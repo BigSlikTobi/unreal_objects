@@ -124,11 +124,15 @@ def prompt_rule_creation(group_id: str, llm_config: dict | None = None) -> dict:
             )
             datapoints = translation["datapoints"]
             edge_cases = translation.get("edge_cases", [])
+            edge_cases_json = translation.get("edge_cases_json", [])
             rule_logic = translation["rule_logic"]
+            rule_logic_json = translation.get("rule_logic_json", {})
             print(f"\n✨ Extracted Datapoints: {', '.join(datapoints)}")
             if edge_cases:
                 print(f"✨ Edge Cases: {', '.join(edge_cases)}")
             print(f"✨ Structured Logic: {rule_logic}")
+            if rule_logic_json:
+                print(f"✨ JSON Logic: {json.dumps(rule_logic_json)}")
         except Exception as e:
             print(f"❌ Translation failed: {e}")
             print("Falling back to manual creation.")
@@ -140,13 +144,19 @@ def prompt_rule_creation(group_id: str, llm_config: dict | None = None) -> dict:
         ec_str = input("Edge Cases (comma-separated, optional): ").strip()
         edge_cases = [e.strip() for e in ec_str.split(",") if e.strip()]
         rule_logic = input("Rule Logic (e.g. IF amount > 500 THEN ASK_FOR_APPROVAL): ").strip()
+        
+        # Manual flow has no json logic engine attached yet
+        rule_logic_json = {}
+        edge_cases_json = []
 
     payload = {
         "name": name,
         "feature": feature,
         "datapoints": datapoints,
         "edge_cases": edge_cases,
-        "rule_logic": rule_logic
+        "edge_cases_json": edge_cases_json,
+        "rule_logic": rule_logic,
+        "rule_logic_json": rule_logic_json
     }
 
     with httpx.Client() as client:
@@ -157,6 +167,8 @@ def prompt_rule_creation(group_id: str, llm_config: dict | None = None) -> dict:
         if rule.get("edge_cases"):
             print(f"      Edge Cases: {', '.join(rule['edge_cases'])}")
         print(f"      Rule Logic: {rule.get('rule_logic', '')}")
+        if rule.get("rule_logic_json"):
+            print(f"      JSON Logic: {json.dumps(rule.get('rule_logic_json'))}")
         return rule
 
 def prompt_auto_test(group_id: str, rule: dict):

@@ -93,7 +93,9 @@ curl -X POST http://127.0.0.1:8001/v1/groups/<YOUR_GROUP_ID>/rules \
     "feature": "Limit Purchases",
     "datapoints": ["amount"],
     "edge_cases": [],
-    "rule_logic": "IF amount > 500 THEN ASK_FOR_APPROVAL"
+    "edge_cases_json": [],
+    "rule_logic": "IF amount > 500 THEN ASK_FOR_APPROVAL",
+    "rule_logic_json": {"if": [{">": [{"var": "amount"}, 500]}, "ASK_FOR_APPROVAL", null]}
   }'
 ```
 

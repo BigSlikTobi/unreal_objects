@@ -144,3 +144,41 @@ async def test_evaluate_user_report(mock_rule_engine):
         resp = await client.get(f"/v1/decide?request_description={request_desc}&context={context_str}&group_id={group_id}")
         assert resp.status_code == 200
         assert resp.json()["outcome"] == "ASK_FOR_APPROVAL"
+
+@pytest.mark.asyncio
+async def test_evaluate_with_json_logic(mock_rule_engine):
+    mock_response = MagicMock()
+    mock_response.status_code = 200
+    mock_response.json.return_value = {
+        "id": "g1",
+        "name": "Grp",
+        "rules": [
+            {
+                "id": "r1",
+                "rule_logic": "IF amount > 500 THEN ASK_FOR_APPROVAL",
+                "rule_logic_json": {"if": [{">": [{"var": "amount"}, 500]}, "ASK_FOR_APPROVAL", None]},
+                "edge_cases": ["IF currency != USD THEN REJECT"],
+                "edge_cases_json": [{"if": [{"!=": [{"var": "currency"}, "USD"]}, "REJECT", None]}]
+            }
+        ]
+    }
+    mock_rule_engine.return_value = mock_response
+
+    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
+        # 1. Triggers edge case
+        context_str = '{"amount": 600, "currency": "EUR"}'
+        resp = await client.get(f"/v1/decide?request_description=Test&context={context_str}&group_id=g1")
+        assert resp.status_code == 200
+        assert resp.json()["outcome"] == "REJECT"
+
+        # 2. Passes edge case, triggers rule logic
+        context_str = '{"amount": 600, "currency": "USD"}'
+        resp = await client.get(f"/v1/decide?request_description=Test&context={context_str}&group_id=g1")
+        assert resp.status_code == 200
+        assert resp.json()["outcome"] == "ASK_FOR_APPROVAL"
+
+        # 3. Passes edge case, does NOT trigger rule logic -> defaults to APPROVE
+        context_str = '{"amount": 400, "currency": "USD"}'
+        resp = await client.get(f"/v1/decide?request_description=Test&context={context_str}&group_id=g1")
+        assert resp.status_code == 200
+        assert resp.json()["outcome"] == "APPROVE"

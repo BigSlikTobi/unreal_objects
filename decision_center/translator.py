@@ -7,13 +7,26 @@ from google import genai
 class RuleLogicDefinition(BaseModel):
     datapoints: list[str] = Field(..., description="A list of specific datapoints extracted from the natural language rule. Normalize variables into snake_case.")
     edge_cases: list[str] = Field(default_factory=list, description="A list of edge cases in the format: IF <condition> THEN <outcome>. E.g.: IF currency <> eur THEN REJECT")
+    edge_cases_json: list[dict] = Field(default_factory=list, description="The JSON Logic formats for edge cases. Should evaluate to an outcome string or null. E.g. {'if': [{'!=': [{'var':'currency'}, 'eur']}, 'REJECT', null]}")
     rule_logic: str = Field(..., description="The main logic represented in the format: IF <condition> THEN <outcome>. E.g.: IF billing_amount > 100 THEN ASK_FOR_APPROVAL")
+    rule_logic_json: dict = Field(..., description="The main logic parsed into standard JSON Logic format. E.g.: {'if': [{'>': [{'var': 'billing_amount'}, 100]}, 'ASK_FOR_APPROVAL', 'APPROVE']}")
 
 SYS_PROMPT = """You are an expert business logic rule translator for the 'Decision Center'.
 Your job is to translate a given natural language prompt detailing a business rule into strictly structured data containing datapoints, edge cases, and the logical formula.
-The edge cases and the logical formula must strictly use the structure `IF <conditions> THEN <outcome>`, allowing AND/OR for multiple conditions.
-Edge cases are isolated constraints or preconditions (e.g. IF currency <> eur THEN REJECT) that apply before the main logic. Do not include normal logical checks as edge cases unless they denote invalid or separate error-causing conditions.
-Possible outcomes are typically APPROVE, REJECT, or ASK_FOR_APPROVAL based on the context.
+
+You must provide BOTH a human-readable string representation (`rule_logic`, `edge_cases`) AND a deterministic JSON Logic representation (`rule_logic_json`, `edge_cases_json`).
+
+Human Readable format: `IF <conditions> THEN <outcome>`
+JSON Logic format: Must strictly follow jsonlogic.com specs and evaluate to an outcome string ("APPROVE", "REJECT", "ASK_FOR_APPROVAL") or null.
+Note: For equality checking in JSON Logic use `"=="` instead of `"="`.
+
+Example Main Logic JSON:
+{"if": [{">": [{"var": "amount"}, 500]}, "ASK_FOR_APPROVAL", "APPROVE"]}
+
+Example Edge Case JSON (must return null if unaffected so evaluation can continue): 
+{"if": [{"!=": [{"var": "currency"}, "eur"]}, "REJECT", null]}
+
+Edge cases are isolated constraints or preconditions that apply before the main logic. Do not include normal logical checks as edge cases unless they denote invalid or separate error-causing conditions.
 Output purely JSON conforming to the structural requirement."""
 
 def check_llm_connection(provider: str, model: str, api_key: str) -> bool:

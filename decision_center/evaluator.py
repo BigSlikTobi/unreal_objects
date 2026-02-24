@@ -1,17 +1,51 @@
+import re
+import httpx
 from typing import List, Dict, Any
 from .models import DecisionOutcome
+from json_logic import jsonLogic, add_operation
 
-import re
+# Enforce fail-closed type checking within JSON Logic
+def strict_eq(a, b):
+    if a is None or b is None: raise ValueError("Missing data")
+    if type(a) != type(b) and not (isinstance(a, (int, float)) and isinstance(b, (int, float))):
+        raise ValueError("Type mismatch in ==")
+    if isinstance(a, str) and isinstance(b, str): return a.lower() == b.lower()
+    return a == b
 
-def basic_evaluate_rule(rule_logic: str, context: Dict[str, Any]) -> str | None:
-    """
-    Evaluates simple rule expressions like:
-      "IF amount > 500 THEN ASK_FOR_APPROVAL"
-      "IF amount < 200 THEN APPROVE"
-      "IF status == ACTIVE THEN APPROVE"
-      "IF contract_partner = 'Amazon' THEN ASK_FOR_APPROVAL"
-    Supports operators: >, <, >=, <=, ==, !=, =
-    """
+def strict_neq(a, b):
+    if a is None or b is None: raise ValueError("Missing data")
+    if type(a) != type(b) and not (isinstance(a, (int, float)) and isinstance(b, (int, float))):
+        raise ValueError("Type mismatch in !=")
+    if isinstance(a, str) and isinstance(b, str): return a.lower() != b.lower()
+    return a != b
+
+def strict_gt(a, b):
+    if a is None or b is None: raise ValueError("Missing data")
+    return a > b
+
+def strict_lt(a, b):
+    if a is None or b is None: raise ValueError("Missing data")
+    return a < b
+
+def strict_gte(a, b):
+    if a is None or b is None: raise ValueError("Missing data")
+    return a >= b
+
+def strict_lte(a, b):
+    if a is None or b is None: raise ValueError("Missing data")
+    return a <= b
+
+# Overwrite built-ins to secure them
+add_operation("==", strict_eq)
+add_operation("!=", strict_neq)
+add_operation(">", strict_gt)
+add_operation("<", strict_lt)
+add_operation(">=", strict_gte)
+add_operation("<=", strict_lte)
+add_operation("=", strict_eq)
+
+def legacy_evaluate_rule(rule_logic: str, context: Dict[str, Any]) -> str | None:
+    """Legacy string-based rule evaluation."""
     pattern = r"IF\s+(\w+)\s*(>=|<=|!=|>|<|==|=)\s*(.+?)\s+THEN\s+(\w+)"
     match = re.match(pattern, rule_logic.strip(), re.IGNORECASE)
     if not match:
@@ -20,7 +54,6 @@ def basic_evaluate_rule(rule_logic: str, context: Dict[str, Any]) -> str | None:
     field, operator, threshold_str, outcome = match.groups()
     value = context.get(field.lower())
     
-    # Clean threshold string of quotes if present
     if threshold_str.startswith(("'", '"')) and threshold_str.endswith(("'", '"')):
         threshold_val = threshold_str[1:-1]
     else:
@@ -32,45 +65,46 @@ def basic_evaluate_rule(rule_logic: str, context: Dict[str, Any]) -> str | None:
     if operator == "=":
         operator = "=="
 
-    # Fail-closed: determine the safest fallback based on rule severity.
-    # REJECT rules stay REJECT; others escalate to ASK_FOR_APPROVAL.
     _RESTRICTIVE = {"REJECT", "ASK_FOR_APPROVAL"}
     fail_closed_outcome = outcome.upper() if outcome.upper() in _RESTRICTIVE else "ASK_FOR_APPROVAL"
 
-    if value is None:
-        # Field missing from context — cannot evaluate, fail closed
-        return fail_closed_outcome
+    if value is None: return fail_closed_outcome
 
-    def safe_compare(op, a, b):
-        try:
-            if op == ">": return a > b
-            if op == "<": return a < b
-            if op == ">=": return a >= b
-            if op == "<=": return a <= b
-            if op == "==":
-                if isinstance(a, str) and isinstance(b, str):
-                    return a.lower() == b.lower()
-                if type(a) != type(b) and not (isinstance(a, (int, float)) and isinstance(b, (int, float))):
-                    raise ValueError("Type mismatch in ==")
-                return a == b
-            if op == "!=":
-                if isinstance(a, str) and isinstance(b, str):
-                    return a.lower() != b.lower()
-                if type(a) != type(b) and not (isinstance(a, (int, float)) and isinstance(b, (int, float))):
-                    raise ValueError("Type mismatch in !=")
-                return a != b
-        except TypeError:
-            raise ValueError("Type mismatch")
-        return False
-    
     try:
-        if safe_compare(operator, value, threshold_val):
-            return outcome.upper()
-    except ValueError:
-        # Type mismatch — cannot evaluate, fail closed
+        if operator == "==" and strict_eq(value, threshold_val): return outcome.upper()
+        if operator == "!=" and strict_neq(value, threshold_val): return outcome.upper()
+        if operator == ">" and strict_gt(value, threshold_val): return outcome.upper()
+        if operator == "<" and strict_lt(value, threshold_val): return outcome.upper()
+        if operator == ">=" and strict_gte(value, threshold_val): return outcome.upper()
+        if operator == "<=" and strict_lte(value, threshold_val): return outcome.upper()
+    except (ValueError, TypeError):
         return fail_closed_outcome
         
     return None
+
+def evaluate_rule(rule_json: dict | None, rule_logic: str, context: Dict[str, Any]) -> str | None:
+    """Evaluates rules using JSON Logic if available, falling back to legacy string parsing."""
+    if not rule_json:
+        return legacy_evaluate_rule(rule_logic, context)
+
+    # Calculate safe fallback based on the legacy string severity
+    _RESTRICTIVE = {"REJECT", "ASK_FOR_APPROVAL"}
+    fail_closed_outcome = "ASK_FOR_APPROVAL"
+    pattern = r"THEN\s+(\w+)"
+    match = re.search(pattern, rule_logic, re.IGNORECASE)
+    if match and match.group(1).upper() in _RESTRICTIVE:
+        fail_closed_outcome = match.group(1).upper()
+
+    try:
+        # Evaluate safely
+        result = jsonLogic(rule_json, context)
+        if result in ["APPROVE", "REJECT", "ASK_FOR_APPROVAL"]:
+            return result
+        # If False/None, the condition wasn't met
+        return None
+    except (ValueError, TypeError):
+        # Type mismatch or missing data
+        return fail_closed_outcome
 
 import httpx
 
@@ -100,10 +134,12 @@ async def evaluate_request(context: Dict[str, Any], group_id: str | None) -> tup
     for r in rules:
         # Evaluate edge cases first
         edge_cases = r.get("edge_cases", [])
+        edge_cases_json = r.get("edge_cases_json", [])
         edge_case_matched = False
         if edge_cases:
-            for ec in edge_cases:
-                ec_res = basic_evaluate_rule(ec, context)
+            for i, ec_str in enumerate(edge_cases):
+                ec_json = edge_cases_json[i] if i < len(edge_cases_json) else {}
+                ec_res = evaluate_rule(ec_json, ec_str, context)
                 if ec_res:
                     edge_case_matched = True
                     if ec_res == "REJECT":
@@ -119,7 +155,8 @@ async def evaluate_request(context: Dict[str, Any], group_id: str | None) -> tup
         
         # Only evaluate rule_logic if no edge case overrode it
         if not edge_case_matched:
-            res = basic_evaluate_rule(r["rule_logic"], context)
+            r_json = r.get("rule_logic_json", {})
+            res = evaluate_rule(r_json, r["rule_logic"], context)
             if res == "REJECT":
                 outcomes.append(DecisionOutcome.REJECT)
                 matched.append(r["id"])

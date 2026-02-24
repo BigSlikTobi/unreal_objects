@@ -59,3 +59,44 @@
 - The `basic_evaluate_rule` in the Decision Center needs to handle strings and
   LLM-style aliases (e.g., `=` mapped to `==`) as gracefully as strict numeric
   comparisons to be robust.
+
+## JSON Logic Migration & Fail-Closed Hardening
+
+**What was built:**
+
+- Replaced the regex-based string evaluator with `json-logic-qubit` to
+  deterministically evaluate business rules and edge cases formatted as JSON
+  Logic.
+- Updated Pydantic models in `rule_engine/models.py` and
+  `decision_center/translator.py` (`rule_logic_json` and `edge_cases_json`) to
+  parse the JSON logic from all 3 supported LLM providers.
+- Modified the CLI tool to natively include JSON logic payloads and output them
+  dynamically.
+- Injected custom, strictly-typed operational overrides (`==`, `!=`, `<`, `>`,
+  `<=`, `>=`) into `jsonLogic` from `decision_center/evaluator.py` to ensure
+  type mismatches and missing payload values trigger critical ValueErrors.
+- Implemented a "Fail-Closed" graceful severity downgrade mechanism (where
+  `REJECT` defaults to `REJECT` and `APPROVE` defaults to `ASK_FOR_APPROVAL` if
+  evaluation cannot complete).
+
+**How it was validated:**
+
+- Rewrote `decision_center/tests/test_evaluator.py` to pass equivalent strict
+  JSON conditions through the overridden JSON logic implementation alongside
+  legacy string fallbacks.
+- Wrote full-blown E2E integration tests in `decision_center/tests/test_api.py`
+  (`test_evaluate_with_json_logic`) to mock LLM interactions and verify that
+  strictly typed rule structures directly execute during standard `v1/decide`
+  requests.
+- All 31 tests passed successfully.
+
+**Key Findings:**
+
+- Adopting the JSON Logic structure from `jsonlogic.com` offers deterministic
+  nested condition handling, but since it is inherently "fail-open" based on
+  JavaScript syntax (where string `costs` == `0` evaluates to False rather than
+  Exception), relying purely on the library's built-in operators is highly
+  insecure for access-control systems.
+- Overwriting operators natively within the `jsonLogic` operation mapping allows
+  developers to harness structured JSON rule representations while implementing
+  rigid type enforcement internally.

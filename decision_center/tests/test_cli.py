@@ -77,7 +77,9 @@ def test_prompt_rule_creation(mock_post, mock_input):
         "feature": "Fraud Check",
         "datapoints": ["amount", "user_idx"],
         "edge_cases": [],
-        "rule_logic": "IF amount > 500 THEN REJECT"
+        "edge_cases_json": [],
+        "rule_logic": "IF amount > 500 THEN REJECT",
+        "rule_logic_json": {}
     }
 
 @patch("builtins.input", side_effect=["750", "user_123", "test description"])
@@ -127,7 +129,9 @@ def test_prompt_rule_creation_with_llm(mock_post, mock_translate, mock_input):
     mock_translate.return_value = {
         "datapoints": ["amount_owed"],
         "edge_cases": ["IF currency <> eur THEN REJECT"],
-        "rule_logic": "IF amount_owed > 100 THEN ASK_FOR_APPROVAL"
+        "edge_cases_json": [{"if": [{"!=": [{"var": "currency"}, "eur"]}, "REJECT", None]}],
+        "rule_logic": "IF amount_owed > 100 THEN ASK_FOR_APPROVAL",
+        "rule_logic_json": {"if": [{">": [{"var": "amount_owed"}, 100]}, "ASK_FOR_APPROVAL", "APPROVE"]}
     }
 
     mock_resp = MagicMock()
@@ -136,7 +140,9 @@ def test_prompt_rule_creation_with_llm(mock_post, mock_translate, mock_input):
         "id": "rule_llm_1", 
         "name": "My LLM Rule",
         "rule_logic": "IF amount_owed > 100 THEN ASK_FOR_APPROVAL",
-        "edge_cases": ["IF currency <> eur THEN REJECT"]
+        "rule_logic_json": {"if": [{">": [{"var": "amount_owed"}, 100]}, "ASK_FOR_APPROVAL", "APPROVE"]},
+        "edge_cases": ["IF currency <> eur THEN REJECT"],
+        "edge_cases_json": [{"if": [{"!=": [{"var": "currency"}, "eur"]}, "REJECT", None]}],
     }
     mock_post.return_value = mock_resp
 
@@ -158,5 +164,7 @@ def test_prompt_rule_creation_with_llm(mock_post, mock_translate, mock_input):
         "feature": "Fraud Feature",
         "datapoints": ["amount_owed"],
         "edge_cases": ["IF currency <> eur THEN REJECT"],
-        "rule_logic": "IF amount_owed > 100 THEN ASK_FOR_APPROVAL"
+        "edge_cases_json": [{"if": [{"!=": [{"var": "currency"}, "eur"]}, "REJECT", None]}],
+        "rule_logic": "IF amount_owed > 100 THEN ASK_FOR_APPROVAL",
+        "rule_logic_json": {"if": [{">": [{"var": "amount_owed"}, 100]}, "ASK_FOR_APPROVAL", "APPROVE"]}
     }
