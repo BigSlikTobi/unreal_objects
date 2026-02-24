@@ -1,7 +1,6 @@
 <div align="center">
   <h1><img src="assets/unreal_objects_logo.png" alt="Unreal Objects Mascot" width="75" style="vertical-align: middle;"/> Unreal Objects <img src="assets/unreal_objects_logo.png" alt="Unreal Objects Mascot" width="75" style="vertical-align: middle;"/> </h1>
-
-<p><b>Accountability infrastructure for autonomous systems.</b></p>
+  <p><b>Accountability infrastructure for autonomous systems.</b></p>
 </div>
 
 ---
