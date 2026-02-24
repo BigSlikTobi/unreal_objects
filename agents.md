@@ -37,7 +37,10 @@ down.
 - **Verify Each Step:** Ensure the build passes and tests run green before every
   commit.
 - **No Pushes to Main:** **NEVER** push directly to the `main` branch. Always
-  create a feature branch, push there, and use a Pull Request for merging.
+  create a feature branch.
+- **Explicit Approval for PRs:** You must **always ask the user for approval**
+  before pushing your branch to the remote repository and creating a Pull
+  Request.
 
 ### 3. Conventional Commits
 
@@ -96,7 +99,9 @@ Always follow autonomously follow this iterative cycle form start to finish:
      docstring gaps) and resolve them.
    - **Final Verification:** Run the complete test suite one last time to
      confirm everything is green.
-3. **Execution:** Create a detailed PR and push to git.
+3. **Execution:** Create a detailed PR draft, but **wait for explicit user
+   approval** before pushing to git and creating the Pull Request. You must ask
+   the user if it is okay to push.
 
 ### 5. Diary Update Is Mandatory
 
