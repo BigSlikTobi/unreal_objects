@@ -46,3 +46,10 @@ async def delete_rule(group_id: str, rule_id: str):
     if not store.delete_rule(group_id, rule_id):
         raise HTTPException(status_code=404, detail="Rule not found")
 
+@app.put("/v1/groups/{group_id}/rules/{rule_id}", response_model=BusinessRule)
+async def update_rule(group_id: str, rule_id: str, rule: CreateRule):
+    updated = store.update_rule(group_id, rule_id, rule)
+    if not updated:
+        raise HTTPException(status_code=404, detail="Rule or Group not found")
+    return updated
+

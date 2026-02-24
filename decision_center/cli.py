@@ -106,9 +106,43 @@ def prompt_llm_setup() -> dict | None:
         return None
 
 def prompt_rule_creation(group_id: str, llm_config: dict | None = None) -> dict:
-    print("\n--- Rule Creation ---")
-    name = input("Rule Name: ").strip()
-    feature = input("Feature (e.g. Fraud Check): ").strip()
+    print("\n--- Rule Management ---")
+    
+    # Check for existing rules in the group
+    with httpx.Client() as client:
+        try:
+            resp = client.get(f"http://127.0.0.1:8001/v1/groups/{group_id}")
+            group_data = resp.json() if resp.status_code == 200 else {}
+            existing_rules = group_data.get("rules", [])
+        except httpx.RequestError:
+            existing_rules = []
+
+    rule_id = None
+    name = ""
+    feature = ""
+    
+    if existing_rules:
+        print("Existing Rules:")
+        for idx, r in enumerate(existing_rules, 1):
+            print(f"  {idx}. {r['name']} ({r['id']})")
+        print("  C. Create a new rule")
+        
+        choice = input("Select a rule to UPDATE, or type 'CREATE': ").strip().upper()
+        if choice != 'C' and choice != 'CREATE':
+            try:
+                idx = int(choice) - 1
+                if 0 <= idx < len(existing_rules):
+                    selected = existing_rules[idx]
+                    rule_id = selected["id"]
+                    name = selected["name"]
+                    feature = selected["feature"]
+                    print(f"Updating Rule: {name}")
+            except ValueError:
+                pass
+                
+    if not rule_id:
+        name = input("Rule Name: ").strip()
+        feature = input("Feature (e.g. Fraud Check): ").strip()
     
     if llm_config:
         natural_language = input("Describe the rule logic (e.g. if they owe more than 100 then ask them): ").strip()
@@ -184,10 +218,18 @@ def prompt_rule_creation(group_id: str, llm_config: dict | None = None) -> dict:
     }
 
     with httpx.Client() as client:
-        resp = client.post(f"http://127.0.0.1:8001/v1/groups/{group_id}/rules", json=payload)
+        if rule_id:
+            # Update existing
+            resp = client.put(f"http://127.0.0.1:8001/v1/groups/{group_id}/rules/{rule_id}", json=payload)
+            action = "Updated"
+        else:
+            # Create new
+            resp = client.post(f"http://127.0.0.1:8001/v1/groups/{group_id}/rules", json=payload)
+            action = "Created"
+            
         resp.raise_for_status()
         rule = resp.json()
-        print(f"\n✅ Created rule '{rule['name']}' with ID: {rule['id']}")
+        print(f"\n✅ {action} rule '{rule['name']}' with ID: {rule['id']}")
         if rule.get("edge_cases"):
             print(f"      Edge Cases: {', '.join(rule['edge_cases'])}")
         print(f"      Rule Logic: {rule.get('rule_logic', '')}")
