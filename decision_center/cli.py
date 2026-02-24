@@ -95,7 +95,13 @@ def prompt_llm_setup() -> dict | None:
         print("Invalid model selection. Falling back to manual rule creation.")
         return None
         
-    api_key = getpass.getpass(f"Enter your {provider} API Key: ").strip()
+    env_var_name = f"{provider.upper()}_API_KEY"
+    api_key = os.environ.get(env_var_name)
+    
+    if api_key:
+        print(f"Using {provider} API Key from environment variable '{env_var_name}'.")
+    else:
+        api_key = getpass.getpass(f"Enter your {provider} API Key (Hidden): ").strip()
     
     print("\nTesting connection...")
     if check_llm_connection(provider, model, api_key):
@@ -308,12 +314,17 @@ def main():
     prompt_start_servers()
     
     llm_config = prompt_llm_setup()
-    
     group_id = prompt_group_selection()
     print(f"\nFinal Selected Group ID: {group_id}")
-    rule = prompt_rule_creation(group_id, llm_config)
-    print(f"\nFinal Created Rule ID: {rule['id']}")
-    prompt_auto_test(group_id, rule)
+    
+    while True:
+        rule = prompt_rule_creation(group_id, llm_config)
+        prompt_auto_test(group_id, rule)
+        
+        cont = input("\nDo you want to manage another rule in this group? [Y/n] ").strip().lower()
+        if cont == 'n':
+            print("Exiting Decision Center Wizard. Goodbye!")
+            break
 
 if __name__ == "__main__":
     main()
