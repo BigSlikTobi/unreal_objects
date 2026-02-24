@@ -119,7 +119,7 @@ def test_prompt_llm_setup_no(mock_input):
     config = prompt_llm_setup()
     assert config is None
 
-@patch("builtins.input", side_effect=["My LLM Rule", "Fraud Feature", "if they owe more than 100 then ask them"])
+@patch("builtins.input", side_effect=["My LLM Rule", "Fraud Feature", "if they owe more than 100 then ask them", "A"])
 @patch("decision_center.cli.translate_rule")
 @patch("httpx.Client.post")
 def test_prompt_rule_creation_with_llm(mock_post, mock_translate, mock_input):

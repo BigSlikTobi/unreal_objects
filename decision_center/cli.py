@@ -112,31 +112,55 @@ def prompt_rule_creation(group_id: str, llm_config: dict | None = None) -> dict:
     
     if llm_config:
         natural_language = input("Describe the rule logic (e.g. if they owe more than 100 then ask them): ").strip()
-        print("Translating using LLM Rule Wizard...")
-        try:
-            translation = translate_rule(
-                natural_language=natural_language,
-                feature=feature,
-                name=name,
-                provider=llm_config["provider"],
-                model=llm_config["model"],
-                api_key=llm_config["api_key"]
-            )
-            datapoints = translation["datapoints"]
-            edge_cases = translation.get("edge_cases", [])
-            edge_cases_json = translation.get("edge_cases_json", [])
-            rule_logic = translation["rule_logic"]
-            rule_logic_json = translation.get("rule_logic_json", {})
-            print(f"\n✨ Extracted Datapoints: {', '.join(datapoints)}")
-            if edge_cases:
-                print(f"✨ Edge Cases: {', '.join(edge_cases)}")
-            print(f"✨ Structured Logic: {rule_logic}")
-            if rule_logic_json:
-                print(f"✨ JSON Logic: {json.dumps(rule_logic_json)}")
-        except Exception as e:
-            print(f"❌ Translation failed: {e}")
-            print("Falling back to manual creation.")
-            llm_config = None
+        while True:
+            print("\nTranslating using LLM Rule Wizard...")
+            try:
+                translation = translate_rule(
+                    natural_language=natural_language,
+                    feature=feature,
+                    name=name,
+                    provider=llm_config["provider"],
+                    model=llm_config["model"],
+                    api_key=llm_config["api_key"]
+                )
+                datapoints = translation["datapoints"]
+                edge_cases = translation.get("edge_cases", [])
+                edge_cases_json = translation.get("edge_cases_json", [])
+                rule_logic = translation["rule_logic"]
+                rule_logic_json = translation.get("rule_logic_json", {})
+                print(f"\n✨ Extracted Datapoints: {', '.join(datapoints)}")
+                if edge_cases:
+                    print(f"✨ Edge Cases: {', '.join(edge_cases)}")
+                print(f"✨ Structured Logic: {rule_logic}")
+                if rule_logic_json:
+                    print(f"✨ JSON Logic: {json.dumps(rule_logic_json)}")
+
+                print("\nOptions:")
+                print("  [A]ccept this rule")
+                print("  [E]dditional edge case constraint")
+                print("  [R]etry translation with a new description")
+                print("  [M]anual creation fallback")
+                choice = input("Select an option [A/e/r/m]: ").strip().upper() or 'A'
+                
+                if choice == 'E':
+                    extra_ec = input("Describe the condition to catch (e.g. Reject if originating in CA): ").strip()
+                    if extra_ec:
+                        natural_language += f". Also, edge case constraint: {extra_ec}"
+                    continue
+                elif choice == 'R':
+                    natural_language = input("\nDescribe the rule logic again: ").strip()
+                    continue
+                elif choice == 'M':
+                    print("\nFalling back to manual creation.")
+                    llm_config = None
+                    break
+                else:
+                    break
+            except Exception as e:
+                print(f"❌ Translation failed: {e}")
+                print("Falling back to manual creation.")
+                llm_config = None
+                break
             
     if not llm_config:
         dp_str = input("Datapoints (comma-separated): ").strip()
