@@ -196,7 +196,15 @@ def prompt_auto_test(group_id: str, rule: dict):
             data = resp.json()
             print("\n✅ Test Evaluation Complete!")
             print(f"Outcome: {data.get('outcome')}")
-            print(f"Matched Rules: {data.get('matched_rules', [])}")
+            
+            details = data.get("matched_details", [])
+            if details:
+                print("Triggered Conditions:")
+                for d in details:
+                    print(f"  - [{d['hit_type'].upper()}] {d['rule_name']}: {d['trigger_expression']}")
+            else:
+                print(f"Matched Rules: {data.get('matched_rules', [])}")
+                
             print(f"Log ID: {data.get('request_id')}")
         except Exception as e:
             print(f"\n❌ Test Failed: {e}")

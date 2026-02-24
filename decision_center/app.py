@@ -28,7 +28,7 @@ async def evaluate(request_description: str, context: str, group_id: str = None)
         raise HTTPException(status_code=400, detail="Invalid context JSON")
 
     # Evaluate
-    outcome, matched_rules = await evaluate_request(ctx_dict, group_id)
+    outcome, matched_rules, matched_details = await evaluate_request(ctx_dict, group_id)
     req_id = str(uuid.uuid4())
     
     # Log Atomic Decision
@@ -41,7 +41,7 @@ async def evaluate(request_description: str, context: str, group_id: str = None)
 
     # Log Chain Event
     store.log_chain_event(req_id, "REQUEST", details={"description": request_description, "context": ctx_dict})
-    store.log_chain_event(req_id, "EVALUATION", details={"outcome": outcome.value, "matched_rules": matched_rules})
+    store.log_chain_event(req_id, "EVALUATION", details={"outcome": outcome.value, "matched_rules": matched_rules, "matched_details": matched_details})
 
     if state == DecisionState.APPROVAL_REQUIRED:
         store.add_pending(req_id, {"description": request_description, "context": ctx_dict})
@@ -49,7 +49,8 @@ async def evaluate(request_description: str, context: str, group_id: str = None)
     return DecisionResult(
         request_id=req_id,
         outcome=outcome,
-        matched_rules=matched_rules
+        matched_rules=matched_rules,
+        matched_details=matched_details
     )
 
 @app.get("/v1/pending", response_model=List[dict])

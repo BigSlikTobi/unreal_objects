@@ -113,24 +113,26 @@ async def _fetch_group(group_id: str):
     async with httpx.AsyncClient() as client:
         return await client.get(f"http://127.0.0.1:8001/v1/groups/{group_id}")
 
-async def evaluate_request(context: Dict[str, Any], group_id: str | None) -> tuple[DecisionOutcome, list[str]]:
+async def evaluate_request(context: Dict[str, Any], group_id: str | None) -> tuple[DecisionOutcome, list[str], list[dict]]:
     if not group_id:
         # Default behavior: execute without rules
-        return DecisionOutcome.APPROVE, []
+        return DecisionOutcome.APPROVE, [], []
 
     # Fetch rules from rule engine
     try:
         resp = await _fetch_group(group_id)
         if resp.status_code != 200:
-            return DecisionOutcome.ASK_FOR_APPROVAL, ["unreachable_or_missing_group"]
+            return DecisionOutcome.ASK_FOR_APPROVAL, ["unreachable_or_missing_group"], []
         group_data = resp.json()
         rules = group_data.get("rules", [])
     except httpx.RequestError:
-        return DecisionOutcome.ASK_FOR_APPROVAL, ["rule_engine_unreachable"]
+        return DecisionOutcome.ASK_FOR_APPROVAL, ["rule_engine_unreachable"], []
 
     # Evaluate rules
     outcomes = []
     matched = []
+    matched_details = []
+    
     for r in rules:
         # Evaluate edge cases first
         edge_cases = r.get("edge_cases", [])
@@ -142,36 +144,45 @@ async def evaluate_request(context: Dict[str, Any], group_id: str | None) -> tup
                 ec_res = evaluate_rule(ec_json, ec_str, context)
                 if ec_res:
                     edge_case_matched = True
+                    matched.append(r["id"])
+                    matched_details.append({
+                        "rule_id": r["id"],
+                        "rule_name": r.get("name", "Unknown Rule"),
+                        "hit_type": "edge_case",
+                        "trigger_expression": ec_str
+                    })
                     if ec_res == "REJECT":
                         outcomes.append(DecisionOutcome.REJECT)
-                        matched.append(r["id"])
                     elif ec_res == "ASK_FOR_APPROVAL":
                         outcomes.append(DecisionOutcome.ASK_FOR_APPROVAL)
-                        matched.append(r["id"])
                     elif ec_res == "APPROVE":
                         outcomes.append(DecisionOutcome.APPROVE)
-                        matched.append(r["id"])
                     break # Only one edge case needs to match to branch logic
         
         # Only evaluate rule_logic if no edge case overrode it
         if not edge_case_matched:
             r_json = r.get("rule_logic_json", {})
             res = evaluate_rule(r_json, r["rule_logic"], context)
-            if res == "REJECT":
-                outcomes.append(DecisionOutcome.REJECT)
+            if res:
                 matched.append(r["id"])
-            elif res == "ASK_FOR_APPROVAL":
-                outcomes.append(DecisionOutcome.ASK_FOR_APPROVAL)
-                matched.append(r["id"])
-            elif res == "APPROVE":
-                outcomes.append(DecisionOutcome.APPROVE)
-                matched.append(r["id"])
+                matched_details.append({
+                    "rule_id": r["id"],
+                    "rule_name": r.get("name", "Unknown Rule"),
+                    "hit_type": "rule_logic",
+                    "trigger_expression": r.get("rule_logic", "Unknown Logic")
+                })
+                if res == "REJECT":
+                    outcomes.append(DecisionOutcome.REJECT)
+                elif res == "ASK_FOR_APPROVAL":
+                    outcomes.append(DecisionOutcome.ASK_FOR_APPROVAL)
+                elif res == "APPROVE":
+                    outcomes.append(DecisionOutcome.APPROVE)
 
     # Apply most restrictive wins
     if DecisionOutcome.REJECT in outcomes:
-        return DecisionOutcome.REJECT, matched
+        return DecisionOutcome.REJECT, matched, matched_details
     if DecisionOutcome.ASK_FOR_APPROVAL in outcomes:
-        return DecisionOutcome.ASK_FOR_APPROVAL, matched
+        return DecisionOutcome.ASK_FOR_APPROVAL, matched, matched_details
     
     # Either all approved or no matching rules (default to APPROVE per spec)
-    return DecisionOutcome.APPROVE, matched
+    return DecisionOutcome.APPROVE, matched, matched_details
