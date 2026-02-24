@@ -120,6 +120,7 @@ def prompt_rule_creation(group_id: str, llm_config: dict | None = None) -> dict:
     rule_id = None
     name = ""
     feature = ""
+    existing_rule_obj = None
     
     if existing_rules:
         print("Existing Rules:")
@@ -136,7 +137,8 @@ def prompt_rule_creation(group_id: str, llm_config: dict | None = None) -> dict:
                     rule_id = selected["id"]
                     name = selected["name"]
                     feature = selected["feature"]
-                    print(f"Updating Rule: {name}")
+                    existing_rule_obj = selected
+                    print(f"\nUpdating Rule: {name}")
             except ValueError:
                 pass
                 
@@ -145,7 +147,23 @@ def prompt_rule_creation(group_id: str, llm_config: dict | None = None) -> dict:
         feature = input("Feature (e.g. Fraud Check): ").strip()
     
     if llm_config:
-        natural_language = input("Describe the rule logic (e.g. if they owe more than 100 then ask them): ").strip()
+        if existing_rule_obj:
+            print(f"Current Logic: {existing_rule_obj.get('rule_logic')}")
+            if existing_rule_obj.get('edge_cases'):
+                print(f"Current Edge Cases: {', '.join(existing_rule_obj.get('edge_cases', []))}")
+            
+            skip_logic = input("\nDo you want to skip rewriting the main logic and just add an edge case? [y/N] ").strip().lower() == 'y'
+            if skip_logic:
+                base_nl = f"Keep the main logic exactly as: '{existing_rule_obj.get('rule_logic')}'. "
+                if existing_rule_obj.get('edge_cases'):
+                    base_nl += f"Keep these existing edge cases exactly: '{'; '.join(existing_rule_obj['edge_cases'])}'. "
+                extra_ec = input("Describe the NEW edge case condition to add (e.g. Reject if originating in CA): ").strip()
+                natural_language = base_nl + f"Add this NEW edge case constraint: {extra_ec}"
+            else:
+                natural_language = input("\nDescribe the entirely new rule logic: ").strip()
+        else:
+            natural_language = input("Describe the rule logic (e.g. if they owe more than 100 then ask them): ").strip()
+            
         while True:
             print("\nTranslating using LLM Rule Wizard...")
             try:
