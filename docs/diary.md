@@ -100,3 +100,10 @@
 - Overwriting operators natively within the `jsonLogic` operation mapping allows
   developers to harness structured JSON rule representations while implementing
   rigid type enforcement internally.
+- **OpenAI Structured Outputs vs. Dynamic Schemas:** OpenAI's `strict=True`
+  Structured Outputs (triggered via `client.beta.chat.completions.parse`)
+  enforce rigid, fully-defined property definitions. This fundamentally
+  conflicts with nested, dynamic dictionaries required for JSON Logic arbitrary
+  payloads. The solution relies on falling back to the standard `.create` method
+  with `response_format={"type": "json_object"}` while manually injecting the
+  Pydantic stringified schema directly into the prompt.
