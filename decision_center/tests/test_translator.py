@@ -1,4 +1,5 @@
 import pytest
+import json
 from unittest.mock import patch, MagicMock
 from decision_center.translator import check_llm_connection, translate_rule
 
@@ -39,16 +40,15 @@ def test_translate_rule_openai(mock_openai):
     mock_client = MagicMock()
     mock_openai.return_value = mock_client
     
-    # Mocking the Pydantic parsed response from beta.chat.completions.parse
-    mock_parsed = MagicMock()
-    mock_parsed.model_dump.return_value = {
+    # Mocking the JSON string response from chat.completions.create
+    mock_message = MagicMock()
+    mock_message.content = json.dumps({
         "datapoints": ["billing_amount"],
         "edge_cases": ["IF billing_amount < 0 THEN REJECT"],
-        "rule_logic": "IF billing_amount > 100 THEN ASK_FOR_APPROVAL"
-    }
-    
-    mock_message = MagicMock()
-    mock_message.parsed = mock_parsed
+        "edge_cases_json": [],
+        "rule_logic": "IF billing_amount > 100 THEN ASK_FOR_APPROVAL",
+        "rule_logic_json": {"if": [{">": [{"var": "billing_amount"}, 100]}, "ASK_FOR_APPROVAL", "APPROVE"]}
+    })
     
     mock_choice = MagicMock()
     mock_choice.message = mock_message
@@ -56,14 +56,14 @@ def test_translate_rule_openai(mock_openai):
     mock_response = MagicMock()
     mock_response.choices = [mock_choice]
     
-    mock_client.beta.chat.completions.parse.return_value = mock_response
+    mock_client.chat.completions.create.return_value = mock_response
     
     result = translate_rule("ask for approval if billing amount is > 100", "fraud", "Fraud Check", "openai", "gpt-5.2", "fake_key")
     
     assert result["datapoints"] == ["billing_amount"]
     assert result["edge_cases"] == ["IF billing_amount < 0 THEN REJECT"]
     assert result["rule_logic"] == "IF billing_amount > 100 THEN ASK_FOR_APPROVAL"
-    mock_client.beta.chat.completions.parse.assert_called_once()
+    mock_client.chat.completions.create.assert_called_once()
 
 @patch("anthropic.Anthropic")
 def test_translate_rule_anthropic(mock_anthropic):

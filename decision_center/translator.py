@@ -61,15 +61,19 @@ def translate_rule(natural_language: str, feature: str, name: str, provider: str
     # Handle OpenAI
     if provider == "openai":
         client = openai.OpenAI(api_key=api_key)
-        response = client.beta.chat.completions.parse(
+        schema_json = RuleLogicDefinition.model_json_schema()
+        system_content = f"{SYS_PROMPT}\n\nStrictly format your response to match this JSON schema:\n{json.dumps(schema_json)}"
+        
+        response = client.chat.completions.create(
             model=model,
             messages=[
-                {"role": "system", "content": SYS_PROMPT},
+                {"role": "system", "content": system_content},
                 {"role": "user", "content": prompt}
             ],
-            response_format=RuleLogicDefinition,
+            response_format={"type": "json_object"},
         )
-        return response.choices[0].message.parsed.model_dump()
+        parsed = json.loads(response.choices[0].message.content)
+        return RuleLogicDefinition(**parsed).model_dump()
 
     # Handle Anthropic
     elif provider == "anthropic":
