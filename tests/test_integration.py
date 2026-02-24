@@ -2,14 +2,15 @@ import pytest
 import subprocess
 import time
 import httpx
+import sys
 from mcp_server.server import list_rule_groups, evaluate_action, submit_approval, get_decision_log
 
 @pytest.fixture(scope="module", autouse=True)
 def live_servers():
     # Start rule engine on port 8001
-    p1 = subprocess.Popen(["uvicorn", "rule_engine.app:app", "--port", "8001"])
+    p1 = subprocess.Popen([sys.executable, "-m", "uvicorn", "rule_engine.app:app", "--port", "8001"])
     # Start decision center on port 8002
-    p2 = subprocess.Popen(["uvicorn", "decision_center.app:app", "--port", "8002"])
+    p2 = subprocess.Popen([sys.executable, "-m", "uvicorn", "decision_center.app:app", "--port", "8002"])
     
     # Wait for servers to be healthy
     time.sleep(2)

@@ -1,5 +1,5 @@
 [project]
-name = "Unreal Objects"
+name = "unreal_objects"
 version = "0.1.0"
 description = "Accountability infrastructure for autonomous systems"
 requires-python = ">=3.11"
