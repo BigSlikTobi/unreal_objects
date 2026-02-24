@@ -41,6 +41,10 @@
   constraints as `edge_cases`, and format `rule_logic`.
 - Included interactive API Key smoke testing to prevent runtime errors later in
   the flow.
+- Added an interactive refinement loop during rule creation, allowing users to
+  review LLM outputs and optionally inject additional "edge case constraints".
+  This triggers a recursive re-translation to guarantee manual conditions are
+  correctly evaluated into structured JSON Logic.
 
 **How it was validated:**
 
@@ -78,6 +82,10 @@
 - Implemented a "Fail-Closed" graceful severity downgrade mechanism (where
   `REJECT` defaults to `REJECT` and `APPROVE` defaults to `ASK_FOR_APPROVAL` if
   evaluation cannot complete).
+- Restructured the `EvaluateRequest` return signatures and `DecisionResult`
+  schema to include a `matched_details` payload, providing exact diagnostic
+  traceability by exposing which specific edge cases or main rules triggered a
+  decision.
 
 **How it was validated:**
 
