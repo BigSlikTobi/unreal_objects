@@ -43,6 +43,7 @@ def test_translate_rule_openai(mock_openai):
     mock_parsed = MagicMock()
     mock_parsed.model_dump.return_value = {
         "datapoints": ["billing_amount"],
+        "edge_cases": ["IF billing_amount < 0 THEN REJECT"],
         "rule_logic": "IF billing_amount > 100 THEN ASK_FOR_APPROVAL"
     }
     
@@ -60,6 +61,7 @@ def test_translate_rule_openai(mock_openai):
     result = translate_rule("ask for approval if billing amount is > 100", "fraud", "Fraud Check", "openai", "gpt-5.2", "fake_key")
     
     assert result["datapoints"] == ["billing_amount"]
+    assert result["edge_cases"] == ["IF billing_amount < 0 THEN REJECT"]
     assert result["rule_logic"] == "IF billing_amount > 100 THEN ASK_FOR_APPROVAL"
     mock_client.beta.chat.completions.parse.assert_called_once()
 
@@ -73,6 +75,7 @@ def test_translate_rule_anthropic(mock_anthropic):
     mock_block.name = "submit_rule"
     mock_block.input = {
         "datapoints": ["billing_amount"],
+        "edge_cases": ["IF billing_amount < 0 THEN REJECT"],
         "rule_logic": "IF billing_amount > 100 THEN ASK_FOR_APPROVAL"
     }
     
@@ -84,6 +87,7 @@ def test_translate_rule_anthropic(mock_anthropic):
     result = translate_rule("ask for approval if billing amount is > 100", "fraud", "Fraud Check", "anthropic", "claude-4.5-haiku", "fake_key")
     
     assert result["datapoints"] == ["billing_amount"]
+    assert result["edge_cases"] == ["IF billing_amount < 0 THEN REJECT"]
     assert result["rule_logic"] == "IF billing_amount > 100 THEN ASK_FOR_APPROVAL"
     mock_client.messages.create.assert_called_once()
 
@@ -93,12 +97,13 @@ def test_translate_rule_gemini(mock_genai):
     mock_genai.return_value = mock_client
     
     mock_response = MagicMock()
-    mock_response.text = '{"datapoints": ["billing_amount"], "rule_logic": "IF billing_amount > 100 THEN ASK_FOR_APPROVAL"}'
+    mock_response.text = '{"datapoints": ["billing_amount"], "edge_cases": ["IF billing_amount < 0 THEN REJECT"], "rule_logic": "IF billing_amount > 100 THEN ASK_FOR_APPROVAL"}'
     
     mock_client.models.generate_content.return_value = mock_response
     
     result = translate_rule("ask for approval if billing amount is > 100", "fraud", "Fraud Check", "gemini", "gemini-3.0-flash", "fake_key")
     
     assert result["datapoints"] == ["billing_amount"]
+    assert result["edge_cases"] == ["IF billing_amount < 0 THEN REJECT"]
     assert result["rule_logic"] == "IF billing_amount > 100 THEN ASK_FOR_APPROVAL"
     mock_client.models.generate_content.assert_called_once()

@@ -53,7 +53,7 @@ def test_prompt_group_selection_create(mock_get, mock_post, mock_input):
     assert "json" in kwargs
     assert kwargs["json"] == {"name": "My Group", "description": "A test group"}
 
-@patch("builtins.input", side_effect=["My Rule", "Fraud Check", "amount, user_idx", "IF amount > 500 THEN REJECT"])
+@patch("builtins.input", side_effect=["My Rule", "Fraud Check", "amount, user_idx", "", "IF amount > 500 THEN REJECT"])
 @patch("httpx.Client.post")
 def test_prompt_rule_creation(mock_post, mock_input):
     mock_resp = MagicMock()
@@ -121,6 +121,7 @@ def test_prompt_rule_creation_with_llm(mock_post, mock_translate, mock_input):
     # Mock the LLM translator output
     mock_translate.return_value = {
         "datapoints": ["amount_owed"],
+        "edge_cases": ["IF currency <> eur THEN REJECT"],
         "rule_logic": "IF amount_owed > 100 THEN ASK_FOR_APPROVAL"
     }
 
@@ -146,6 +147,6 @@ def test_prompt_rule_creation_with_llm(mock_post, mock_translate, mock_input):
         "name": "My LLM Rule",
         "feature": "Fraud Feature",
         "datapoints": ["amount_owed"],
-        "edge_cases": [],
+        "edge_cases": ["IF currency <> eur THEN REJECT"],
         "rule_logic": "IF amount_owed > 100 THEN ASK_FOR_APPROVAL"
     }

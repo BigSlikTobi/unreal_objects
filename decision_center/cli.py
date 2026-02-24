@@ -123,8 +123,11 @@ def prompt_rule_creation(group_id: str, llm_config: dict | None = None) -> dict:
                 api_key=llm_config["api_key"]
             )
             datapoints = translation["datapoints"]
+            edge_cases = translation.get("edge_cases", [])
             rule_logic = translation["rule_logic"]
             print(f"\n✨ Extracted Datapoints: {', '.join(datapoints)}")
+            if edge_cases:
+                print(f"✨ Edge Cases: {', '.join(edge_cases)}")
             print(f"✨ Structured Logic: {rule_logic}")
         except Exception as e:
             print(f"❌ Translation failed: {e}")
@@ -134,13 +137,15 @@ def prompt_rule_creation(group_id: str, llm_config: dict | None = None) -> dict:
     if not llm_config:
         dp_str = input("Datapoints (comma-separated): ").strip()
         datapoints = [d.strip() for d in dp_str.split(",") if d.strip()]
+        ec_str = input("Edge Cases (comma-separated, optional): ").strip()
+        edge_cases = [e.strip() for e in ec_str.split(",") if e.strip()]
         rule_logic = input("Rule Logic (e.g. IF amount > 500 THEN ASK_FOR_APPROVAL): ").strip()
 
     payload = {
         "name": name,
         "feature": feature,
         "datapoints": datapoints,
-        "edge_cases": [],
+        "edge_cases": edge_cases,
         "rule_logic": rule_logic
     }
 

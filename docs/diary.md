@@ -37,8 +37,8 @@
   **Anthropic** (Claude 4.6), and **Google Gemini** (3.1 Pro, 3 Flash).
 - Implemented `decision_center/translator.py` which interfaces directly with
   each API's official Python SDK using strictly typed Pydantic models
-  (Structured Outputs / Tool Calling) to extract `datapoints` and format
-  `rule_logic`.
+  (Structured Outputs / Tool Calling) to extract `datapoints`, define
+  constraints as `edge_cases`, and format `rule_logic`.
 - Included interactive API Key smoke testing to prevent runtime errors later in
   the flow.
 

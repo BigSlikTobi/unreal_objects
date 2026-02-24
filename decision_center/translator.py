@@ -6,11 +6,13 @@ from google import genai
 
 class RuleLogicDefinition(BaseModel):
     datapoints: list[str] = Field(..., description="A list of specific datapoints extracted from the natural language rule. Normalize variables into snake_case.")
-    rule_logic: str = Field(..., description="The logic represented in the format: IF <condition> THEN <outcome>. E.g.: IF billing_amount > 100 THEN ASK_FOR_APPROVAL")
+    edge_cases: list[str] = Field(default_factory=list, description="A list of edge cases in the format: IF <condition> THEN <outcome>. E.g.: IF currency <> eur THEN REJECT")
+    rule_logic: str = Field(..., description="The main logic represented in the format: IF <condition> THEN <outcome>. E.g.: IF billing_amount > 100 THEN ASK_FOR_APPROVAL")
 
 SYS_PROMPT = """You are an expert business logic rule translator for the 'Decision Center'.
-Your job is to translate a given natural language prompt detailing a business rule into strictly structured data containing datapoints and the logical formula.
-The logical formula must strictly use the structure `IF <conditions> THEN <outcome>`, allowing AND/OR for multiple conditions.
+Your job is to translate a given natural language prompt detailing a business rule into strictly structured data containing datapoints, edge cases, and the logical formula.
+The edge cases and the logical formula must strictly use the structure `IF <conditions> THEN <outcome>`, allowing AND/OR for multiple conditions.
+Edge cases are isolated constraints or preconditions (e.g. IF currency <> eur THEN REJECT) that apply before the main logic. Do not include normal logical checks as edge cases unless they denote invalid or separate error-causing conditions.
 Possible outcomes are typically APPROVE, REJECT, or ASK_FOR_APPROVAL based on the context.
 Output purely JSON conforming to the structural requirement."""
 
