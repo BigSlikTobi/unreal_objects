@@ -4,6 +4,7 @@ import time
 import json
 import urllib.parse
 import os
+import getpass
 
 from decision_center.translator import check_llm_connection, translate_rule
 
@@ -94,7 +95,7 @@ def prompt_llm_setup() -> dict | None:
         print("Invalid model selection. Falling back to manual rule creation.")
         return None
         
-    api_key = input(f"Enter your {provider} API Key: ").strip()
+    api_key = getpass.getpass(f"Enter your {provider} API Key: ").strip()
     
     print("\nTesting connection...")
     if check_llm_connection(provider, model, api_key):

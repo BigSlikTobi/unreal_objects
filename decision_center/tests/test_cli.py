@@ -96,9 +96,10 @@ def test_prompt_auto_test(mock_get, mock_input):
     assert "user_123" in url
     assert "group_123" in url
 
-@patch("builtins.input", side_effect=["y", "1", "2", "test_key"])
+@patch("builtins.input", side_effect=["y", "1", "2"])
+@patch("getpass.getpass", return_value="test_key")
 @patch("decision_center.cli.check_llm_connection", return_value=True)
-def test_prompt_llm_setup_yes(mock_check, mock_input):
+def test_prompt_llm_setup_yes(mock_check, mock_getpass, mock_input):
     config = prompt_llm_setup()
     assert config is not None
     assert config["provider"] == "openai"
