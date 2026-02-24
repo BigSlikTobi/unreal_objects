@@ -80,16 +80,37 @@ async def evaluate_request(context: Dict[str, Any], group_id: str | None) -> tup
     outcomes = []
     matched = []
     for r in rules:
-        res = basic_evaluate_rule(r["rule_logic"], context)
-        if res == "REJECT":
-            outcomes.append(DecisionOutcome.REJECT)
-            matched.append(r["id"])
-        elif res == "ASK_FOR_APPROVAL":
-            outcomes.append(DecisionOutcome.ASK_FOR_APPROVAL)
-            matched.append(r["id"])
-        elif res == "APPROVE":
-            outcomes.append(DecisionOutcome.APPROVE)
-            matched.append(r["id"])
+        # Evaluate edge cases first
+        edge_cases = r.get("edge_cases", [])
+        edge_case_matched = False
+        if edge_cases:
+            for ec in edge_cases:
+                ec_res = basic_evaluate_rule(ec, context)
+                if ec_res:
+                    edge_case_matched = True
+                    if ec_res == "REJECT":
+                        outcomes.append(DecisionOutcome.REJECT)
+                        matched.append(r["id"])
+                    elif ec_res == "ASK_FOR_APPROVAL":
+                        outcomes.append(DecisionOutcome.ASK_FOR_APPROVAL)
+                        matched.append(r["id"])
+                    elif ec_res == "APPROVE":
+                        outcomes.append(DecisionOutcome.APPROVE)
+                        matched.append(r["id"])
+                    break # Only one edge case needs to match to branch logic
+        
+        # Only evaluate rule_logic if no edge case overrode it
+        if not edge_case_matched:
+            res = basic_evaluate_rule(r["rule_logic"], context)
+            if res == "REJECT":
+                outcomes.append(DecisionOutcome.REJECT)
+                matched.append(r["id"])
+            elif res == "ASK_FOR_APPROVAL":
+                outcomes.append(DecisionOutcome.ASK_FOR_APPROVAL)
+                matched.append(r["id"])
+            elif res == "APPROVE":
+                outcomes.append(DecisionOutcome.APPROVE)
+                matched.append(r["id"])
 
     # Apply most restrictive wins
     if DecisionOutcome.REJECT in outcomes:
