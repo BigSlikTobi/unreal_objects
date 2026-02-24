@@ -51,12 +51,62 @@ pytest -v
 
 ---
 
-## 🎮 How To Use (The Full Flow)
+## ⚙️ The Rule Engine
+
+The core heart of Unreal Objects is the **Rule Engine** and its twin, the
+**Decision Center**. Together, they form an isolation layer that inspects the
+chaotic, unpredictable outputs of an LLM agent and enforces strict,
+deterministic business conditions.
+
+### How Decisions Are Made (The Evaluation Pipeline)
+
+When an AI agent requests to take an action (e.g., spending company money,
+sending an email), the Decision Center funnels that request through a 3-step
+pipeline safely governed by the Rule Engine's stored groups.
+
+```text
+ [AI Agent] 
+     │ 
+     ▼ (Request: "I want to purchase a laptop for $750")
+┌─────────────────────────────────────────────────────────┐
+│                  DECISION CENTER                        │
+│                                                         │
+│  1. Context parsing mapped against Datapoints           │
+│       (e.g., {"amount": 750})                           │
+│                          │                              │
+│  2. ⚡️ Edge Case Evaluation  [FAIL-CLOSED]              │
+│       Checks conditions:   "amount > 10000 -> REJECT"   │
+│       (If triggered, execution STOPS immediately)       │
+│                          │                              │
+│  3. 🧠 Core Rule Logic Evaluation (JSON Logic)          │
+│       Checks condition:  "amount > 500 -> ASK"          │
+│                          │                              │
+│  4. 🧾 Immutable Audit Trail Logged                     │
+└──────────────────────────┼──────────────────────────────┘
+                           ▼
+                   [Outcome Enforced]
+                (e.g., "ASK_FOR_APPROVAL")
+```
+
+- **Fail-Closed by Default:** Any missing data, type mismatches (e.g., putting a
+  string "750" in a numeric operation), or evaluation timeouts instantly
+  hard-fail to `ASK_FOR_APPROVAL` or `REJECT`.
+- **JSON Logic Engine:** Under the hood, we compile your natural language rules
+  into highly resilient, strictly auditable AST representations known as
+  [JsonLogic](http://jsonlogic.com/).
+
+---
+
+## 🎮 How To Use (The Interactive CLI Wizard)
+
+We've built a native CLI tool hooked up to modern LLMs (OpenAI, Anthropic,
+Gemini) that allows you to draft these complex JsonLogic rules entirely in
+English.
 
 ### 1. Boot the Core Servers
 
-First, start the Rule Engine and Decision Center servers in separate terminal
-windows:
+Start the Rule Engine and Decision Center servers in the background. Note: The
+CLI will offer to start these for you automatically!
 
 ```bash
 # Terminal 1: Rule Engine
@@ -68,68 +118,47 @@ source .venv/bin/activate
 uvicorn decision_center.app:app --port 8002
 ```
 
-### 2. Define Your Rules
+### 2. Launch the LLM Rule Wizard
 
-Rules belong to "Groups". Let's create a Transaction Monitoring group and add a
-rule to it.
-
-```bash
-# Create the Group
-curl -X POST http://127.0.0.1:8001/v1/groups \
-  -H "Content-Type: application/json" \
-  -d '{"name": "Transaction Rules", "description": "Limits on purchases"}'
-```
-
-_Take note of the `id` returned in the response._
-
-Now, let's add a dynamic rule. Our engine evaluates expressions dynamically!
+Run the interactive CLI loop. You can pass your API keys securely, or source
+them straight from your environment variables (`OPENAI_API_KEY`,
+`ANTHROPIC_API_KEY`, etc.)
 
 ```bash
-# Add a Rule to the Group
-curl -X POST http://127.0.0.1:8001/v1/groups/<YOUR_GROUP_ID>/rules \
-  -H "Content-Type: application/json" \
-  -d '{
-    "name": "High Value Transaction",
-    "feature": "Limit Purchases",
-    "datapoints": ["amount"],
-    "edge_cases": [],
-    "edge_cases_json": [],
-    "rule_logic": "IF amount > 500 THEN ASK_FOR_APPROVAL",
-    "rule_logic_json": {"if": [{">": [{"var": "amount"}, 500]}, "ASK_FOR_APPROVAL", null]}
-  }'
+python decision_center/cli.py
 ```
 
-### 3. Evaluate a Decision
-
-To see the engine in action, simulate evaluating a request:
-
-```bash
-# Simulating an agent wanting to spend 750 (triggers approval!)
-curl "http://127.0.0.1:8002/v1/decide?request_description=Buying+Laptop&context={\"amount\":750}&group_id=<YOUR_GROUP_ID>"
-```
+1. **Pick a Provider:** Select your preferred reasoning model.
+2. **Create/Update Rules:** Describe what you want exactly how you'd say it:
+   > _"If the transaction originates in California, or if the user owes more
+   > than $100, then ask them for manual approval immediately."_
+3. **Iterative Refinement:** Don't like the generated JSON Logic structure? The
+   wizard lets you type `E` to seamlessly append additional **Edge Cases** on
+   the fly without breaking the main logic branch.
+4. **Auto-Test:** Instantly simulate agent requests and review exactly which
+   expression node triggered the outcome securely within the wizard console.
 
 ---
 
 ## 🤖 Connecting Your AI Agents
 
-Instead of using `curl`, AI agents can interact with Unreal Objects directly
-through the **MCP Server**.
+Instead of using the wizard's auto-tester, your actual autonomous AI agents can
+interact with Unreal Objects natively through the built-in **MCP Server**.
 
 ### Running the MCP Server natively (for LAN/External Agents)
 
-If your AI agent (like OpenClaw) is running on a different machine or docker
+If your AI agent (like OpenClaw) is running on a different machine or Docker
 container in your network, start the MCP Server via SSE (Server-Sent Events)
 bound to your local IP:
 
 ```bash
-# Terminal 3: MCP Server
 source .venv/bin/activate
 python mcp_server/server.py --transport sse --host 0.0.0.0 --port 8000
 ```
 
 ### Exposing the Tools
 
-Once connected, the agent immediately discovers these capabilities:
+Once hooked up, your agent discovers these protected capabilities:
 
 - `list_rule_groups()`: Read available governance groups.
 - `evaluate_action(request_description, context_json, group_id)`: Try to execute
@@ -138,11 +167,4 @@ Once connected, the agent immediately discovers these capabilities:
   human for sign-off.
 - `get_decision_log(log_type, request_id)`: Read the audit trail of decisions.
 
-### Example: Connect OpenClaw / Claude Desktop
-
-Add exactly this to your bot's MCP settings:
-
-- **Transport**: `SSE`
-- **URL**: `http://<YOUR_LAN_IP>:8000/sse`
-
-Your agent is now governed by Unreal Objects! ✨
+Your infrastructure is now fully governed and transparent! ✨
