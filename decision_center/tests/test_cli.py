@@ -3,7 +3,7 @@ from unittest.mock import patch, MagicMock
 
 # We will implement these in decision_center.cli shortly
 try:
-    from decision_center.cli import prompt_start_servers, prompt_group_selection, prompt_rule_creation, prompt_auto_test
+    from decision_center.cli import prompt_start_servers, prompt_group_selection, prompt_llm_setup, prompt_rule_creation, prompt_auto_test
 except ImportError:
     # Dummy implementations so test collection doesn't instantly crash,
     # but the tests will still fail because they aren't fully implemented.
@@ -11,7 +11,9 @@ except ImportError:
         raise NotImplementedError()
     def prompt_group_selection():
         raise NotImplementedError()
-    def prompt_rule_creation(group_id: str):
+    def prompt_llm_setup():
+        raise NotImplementedError()
+    def prompt_rule_creation(group_id: str, llm_config: dict | None = None):
         raise NotImplementedError()
     def prompt_auto_test(group_id: str, rule: dict):
         raise NotImplementedError()
@@ -59,7 +61,7 @@ def test_prompt_rule_creation(mock_post, mock_input):
     mock_resp.json.return_value = {"id": "rule_1", "name": "My Rule"}
     mock_post.return_value = mock_resp
     
-    rule = prompt_rule_creation("group_123")
+    rule = prompt_rule_creation("group_123", llm_config=None)
     assert rule["id"] == "rule_1"
     
     mock_post.assert_called_once()
@@ -93,3 +95,56 @@ def test_prompt_auto_test(mock_get, mock_input):
     assert "750" in url
     assert "user_123" in url
     assert "group_123" in url
+
+@patch("builtins.input", side_effect=["y", "1", "2", "test_key"])
+@patch("decision_center.cli.check_llm_connection", return_value=True)
+def test_prompt_llm_setup_yes(mock_check, mock_input):
+    config = prompt_llm_setup()
+    assert config is not None
+    assert config["provider"] == "openai"
+    assert config["model"] == "gpt-5-mini"
+    assert config["api_key"] == "test_key"
+    mock_check.assert_called_once_with("openai", "gpt-5-mini", "test_key")
+
+@patch("builtins.input", side_effect=["n"])
+def test_prompt_llm_setup_no(mock_input):
+    config = prompt_llm_setup()
+    assert config is None
+
+@patch("builtins.input", side_effect=["My LLM Rule", "Fraud Feature", "if they owe more than 100 then ask them"])
+@patch("decision_center.cli.translate_rule")
+@patch("httpx.Client.post")
+def test_prompt_rule_creation_with_llm(mock_post, mock_translate, mock_input):
+    llm_config = {"provider": "openai", "model": "gpt-5.2", "api_key": "test_key"}
+    
+    # Mock the LLM translator output
+    mock_translate.return_value = {
+        "datapoints": ["amount_owed"],
+        "rule_logic": "IF amount_owed > 100 THEN ASK_FOR_APPROVAL"
+    }
+
+    mock_resp = MagicMock()
+    mock_resp.status_code = 201
+    mock_resp.json.return_value = {"id": "rule_llm_1", "name": "My LLM Rule"}
+    mock_post.return_value = mock_resp
+
+    rule = prompt_rule_creation("group_123", llm_config=llm_config)
+    
+    assert rule["id"] == "rule_llm_1"
+    mock_translate.assert_called_once_with(
+        natural_language="if they owe more than 100 then ask them",
+        feature="Fraud Feature",
+        name="My LLM Rule",
+        provider="openai",
+        model="gpt-5.2",
+        api_key="test_key"
+    )
+    
+    args, kwargs = mock_post.call_args
+    assert kwargs["json"] == {
+        "name": "My LLM Rule",
+        "feature": "Fraud Feature",
+        "datapoints": ["amount_owed"],
+        "edge_cases": [],
+        "rule_logic": "IF amount_owed > 100 THEN ASK_FOR_APPROVAL"
+    }
