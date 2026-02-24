@@ -22,10 +22,17 @@ class EvaluateRequest(BaseModel):
     context: Dict[str, Any]
     group_id: Optional[str] = None
 
+class MatchedRuleInfo(BaseModel):
+    rule_id: str
+    rule_name: str
+    hit_type: str
+    trigger_expression: str
+
 class DecisionResult(BaseModel):
     request_id: str
     outcome: DecisionOutcome
     matched_rules: List[str]
+    matched_details: List[MatchedRuleInfo] = Field(default_factory=list)
     timestamp: datetime = Field(default_factory=datetime.now)
 
 class ApprovalSubmission(BaseModel):

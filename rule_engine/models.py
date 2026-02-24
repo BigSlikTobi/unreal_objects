@@ -11,7 +11,9 @@ class BusinessRule(BaseModel):
     feature: str
     datapoints: list[str]
     edge_cases: list[str]
+    edge_cases_json: list[dict] = Field(default_factory=list)
     rule_logic: str
+    rule_logic_json: dict = Field(default_factory=dict)
     created_at: datetime = Field(default_factory=datetime.now)
 
 class BusinessRuleGroup(BaseModel):
@@ -25,7 +27,9 @@ class CreateRule(BaseModel):
     feature: str
     datapoints: list[str]
     edge_cases: list[str]
+    edge_cases_json: list[dict] = Field(default_factory=list)
     rule_logic: str
+    rule_logic_json: dict = Field(default_factory=dict)
 
 class CreateRuleGroup(BaseModel):
     name: str

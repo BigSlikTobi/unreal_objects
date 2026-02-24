@@ -85,3 +85,100 @@ async def test_approval_flow_and_logs(mock_rule_engine):
         assert chain["events"][0]["event_type"] == "REQUEST"
         assert chain["events"][-1]["event_type"] == "APPROVAL_STATUS"
         assert chain["events"][-1]["details"]["status"] == "APPROVED"
+
+@pytest.mark.asyncio
+async def test_evaluate_with_edge_cases(mock_rule_engine):
+    mock_response = MagicMock()
+    mock_response.status_code = 200
+    mock_response.json.return_value = {
+        "id": "g1",
+        "name": "Grp",
+        "rules": [
+            {
+                "id": "r1",
+                "rule_logic": "IF amount > 100 THEN ASK_FOR_APPROVAL",
+                "edge_cases": ["IF currency == GBP THEN REJECT"]
+            }
+        ]
+    }
+    mock_rule_engine.return_value = mock_response
+
+    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
+        # 1. Triggers edge case
+        context_str = '{"amount": 150, "currency": "GBP"}'
+        resp = await client.get(f"/v1/decide?request_description=Test&context={context_str}&group_id=g1")
+        assert resp.status_code == 200
+        assert resp.json()["outcome"] == "REJECT"
+
+        # 2. Passes edge case, triggers rule logic
+        context_str = '{"amount": 150, "currency": "EUR"}'
+        resp = await client.get(f"/v1/decide?request_description=Test&context={context_str}&group_id=g1")
+        assert resp.status_code == 200
+        assert resp.json()["outcome"] == "ASK_FOR_APPROVAL"
+
+@pytest.mark.asyncio
+async def test_evaluate_user_report(mock_rule_engine):
+    mock_response = MagicMock()
+    mock_response.status_code = 200
+    mock_response.json.return_value = {
+        "id": "g1",
+        "name": "Grp",
+        "rules": [
+            {
+                "id": "r1",
+                "rule_logic": "IF contract_partner_name = 'Amazon' THEN ASK_FOR_APPROVAL",
+                "edge_cases": []
+            }
+        ]
+    }
+    mock_rule_engine.return_value = mock_response
+
+    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
+        # EXACT PAYLOAD LOGGED BY THE USER:
+        # /v1/decide?request_description=Purchase%20of%20100%20paper%20clips%20at%20Amazon&context=%7B%22contract_partner_name%22%3A%20%22Amazon%22%7D&group_id=db0d2fd1-d716-4007-b2fe-389887ba565b
+        import urllib.parse
+        context_str = urllib.parse.quote('{"contract_partner_name": "Amazon"}')
+        request_desc = urllib.parse.quote("Purchase of 100 paper clips at Amazon")
+        group_id = "db0d2fd1-d716-4007-b2fe-389887ba565b"
+        
+        resp = await client.get(f"/v1/decide?request_description={request_desc}&context={context_str}&group_id={group_id}")
+        assert resp.status_code == 200
+        assert resp.json()["outcome"] == "ASK_FOR_APPROVAL"
+
+@pytest.mark.asyncio
+async def test_evaluate_with_json_logic(mock_rule_engine):
+    mock_response = MagicMock()
+    mock_response.status_code = 200
+    mock_response.json.return_value = {
+        "id": "g1",
+        "name": "Grp",
+        "rules": [
+            {
+                "id": "r1",
+                "rule_logic": "IF amount > 500 THEN ASK_FOR_APPROVAL",
+                "rule_logic_json": {"if": [{">": [{"var": "amount"}, 500]}, "ASK_FOR_APPROVAL", None]},
+                "edge_cases": ["IF currency != USD THEN REJECT"],
+                "edge_cases_json": [{"if": [{"!=": [{"var": "currency"}, "USD"]}, "REJECT", None]}]
+            }
+        ]
+    }
+    mock_rule_engine.return_value = mock_response
+
+    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
+        # 1. Triggers edge case
+        context_str = '{"amount": 600, "currency": "EUR"}'
+        resp = await client.get(f"/v1/decide?request_description=Test&context={context_str}&group_id=g1")
+        assert resp.status_code == 200
+        assert resp.json()["outcome"] == "REJECT"
+
+        # 2. Passes edge case, triggers rule logic
+        context_str = '{"amount": 600, "currency": "USD"}'
+        resp = await client.get(f"/v1/decide?request_description=Test&context={context_str}&group_id=g1")
+        assert resp.status_code == 200
+        assert resp.json()["outcome"] == "ASK_FOR_APPROVAL"
+
+        # 3. Passes edge case, does NOT trigger rule logic -> defaults to APPROVE
+        context_str = '{"amount": 400, "currency": "USD"}'
+        resp = await client.get(f"/v1/decide?request_description=Test&context={context_str}&group_id=g1")
+        assert resp.status_code == 200
+        assert resp.json()["outcome"] == "APPROVE"
