@@ -32,6 +32,10 @@ def basic_evaluate_rule(rule_logic: str, context: Dict[str, Any]) -> str | None:
     if operator == "=":
         operator = "=="
 
+    if value is None:
+        # Fail closed if field is missing but rule expects it
+        return "ASK_FOR_APPROVAL"
+
     def safe_compare(op, a, b):
         try:
             if op == ">": return a > b
@@ -41,17 +45,26 @@ def basic_evaluate_rule(rule_logic: str, context: Dict[str, Any]) -> str | None:
             if op == "==":
                 if isinstance(a, str) and isinstance(b, str):
                     return a.lower() == b.lower()
+                if type(a) != type(b) and not (isinstance(a, (int, float)) and isinstance(b, (int, float))):
+                    raise ValueError("Type mismatch in ==")
                 return a == b
             if op == "!=":
                 if isinstance(a, str) and isinstance(b, str):
                     return a.lower() != b.lower()
+                if type(a) != type(b) and not (isinstance(a, (int, float)) and isinstance(b, (int, float))):
+                    raise ValueError("Type mismatch in !=")
                 return a != b
         except TypeError:
-            return False
+            raise ValueError("Type mismatch")
         return False
     
-    if safe_compare(operator, value, threshold_val):
-        return outcome.upper()
+    try:
+        if safe_compare(operator, value, threshold_val):
+            return outcome.upper()
+    except ValueError:
+        # Fail closed if type mismatch occurs
+        return "ASK_FOR_APPROVAL"
+        
     return None
 
 import httpx
