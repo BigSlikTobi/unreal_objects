@@ -58,7 +58,12 @@ def test_prompt_group_selection_create(mock_get, mock_post, mock_input):
 def test_prompt_rule_creation(mock_post, mock_input):
     mock_resp = MagicMock()
     mock_resp.status_code = 201
-    mock_resp.json.return_value = {"id": "rule_1", "name": "My Rule"}
+    mock_resp.json.return_value = {
+        "id": "rule_1", 
+        "name": "My Rule", 
+        "rule_logic": "IF amount > 500 THEN REJECT", 
+        "edge_cases": []
+    }
     mock_post.return_value = mock_resp
     
     rule = prompt_rule_creation("group_123", llm_config=None)
@@ -127,7 +132,12 @@ def test_prompt_rule_creation_with_llm(mock_post, mock_translate, mock_input):
 
     mock_resp = MagicMock()
     mock_resp.status_code = 201
-    mock_resp.json.return_value = {"id": "rule_llm_1", "name": "My LLM Rule"}
+    mock_resp.json.return_value = {
+        "id": "rule_llm_1", 
+        "name": "My LLM Rule",
+        "rule_logic": "IF amount_owed > 100 THEN ASK_FOR_APPROVAL",
+        "edge_cases": ["IF currency <> eur THEN REJECT"]
+    }
     mock_post.return_value = mock_resp
 
     rule = prompt_rule_creation("group_123", llm_config=llm_config)

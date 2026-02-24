@@ -153,7 +153,10 @@ def prompt_rule_creation(group_id: str, llm_config: dict | None = None) -> dict:
         resp = client.post(f"http://127.0.0.1:8001/v1/groups/{group_id}/rules", json=payload)
         resp.raise_for_status()
         rule = resp.json()
-        print(f"Created rule '{rule['name']}' with ID: {rule['id']}")
+        print(f"\n✅ Created rule '{rule['name']}' with ID: {rule['id']}")
+        if rule.get("edge_cases"):
+            print(f"      Edge Cases: {', '.join(rule['edge_cases'])}")
+        print(f"      Rule Logic: {rule.get('rule_logic', '')}")
         return rule
 
 def prompt_auto_test(group_id: str, rule: dict):
