@@ -32,9 +32,14 @@ def basic_evaluate_rule(rule_logic: str, context: Dict[str, Any]) -> str | None:
     if operator == "=":
         operator = "=="
 
+    # Fail-closed: determine the safest fallback based on rule severity.
+    # REJECT rules stay REJECT; others escalate to ASK_FOR_APPROVAL.
+    _RESTRICTIVE = {"REJECT", "ASK_FOR_APPROVAL"}
+    fail_closed_outcome = outcome.upper() if outcome.upper() in _RESTRICTIVE else "ASK_FOR_APPROVAL"
+
     if value is None:
-        # Fail closed if field is missing but rule expects it
-        return "ASK_FOR_APPROVAL"
+        # Field missing from context — cannot evaluate, fail closed
+        return fail_closed_outcome
 
     def safe_compare(op, a, b):
         try:
@@ -62,8 +67,8 @@ def basic_evaluate_rule(rule_logic: str, context: Dict[str, Any]) -> str | None:
         if safe_compare(operator, value, threshold_val):
             return outcome.upper()
     except ValueError:
-        # Fail closed if type mismatch occurs
-        return "ASK_FOR_APPROVAL"
+        # Type mismatch — cannot evaluate, fail closed
+        return fail_closed_outcome
         
     return None
 

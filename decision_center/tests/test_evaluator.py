@@ -32,16 +32,16 @@ def test_basic_evaluate_rule_user_report():
     assert basic_evaluate_rule("IF contract_partner_name == 'Amazon' THEN ASK_FOR_APPROVAL", context) == "ASK_FOR_APPROVAL"
 
 def test_basic_evaluate_rule_fail_closed_missing_data():
-    # If a rule defines a field that is completely missing from the context,
-    # the engine should fail closed (ASK_FOR_APPROVAL) to prevent bypassing rules by omitting data.
-    assert basic_evaluate_rule("IF order_total_cost = 0 THEN REJECT", {}) == "ASK_FOR_APPROVAL"
+    # A REJECT rule with missing data should fail closed to REJECT (preserves severity)
+    assert basic_evaluate_rule("IF order_total_cost = 0 THEN REJECT", {}) == "REJECT"
+    # An APPROVE rule with missing data should escalate to ASK_FOR_APPROVAL
+    assert basic_evaluate_rule("IF status == ACTIVE THEN APPROVE", {}) == "ASK_FOR_APPROVAL"
 
 def test_basic_evaluate_rule_fail_closed_type_mismatch():
-    # If the user provides a string instead of a number for a numeric comparison,
-    # it should fail closed (ASK_FOR_APPROVAL) to prevent bypassing the rule.
+    # REJECT rule: string provided for numeric comparison → fail closed to REJECT
     context = {"order_total_cost": "costs "}
-    assert basic_evaluate_rule("IF order_total_cost = 0 THEN REJECT", context) == "ASK_FOR_APPROVAL"
+    assert basic_evaluate_rule("IF order_total_cost = 0 THEN REJECT", context) == "REJECT"
     
-    # Similarly, providing an int instead of a string to a string comparison should fail closed.
+    # APPROVE rule: int provided for string comparison → fail closed to ASK_FOR_APPROVAL
     context2 = {"status": 200}
     assert basic_evaluate_rule("IF status == ACTIVE THEN APPROVE", context2) == "ASK_FOR_APPROVAL"
