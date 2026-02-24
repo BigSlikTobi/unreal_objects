@@ -8,30 +8,49 @@ def basic_evaluate_rule(rule_logic: str, context: Dict[str, Any]) -> str | None:
     Evaluates simple rule expressions like:
       "IF amount > 500 THEN ASK_FOR_APPROVAL"
       "IF amount < 200 THEN APPROVE"
-    Supports operators: >, <, >=, <=, ==, !=
+      "IF status == ACTIVE THEN APPROVE"
+      "IF contract_partner = 'Amazon' THEN ASK_FOR_APPROVAL"
+    Supports operators: >, <, >=, <=, ==, !=, =
     """
-    pattern = r"IF\s+(\w+)\s*(>=|<=|!=|>|<|==)\s*(\d+(?:\.\d+)?)\s+THEN\s+(\w+)"
+    pattern = r"IF\s+(\w+)\s*(>=|<=|!=|>|<|==|=)\s*(.+?)\s+THEN\s+(\w+)"
     match = re.match(pattern, rule_logic.strip(), re.IGNORECASE)
     if not match:
         return None
     
     field, operator, threshold_str, outcome = match.groups()
-    threshold = float(threshold_str)
     value = context.get(field.lower())
     
-    if not isinstance(value, (int, float)):
-        return None
+    # Clean threshold string of quotes if present
+    if threshold_str.startswith(("'", '"')) and threshold_str.endswith(("'", '"')):
+        threshold_val = threshold_str[1:-1]
+    else:
+        try:
+            threshold_val = float(threshold_str)
+        except ValueError:
+            threshold_val = threshold_str
+
+    if operator == "=":
+        operator = "=="
+
+    def safe_compare(op, a, b):
+        try:
+            if op == ">": return a > b
+            if op == "<": return a < b
+            if op == ">=": return a >= b
+            if op == "<=": return a <= b
+            if op == "==":
+                if isinstance(a, str) and isinstance(b, str):
+                    return a.lower() == b.lower()
+                return a == b
+            if op == "!=":
+                if isinstance(a, str) and isinstance(b, str):
+                    return a.lower() != b.lower()
+                return a != b
+        except TypeError:
+            return False
+        return False
     
-    ops = {
-        ">": value > threshold,
-        "<": value < threshold,
-        ">=": value >= threshold,
-        "<=": value <= threshold,
-        "==": value == threshold,
-        "!=": value != threshold,
-    }
-    
-    if ops.get(operator, False):
+    if safe_compare(operator, value, threshold_val):
         return outcome.upper()
     return None
 

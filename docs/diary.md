@@ -56,3 +56,6 @@
   Anthropic's Tools, and Gemini's config schemas) into a single functional unit
   `translate_rule` keeps the CLI logic clean.
 - Smoke-testing user-provided keys significantly improves CLI UX.
+- The `basic_evaluate_rule` in the Decision Center needs to handle strings and
+  LLM-style aliases (e.g., `=` mapped to `==`) as gracefully as strict numeric
+  comparisons to be robust.
