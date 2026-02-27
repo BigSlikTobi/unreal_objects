@@ -9,7 +9,7 @@ class RuleLogicDefinition(BaseModel):
     edge_cases: list[str] = Field(default_factory=list, description="A list of edge cases in the format: IF <condition> THEN <outcome>. E.g.: IF currency <> eur THEN REJECT")
     edge_cases_json: list[dict] = Field(default_factory=list, description="The JSON Logic formats for edge cases. Should evaluate to an outcome string or null. E.g. {'if': [{'!=': [{'var':'currency'}, 'eur']}, 'REJECT', null]}")
     rule_logic: str = Field(..., description="The main logic represented in the format: IF <condition> THEN <outcome>. E.g.: IF billing_amount > 100 THEN ASK_FOR_APPROVAL")
-    rule_logic_json: dict = Field(..., description="The main logic parsed into standard JSON Logic format. E.g.: {'if': [{'>': [{'var': 'billing_amount'}, 100]}, 'ASK_FOR_APPROVAL', 'APPROVE']}")
+    rule_logic_json: dict = Field(..., description="The main logic parsed into standard JSON Logic format. E.g.: {'if': [{'>': [{'var': 'billing_amount'}, 100]}, 'ASK_FOR_APPROVAL', null]}")
 
 SYS_PROMPT = """You are an expert business logic rule translator for the 'Decision Center'.
 Your job is to translate a given natural language prompt detailing a business rule into strictly structured data containing datapoints, edge cases, and the logical formula.
@@ -20,8 +20,12 @@ Human Readable format: `IF <conditions> THEN <outcome>`
 JSON Logic format: Must strictly follow jsonlogic.com specs and evaluate to an outcome string ("APPROVE", "REJECT", "ASK_FOR_APPROVAL") or null.
 Note: For equality checking in JSON Logic use `"=="` instead of `"="`.
 
+CRITICAL VARIABLE INSTRUCTION:
+You MUST use the exact variable names that are explicitly mentioned in the natural language rule. For example, if the rule says "transaction_amount > 500", your JSON Logic must use `{"var": "transaction_amount"}`. DO NOT invent, normalize, or alter the variable names unless strictly necessary. If a variable is written in snake_case in the text, extract it verbatim.
+
 Example Main Logic JSON:
-{"if": [{">": [{"var": "amount"}, 500]}, "ASK_FOR_APPROVAL", "APPROVE"]}
+{"if": [{">": [{"var": "amount"}, 500]}, "ASK_FOR_APPROVAL", null]}
+The else branch MUST always be null (never an outcome string). Only the matching branch returns an outcome.
 
 Example Edge Case JSON (must return null if unaffected so evaluation can continue): 
 {"if": [{"!=": [{"var": "currency"}, "eur"]}, "REJECT", null]}
@@ -54,15 +58,19 @@ def check_llm_connection(provider: str, model: str, api_key: str) -> bool:
         print(f"\n[!] Error connecting to {provider}: {e}")
         return False
 
-def translate_rule(natural_language: str, feature: str, name: str, provider: str, model: str, api_key: str) -> dict:
+def translate_rule(natural_language: str, feature: str, name: str, provider: str, model: str, api_key: str, context_schema: dict | None = None) -> dict:
     """Calls the specified LLM to translate natural language into structured logic."""
     prompt = f"Rule Name: {name}\nFeature: {feature}\nNatural Language Rule: {natural_language}"
+    
+    active_sys_prompt = SYS_PROMPT
+    if context_schema:
+        active_sys_prompt += f"\n\nCRITICAL SCHEMA ENFORCEMENT:\nYou MUST strictly use the variable names provided in the following JSON schema. Do not invent any names not present in this dictionary.\nSchema:\n{json.dumps(context_schema)}"
 
     # Handle OpenAI
     if provider == "openai":
         client = openai.OpenAI(api_key=api_key)
         schema_json = RuleLogicDefinition.model_json_schema()
-        system_content = f"{SYS_PROMPT}\n\nStrictly format your response to match this JSON schema:\n{json.dumps(schema_json)}"
+        system_content = f"{active_sys_prompt}\n\nStrictly format your response to match this JSON schema:\n{json.dumps(schema_json)}"
         
         response = client.chat.completions.create(
             model=model,
@@ -73,7 +81,6 @@ def translate_rule(natural_language: str, feature: str, name: str, provider: str
             response_format={"type": "json_object"},
         )
         parsed = json.loads(response.choices[0].message.content)
-        return RuleLogicDefinition(**parsed).model_dump()
 
     # Handle Anthropic
     elif provider == "anthropic":
@@ -83,7 +90,7 @@ def translate_rule(natural_language: str, feature: str, name: str, provider: str
         response = client.messages.create(
             model=model,
             max_tokens=1024,
-            system=SYS_PROMPT,
+            system=active_sys_prompt,
             messages=[{"role": "user", "content": prompt}],
             tools=[{
                 "name": "submit_rule",
@@ -92,23 +99,40 @@ def translate_rule(natural_language: str, feature: str, name: str, provider: str
             }],
             tool_choice={"type": "tool", "name": "submit_rule"}
         )
+        parsed = None
         for block in response.content:
             if block.type == "tool_use" and block.name == "submit_rule":
-                return block.input
-        raise ValueError("Anthropic did not return the expected tool use data.")
+                parsed = block.input
+                break
+        if parsed is None:
+            raise ValueError("Anthropic did not return the expected tool use data.")
 
     # Handle Gemini
     elif provider == "gemini":
         client = genai.Client(api_key=api_key)
         response = client.models.generate_content(
             model=model,
-            contents=f"{SYS_PROMPT}\n\nTask:\n{prompt}",
+            contents=f"{active_sys_prompt}\n\nTask:\n{prompt}",
             config=genai.types.GenerateContentConfig(
                 response_mime_type="application/json",
                 response_schema=RuleLogicDefinition,
             )
         )
-        return json.loads(response.text)
+        parsed = json.loads(response.text)
 
     else:
         raise ValueError(f"Unknown provider: {provider}")
+
+    # Filter out null checking edge cases generated by strict LLMs
+    filtered_ec_str = []
+    filtered_ec_json = []
+    for i, ec_str in enumerate(parsed.get("edge_cases", [])):
+        if "null" not in ec_str.lower() and "invalid" not in ec_str.lower():
+            filtered_ec_str.append(ec_str)
+            if i < len(parsed.get("edge_cases_json", [])):
+                filtered_ec_json.append(parsed.get("edge_cases_json")[i])
+    
+    parsed["edge_cases"] = filtered_ec_str
+    parsed["edge_cases_json"] = filtered_ec_json
+
+    return RuleLogicDefinition(**parsed).model_dump()

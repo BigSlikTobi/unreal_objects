@@ -1,0 +1,5030 @@
+[
+  {
+    "natural_language_rule": "If the transaction_amount is greater than 100 then ASK_FOR_APPROVAL.",
+    "context_data": {
+      "transaction_amount": 150
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "Reject the transaction if the transaction_amount is greater than 1000 and the user_risk_score is greater than 80.",
+    "context_data": {
+      "transaction_amount": 2500,
+      "user_risk_score": 85
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "If the merchant_category is 'electronics' and the user_risk_score is greater than 50 then REJECT.",
+    "context_data": {
+      "merchant_category": "electronics",
+      "user_risk_score": 60
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "If the shipping_address_matches_billing is false and the transaction_amount is greater than 500 then ASK_FOR_APPROVAL.",
+    "context_data": {
+      "shipping_address_matches_billing": false,
+      "transaction_amount": 600
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "If the item_count is greater than 10 and the coupon_applied is true then ASK_FOR_APPROVAL.",
+    "context_data": {
+      "item_count": 12,
+      "coupon_applied": true
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "If the payment_method is 'crypto' and the transaction_amount is greater than 200 then ASK_FOR_APPROVAL.",
+    "context_data": {
+      "payment_method": "crypto",
+      "transaction_amount": 300
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "If the is_first_time_buyer is true and the account_age_days is less than 30 and the transaction_amount is greater than 250 then ASK_FOR_APPROVAL.",
+    "context_data": {
+      "is_first_time_buyer": true,
+      "account_age_days": 10,
+      "transaction_amount": 300
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "If the user_country is 'CN' and the transaction_amount is greater than 300 then REJECT.",
+    "context_data": {
+      "user_country": "CN",
+      "transaction_amount": 500
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "If the shipping_speed is 'overnight' and the transaction_amount is greater than 1000 then ASK_FOR_APPROVAL.",
+    "context_data": {
+      "shipping_speed": "overnight",
+      "transaction_amount": 1500
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "If the coupon_applied is true and the transaction_amount is equal to 0 then REJECT.",
+    "context_data": {
+      "coupon_applied": true,
+      "transaction_amount": 0
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "If the payment_method is 'paypal' and the shipping_address_matches_billing is false then ASK_FOR_APPROVAL.",
+    "context_data": {
+      "payment_method": "paypal",
+      "shipping_address_matches_billing": false
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "If the user_risk_score is less than 20 and the transaction_amount is less than 50 then APPROVE.",
+    "context_data": {
+      "user_risk_score": 10,
+      "transaction_amount": 20
+    },
+    "expected_outcome": "APPROVE"
+  },
+  {
+    "natural_language_rule": "If the merchant_category is 'gift_card' and the transaction_amount is greater than 200 then REJECT.",
+    "context_data": {
+      "merchant_category": "gift_card",
+      "transaction_amount": 300
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "If the account_age_days is less than 1 and the is_first_time_buyer is true and the transaction_amount is greater than 100 then ASK_FOR_APPROVAL.",
+    "context_data": {
+      "account_age_days": 0,
+      "is_first_time_buyer": true,
+      "transaction_amount": 150
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "If the item_count is equal to 1 and the merchant_category is 'electronics' and the transaction_amount is greater than 1500 then ASK_FOR_APPROVAL.",
+    "context_data": {
+      "item_count": 1,
+      "merchant_category": "electronics",
+      "transaction_amount": 2000
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "If the user_country is 'US' and the payment_method is 'credit_card' and the user_risk_score is less than 50 then APPROVE.",
+    "context_data": {
+      "user_country": "US",
+      "payment_method": "credit_card",
+      "user_risk_score": 30
+    },
+    "expected_outcome": "APPROVE"
+  },
+  {
+    "natural_language_rule": "If the shipping_address_matches_billing is false and the user_country is not 'US' and the transaction_amount is greater than 100 then ASK_FOR_APPROVAL.",
+    "context_data": {
+      "shipping_address_matches_billing": false,
+      "user_country": "DE",
+      "transaction_amount": 150
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "If the account_age_days is greater than 365 and the user_risk_score is less than 30 and the transaction_amount is less than 500 then APPROVE.",
+    "context_data": {
+      "account_age_days": 400,
+      "user_risk_score": 20,
+      "transaction_amount": 200
+    },
+    "expected_outcome": "APPROVE"
+  },
+  {
+    "natural_language_rule": "If the merchant_category is 'apparel' and the item_count is greater than 20 then ASK_FOR_APPROVAL.",
+    "context_data": {
+      "merchant_category": "apparel",
+      "item_count": 25
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "If the payment_method is 'credit_card' and the transaction_amount is greater than 5000 then REJECT.",
+    "context_data": {
+      "payment_method": "credit_card",
+      "transaction_amount": 6000
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "If the user_risk_score is greater than or equal to 90 then REJECT.",
+    "context_data": {
+      "user_risk_score": 95
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "If the user_risk_score is between 70 and 89 inclusive and the transaction_amount is greater than 1000 then ASK_FOR_APPROVAL.",
+    "context_data": {
+      "user_risk_score": 80,
+      "transaction_amount": 1500
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "If the shipping_speed is 'standard' and the transaction_amount is less than 20 then APPROVE.",
+    "context_data": {
+      "shipping_speed": "standard",
+      "transaction_amount": 10
+    },
+    "expected_outcome": "APPROVE"
+  },
+  {
+    "natural_language_rule": "If the coupon_applied is true and the item_count is equal to 0 then REJECT.",
+    "context_data": {
+      "coupon_applied": true,
+      "item_count": 0
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "If the transaction_amount is exactly 100 and the user_risk_score is greater than 60 then ASK_FOR_APPROVAL.",
+    "context_data": {
+      "transaction_amount": 100,
+      "user_risk_score": 65
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "If the merchant_category is 'electronics' and the payment_method is 'paypal' and the shipping_address_matches_billing is false then ASK_FOR_APPROVAL.",
+    "context_data": {
+      "merchant_category": "electronics",
+      "payment_method": "paypal",
+      "shipping_address_matches_billing": false
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "If the is_first_time_buyer is true and the user_country is 'US' and the transaction_amount is less than 20 then APPROVE.",
+    "context_data": {
+      "is_first_time_buyer": true,
+      "user_country": "US",
+      "transaction_amount": 10
+    },
+    "expected_outcome": "APPROVE"
+  },
+  {
+    "natural_language_rule": "If the account_age_days is greater than 30 and the is_first_time_buyer is false and the transaction_amount is less than 100 then APPROVE.",
+    "context_data": {
+      "account_age_days": 100,
+      "is_first_time_buyer": false,
+      "transaction_amount": 50
+    },
+    "expected_outcome": "APPROVE"
+  },
+  {
+    "natural_language_rule": "If the user_country is 'GB' and the merchant_category is 'gift_card' then REJECT.",
+    "context_data": {
+      "user_country": "GB",
+      "merchant_category": "gift_card"
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "If the shipping_speed is 'overnight' and the item_count is greater than 5 then ASK_FOR_APPROVAL.",
+    "context_data": {
+      "shipping_speed": "overnight",
+      "item_count": 6
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "If the transaction_amount is less than 0 (negative or refund) then APPROVE.",
+    "context_data": {
+      "transaction_amount": -50
+    },
+    "expected_outcome": "APPROVE"
+  },
+  {
+    "natural_language_rule": "If the payment_method is 'crypto' and the user_country is 'US' then ASK_FOR_APPROVAL.",
+    "context_data": {
+      "payment_method": "crypto",
+      "user_country": "US"
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "If the item_count is equal to 1000 then REJECT.",
+    "context_data": {
+      "item_count": 1000
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "If the account_age_days is exactly 365 and the user_risk_score is exactly 30 and the transaction_amount is exactly 365 then APPROVE.",
+    "context_data": {
+      "account_age_days": 365,
+      "user_risk_score": 30,
+      "transaction_amount": 365
+    },
+    "expected_outcome": "APPROVE"
+  },
+  {
+    "natural_language_rule": "If the shipping_address_matches_billing is true and the user_risk_score is greater than 90 then ASK_FOR_APPROVAL.",
+    "context_data": {
+      "shipping_address_matches_billing": true,
+      "user_risk_score": 92
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "If the coupon_applied is false and the merchant_category is 'electronics' and the transaction_amount is greater than 2000 then REJECT.",
+    "context_data": {
+      "coupon_applied": false,
+      "merchant_category": "electronics",
+      "transaction_amount": 2500
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "If the payment_method is 'credit_card' and the item_count is greater than 50 then REJECT.",
+    "context_data": {
+      "payment_method": "credit_card",
+      "item_count": 60
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "If the user_risk_score is exactly 50 and the transaction_amount is greater than 500 then ASK_FOR_APPROVAL.",
+    "context_data": {
+      "user_risk_score": 50,
+      "transaction_amount": 600
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "If the merchant_category is 'apparel' and the coupon_applied is true and the transaction_amount is greater than 500 then ASK_FOR_APPROVAL.",
+    "context_data": {
+      "merchant_category": "apparel",
+      "coupon_applied": true,
+      "transaction_amount": 600
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "If the is_first_time_buyer is true and the payment_method is 'credit_card' and the user_risk_score is less than 25 then APPROVE.",
+    "context_data": {
+      "is_first_time_buyer": true,
+      "payment_method": "credit_card",
+      "user_risk_score": 20
+    },
+    "expected_outcome": "APPROVE"
+  },
+  {
+    "natural_language_rule": "If the user_country is 'US' and the shipping_address_matches_billing is false and the transaction_amount is greater than 2000 then REJECT.",
+    "context_data": {
+      "user_country": "US",
+      "shipping_address_matches_billing": false,
+      "transaction_amount": 3000
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "If the shipping_speed is 'overnight' and the user_risk_score is greater than 75 then REJECT.",
+    "context_data": {
+      "shipping_speed": "overnight",
+      "user_risk_score": 80
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "If the account_age_days is less than 7 and the transaction_amount is greater than 300 and the payment_method is 'paypal' then ASK_FOR_APPROVAL.",
+    "context_data": {
+      "account_age_days": 3,
+      "transaction_amount": 400,
+      "payment_method": "paypal"
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "If the merchant_category is 'electronics' and the item_count is equal to 0 then REJECT.",
+    "context_data": {
+      "merchant_category": "electronics",
+      "item_count": 0
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "If the coupon_applied is true and the transaction_amount is greater than 1000 and the user_risk_score is greater than 40 then ASK_FOR_APPROVAL.",
+    "context_data": {
+      "coupon_applied": true,
+      "transaction_amount": 1500,
+      "user_risk_score": 50
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "If the user_country is 'CA' and the payment_method is 'credit_card' and the account_age_days is less than 90 then ASK_FOR_APPROVAL.",
+    "context_data": {
+      "user_country": "CA",
+      "payment_method": "credit_card",
+      "account_age_days": 30
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "If the transaction_amount is greater than 9999 then REJECT.",
+    "context_data": {
+      "transaction_amount": 15000
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "If the shipping_address_matches_billing is false and the merchant_category is 'gift_card' then REJECT.",
+    "context_data": {
+      "shipping_address_matches_billing": false,
+      "merchant_category": "gift_card"
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "If the is_first_time_buyer is true and the item_count is greater than 3 and the transaction_amount is greater than 300 then ASK_FOR_APPROVAL.",
+    "context_data": {
+      "is_first_time_buyer": true,
+      "item_count": 4,
+      "transaction_amount": 400
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "If the user_risk_score is less than 40 and the account_age_days is greater than 180 and the transaction_amount is less than 1000 and the shipping_address_matches_billing is true then APPROVE.",
+    "context_data": {
+      "user_risk_score": 25,
+      "account_age_days": 365,
+      "transaction_amount": 500,
+      "shipping_address_matches_billing": true
+    },
+    "expected_outcome": "APPROVE"
+  },
+  {
+    "natural_language_rule": "If the transaction_amount is greater than 100 -> ASK_FOR_APPROVAL.",
+    "context_data": {
+      "transaction_amount": 150,
+      "currency": "USD",
+      "user_risk_score": 20,
+      "account_age_days": 400,
+      "merchant_category": "apparel",
+      "shipping_address_matches_billing": true,
+      "item_count": 2,
+      "coupon_applied": false,
+      "payment_method": "credit_card",
+      "user_country": "US",
+      "shipping_speed": "standard",
+      "is_first_time_buyer": false
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "Reject the transaction if the transaction_amount is greater than 5000 and the user_risk_score is greater than 80.",
+    "context_data": {
+      "transaction_amount": 7000,
+      "currency": "EUR",
+      "user_risk_score": 85,
+      "account_age_days": 1200,
+      "merchant_category": "electronics",
+      "shipping_address_matches_billing": true,
+      "item_count": 1,
+      "coupon_applied": false,
+      "payment_method": "credit_card",
+      "user_country": "DE",
+      "shipping_speed": "overnight",
+      "is_first_time_buyer": false
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "Approve if the transaction_amount is less than or equal to 50 and the user_risk_score is less than 20.",
+    "context_data": {
+      "transaction_amount": 50,
+      "currency": "USD",
+      "user_risk_score": 10,
+      "account_age_days": 30,
+      "merchant_category": "apparel",
+      "shipping_address_matches_billing": true,
+      "item_count": 1,
+      "coupon_applied": true,
+      "payment_method": "paypal",
+      "user_country": "US",
+      "shipping_speed": "standard",
+      "is_first_time_buyer": false
+    },
+    "expected_outcome": "APPROVE"
+  },
+  {
+    "natural_language_rule": "If the merchant_category is gift_card and the transaction_amount is greater than 200 -> ASK_FOR_APPROVAL.",
+    "context_data": {
+      "transaction_amount": 250,
+      "currency": "USD",
+      "user_risk_score": 30,
+      "account_age_days": 90,
+      "merchant_category": "gift_card",
+      "shipping_address_matches_billing": true,
+      "item_count": 3,
+      "coupon_applied": false,
+      "payment_method": "credit_card",
+      "user_country": "US",
+      "shipping_speed": "standard",
+      "is_first_time_buyer": false
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "Reject if the payment_method is crypto and the user_risk_score is above 40.",
+    "context_data": {
+      "transaction_amount": 150,
+      "currency": "USD",
+      "user_risk_score": 45,
+      "account_age_days": 60,
+      "merchant_category": "electronics",
+      "shipping_address_matches_billing": false,
+      "item_count": 1,
+      "coupon_applied": false,
+      "payment_method": "crypto",
+      "user_country": "US",
+      "shipping_speed": "standard",
+      "is_first_time_buyer": true
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "If the shipping_address_matches_billing is false and the user_risk_score is greater than 60 -> REJECT.",
+    "context_data": {
+      "transaction_amount": 300,
+      "currency": "GBP",
+      "user_risk_score": 70,
+      "account_age_days": 20,
+      "merchant_category": "apparel",
+      "shipping_address_matches_billing": false,
+      "item_count": 2,
+      "coupon_applied": true,
+      "payment_method": "credit_card",
+      "user_country": "GB",
+      "shipping_speed": "standard",
+      "is_first_time_buyer": true
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "Ask for approval if the account_age_days is less than 7 and the transaction_amount is greater than 100.",
+    "context_data": {
+      "transaction_amount": 250,
+      "currency": "USD",
+      "user_risk_score": 25,
+      "account_age_days": 3,
+      "merchant_category": "electronics",
+      "shipping_address_matches_billing": true,
+      "item_count": 1,
+      "coupon_applied": false,
+      "payment_method": "paypal",
+      "user_country": "US",
+      "shipping_speed": "overnight",
+      "is_first_time_buyer": true
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "Reject if the transaction_amount is greater than 1000 and the shipping_speed is overnight and the user_risk_score is greater than 50.",
+    "context_data": {
+      "transaction_amount": 1500,
+      "currency": "USD",
+      "user_risk_score": 55,
+      "account_age_days": 365,
+      "merchant_category": "electronics",
+      "shipping_address_matches_billing": true,
+      "item_count": 2,
+      "coupon_applied": false,
+      "payment_method": "credit_card",
+      "user_country": "US",
+      "shipping_speed": "overnight",
+      "is_first_time_buyer": false
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "If the merchant_category is electronics and the item_count is greater than 5 -> ASK_FOR_APPROVAL.",
+    "context_data": {
+      "transaction_amount": 1200,
+      "currency": "USD",
+      "user_risk_score": 35,
+      "account_age_days": 200,
+      "merchant_category": "electronics",
+      "shipping_address_matches_billing": true,
+      "item_count": 6,
+      "coupon_applied": false,
+      "payment_method": "credit_card",
+      "user_country": "US",
+      "shipping_speed": "standard",
+      "is_first_time_buyer": false
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "Approve if the transaction_amount is less than 10 and the item_count is 1 and the user_risk_score is less than 10.",
+    "context_data": {
+      "transaction_amount": 9,
+      "currency": "USD",
+      "user_risk_score": 5,
+      "account_age_days": 800,
+      "merchant_category": "apparel",
+      "shipping_address_matches_billing": true,
+      "item_count": 1,
+      "coupon_applied": false,
+      "payment_method": "paypal",
+      "user_country": "US",
+      "shipping_speed": "standard",
+      "is_first_time_buyer": false
+    },
+    "expected_outcome": "APPROVE"
+  },
+  {
+    "natural_language_rule": "Reject if the user_country is NG (Nigeria) and the transaction_amount is greater than 300 and the shipping_address_matches_billing is false.",
+    "context_data": {
+      "transaction_amount": 500,
+      "currency": "USD",
+      "user_risk_score": 60,
+      "account_age_days": 400,
+      "merchant_category": "gift_card",
+      "shipping_address_matches_billing": false,
+      "item_count": 1,
+      "coupon_applied": false,
+      "payment_method": "credit_card",
+      "user_country": "NG",
+      "shipping_speed": "standard",
+      "is_first_time_buyer": false
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "If the is_first_time_buyer is true and the transaction_amount is greater than 250 -> ASK_FOR_APPROVAL.",
+    "context_data": {
+      "transaction_amount": 300,
+      "currency": "USD",
+      "user_risk_score": 30,
+      "account_age_days": 2,
+      "merchant_category": "electronics",
+      "shipping_address_matches_billing": true,
+      "item_count": 1,
+      "coupon_applied": false,
+      "payment_method": "credit_card",
+      "user_country": "US",
+      "shipping_speed": "standard",
+      "is_first_time_buyer": true
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "Reject if the coupon_applied is true and the user_risk_score is greater than 70.",
+    "context_data": {
+      "transaction_amount": 120,
+      "currency": "USD",
+      "user_risk_score": 75,
+      "account_age_days": 150,
+      "merchant_category": "apparel",
+      "shipping_address_matches_billing": true,
+      "item_count": 2,
+      "coupon_applied": true,
+      "payment_method": "paypal",
+      "user_country": "US",
+      "shipping_speed": "standard",
+      "is_first_time_buyer": false
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "Ask for approval if the transaction_amount is exactly 1000 and the user_risk_score is exactly 50.",
+    "context_data": {
+      "transaction_amount": 1000,
+      "currency": "EUR",
+      "user_risk_score": 50,
+      "account_age_days": 400,
+      "merchant_category": "electronics",
+      "shipping_address_matches_billing": true,
+      "item_count": 1,
+      "coupon_applied": false,
+      "payment_method": "credit_card",
+      "user_country": "FR",
+      "shipping_speed": "standard",
+      "is_first_time_buyer": false
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "Approve if the payment_method is paypal and the transaction_amount is less than 200 and the user_risk_score is less than 30.",
+    "context_data": {
+      "transaction_amount": 150,
+      "currency": "USD",
+      "user_risk_score": 20,
+      "account_age_days": 500,
+      "merchant_category": "apparel",
+      "shipping_address_matches_billing": true,
+      "item_count": 3,
+      "coupon_applied": false,
+      "payment_method": "paypal",
+      "user_country": "US",
+      "shipping_speed": "standard",
+      "is_first_time_buyer": false
+    },
+    "expected_outcome": "APPROVE"
+  },
+  {
+    "natural_language_rule": "Reject if the merchant_category is electronics and the payment_method is crypto.",
+    "context_data": {
+      "transaction_amount": 400,
+      "currency": "USD",
+      "user_risk_score": 55,
+      "account_age_days": 100,
+      "merchant_category": "electronics",
+      "shipping_address_matches_billing": false,
+      "item_count": 1,
+      "coupon_applied": false,
+      "payment_method": "crypto",
+      "user_country": "US",
+      "shipping_speed": "standard",
+      "is_first_time_buyer": true
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "If the account_age_days is less than 30 and the is_first_time_buyer is true and the transaction_amount is greater than 500 -> REJECT.",
+    "context_data": {
+      "transaction_amount": 800,
+      "currency": "USD",
+      "user_risk_score": 40,
+      "account_age_days": 10,
+      "merchant_category": "electronics",
+      "shipping_address_matches_billing": true,
+      "item_count": 2,
+      "coupon_applied": false,
+      "payment_method": "credit_card",
+      "user_country": "US",
+      "shipping_speed": "standard",
+      "is_first_time_buyer": true
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "Ask for approval if the transaction_amount is greater than 1000 and the currency is not USD.",
+    "context_data": {
+      "transaction_amount": 1500,
+      "currency": "CAD",
+      "user_risk_score": 30,
+      "account_age_days": 600,
+      "merchant_category": "apparel",
+      "shipping_address_matches_billing": true,
+      "item_count": 4,
+      "coupon_applied": false,
+      "payment_method": "credit_card",
+      "user_country": "CA",
+      "shipping_speed": "standard",
+      "is_first_time_buyer": false
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "Reject if the item_count is greater than 50 regardless of transaction_amount (edge bulk order rule).",
+    "context_data": {
+      "transaction_amount": 200,
+      "currency": "USD",
+      "user_risk_score": 20,
+      "account_age_days": 100,
+      "merchant_category": "apparel",
+      "shipping_address_matches_billing": true,
+      "item_count": 51,
+      "coupon_applied": false,
+      "payment_method": "paypal",
+      "user_country": "US",
+      "shipping_speed": "standard",
+      "is_first_time_buyer": false
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "If the shipping_speed is overnight and the transaction_amount is less than 20 -> ASK_FOR_APPROVAL (edge suspicious expedited cheap order).",
+    "context_data": {
+      "transaction_amount": 15,
+      "currency": "USD",
+      "user_risk_score": 25,
+      "account_age_days": 50,
+      "merchant_category": "apparel",
+      "shipping_address_matches_billing": true,
+      "item_count": 1,
+      "coupon_applied": false,
+      "payment_method": "credit_card",
+      "user_country": "US",
+      "shipping_speed": "overnight",
+      "is_first_time_buyer": false
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "Approve if the coupon_applied is true and the transaction_amount is less than 100 and the user_risk_score is less than 40.",
+    "context_data": {
+      "transaction_amount": 80,
+      "currency": "USD",
+      "user_risk_score": 30,
+      "account_age_days": 250,
+      "merchant_category": "apparel",
+      "shipping_address_matches_billing": true,
+      "item_count": 2,
+      "coupon_applied": true,
+      "payment_method": "paypal",
+      "user_country": "US",
+      "shipping_speed": "standard",
+      "is_first_time_buyer": false
+    },
+    "expected_outcome": "APPROVE"
+  },
+  {
+    "natural_language_rule": "Reject if the transaction_amount is greater than 2000 and the account_age_days is less than 90.",
+    "context_data": {
+      "transaction_amount": 2500,
+      "currency": "USD",
+      "user_risk_score": 45,
+      "account_age_days": 30,
+      "merchant_category": "electronics",
+      "shipping_address_matches_billing": true,
+      "item_count": 1,
+      "coupon_applied": false,
+      "payment_method": "credit_card",
+      "user_country": "US",
+      "shipping_speed": "standard",
+      "is_first_time_buyer": true
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "If the user_country is CN and the transaction_amount is greater than 300 -> ASK_FOR_APPROVAL.",
+    "context_data": {
+      "transaction_amount": 350,
+      "currency": "USD",
+      "user_risk_score": 40,
+      "account_age_days": 500,
+      "merchant_category": "electronics",
+      "shipping_address_matches_billing": false,
+      "item_count": 1,
+      "coupon_applied": false,
+      "payment_method": "credit_card",
+      "user_country": "CN",
+      "shipping_speed": "standard",
+      "is_first_time_buyer": false
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "Approve if the shipping_address_matches_billing is true and the user_risk_score is less than 25.",
+    "context_data": {
+      "transaction_amount": 600,
+      "currency": "USD",
+      "user_risk_score": 20,
+      "account_age_days": 1000,
+      "merchant_category": "electronics",
+      "shipping_address_matches_billing": true,
+      "item_count": 2,
+      "coupon_applied": false,
+      "payment_method": "credit_card",
+      "user_country": "US",
+      "shipping_speed": "standard",
+      "is_first_time_buyer": false
+    },
+    "expected_outcome": "APPROVE"
+  },
+  {
+    "natural_language_rule": "If the merchant_category is gift_card and the item_count is greater than 10 -> REJECT (bulk gift card block).",
+    "context_data": {
+      "transaction_amount": 1200,
+      "currency": "USD",
+      "user_risk_score": 35,
+      "account_age_days": 300,
+      "merchant_category": "gift_card",
+      "shipping_address_matches_billing": true,
+      "item_count": 12,
+      "coupon_applied": false,
+      "payment_method": "credit_card",
+      "user_country": "US",
+      "shipping_speed": "standard",
+      "is_first_time_buyer": false
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "Ask for approval if the payment_method is credit_card and the transaction_amount is greater than 2000 and the user_risk_score is greater than 30.",
+    "context_data": {
+      "transaction_amount": 2200,
+      "currency": "USD",
+      "user_risk_score": 35,
+      "account_age_days": 600,
+      "merchant_category": "electronics",
+      "shipping_address_matches_billing": true,
+      "item_count": 1,
+      "coupon_applied": false,
+      "payment_method": "credit_card",
+      "user_country": "US",
+      "shipping_speed": "overnight",
+      "is_first_time_buyer": false
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "Reject if the transaction_amount is greater than 10000 regardless of other factors (high-value block).",
+    "context_data": {
+      "transaction_amount": 15000,
+      "currency": "USD",
+      "user_risk_score": 10,
+      "account_age_days": 2000,
+      "merchant_category": "electronics",
+      "shipping_address_matches_billing": true,
+      "item_count": 1,
+      "coupon_applied": false,
+      "payment_method": "credit_card",
+      "user_country": "US",
+      "shipping_speed": "standard",
+      "is_first_time_buyer": false
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "Approve if the account_age_days is greater than 3650 and the user_risk_score is less than 20, regardless of transaction_amount (trusted long-term user).",
+    "context_data": {
+      "transaction_amount": 9000,
+      "currency": "USD",
+      "user_risk_score": 15,
+      "account_age_days": 4000,
+      "merchant_category": "electronics",
+      "shipping_address_matches_billing": true,
+      "item_count": 2,
+      "coupon_applied": false,
+      "payment_method": "credit_card",
+      "user_country": "US",
+      "shipping_speed": "overnight",
+      "is_first_time_buyer": false
+    },
+    "expected_outcome": "APPROVE"
+  },
+  {
+    "natural_language_rule": "If the user_risk_score is greater than or equal to 90 -> REJECT (extreme risk).",
+    "context_data": {
+      "transaction_amount": 50,
+      "currency": "USD",
+      "user_risk_score": 95,
+      "account_age_days": 100,
+      "merchant_category": "apparel",
+      "shipping_address_matches_billing": false,
+      "item_count": 1,
+      "coupon_applied": true,
+      "payment_method": "paypal",
+      "user_country": "US",
+      "shipping_speed": "standard",
+      "is_first_time_buyer": true
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "Ask for approval if the transaction_amount is between 500 and 1000 inclusive and the user_risk_score is between 30 and 60 inclusive.",
+    "context_data": {
+      "transaction_amount": 750,
+      "currency": "USD",
+      "user_risk_score": 45,
+      "account_age_days": 200,
+      "merchant_category": "electronics",
+      "shipping_address_matches_billing": true,
+      "item_count": 2,
+      "coupon_applied": false,
+      "payment_method": "credit_card",
+      "user_country": "US",
+      "shipping_speed": "standard",
+      "is_first_time_buyer": false
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "Reject if the merchant_category is apparel and the item_count is 0 (edge invalid order).",
+    "context_data": {
+      "transaction_amount": 0,
+      "currency": "USD",
+      "user_risk_score": 10,
+      "account_age_days": 50,
+      "merchant_category": "apparel",
+      "shipping_address_matches_billing": true,
+      "item_count": 0,
+      "coupon_applied": false,
+      "payment_method": "paypal",
+      "user_country": "US",
+      "shipping_speed": "standard",
+      "is_first_time_buyer": false
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "Approve if the user_country is US and the payment_method is credit_card and the shipping_address_matches_billing is true.",
+    "context_data": {
+      "transaction_amount": 450,
+      "currency": "USD",
+      "user_risk_score": 30,
+      "account_age_days": 300,
+      "merchant_category": "electronics",
+      "shipping_address_matches_billing": true,
+      "item_count": 1,
+      "coupon_applied": false,
+      "payment_method": "credit_card",
+      "user_country": "US",
+      "shipping_speed": "standard",
+      "is_first_time_buyer": false
+    },
+    "expected_outcome": "APPROVE"
+  },
+  {
+    "natural_language_rule": "If the coupon_applied is true and the transaction_amount is greater than 1000 -> ASK_FOR_APPROVAL (large discount scrutiny).",
+    "context_data": {
+      "transaction_amount": 1500,
+      "currency": "USD",
+      "user_risk_score": 35,
+      "account_age_days": 180,
+      "merchant_category": "electronics",
+      "shipping_address_matches_billing": true,
+      "item_count": 1,
+      "coupon_applied": true,
+      "payment_method": "credit_card",
+      "user_country": "US",
+      "shipping_speed": "standard",
+      "is_first_time_buyer": false
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "Reject if the transaction_amount is less than 0 (edge invalid negative amount).",
+    "context_data": {
+      "transaction_amount": -10,
+      "currency": "USD",
+      "user_risk_score": 5,
+      "account_age_days": 100,
+      "merchant_category": "apparel",
+      "shipping_address_matches_billing": true,
+      "item_count": 1,
+      "coupon_applied": false,
+      "payment_method": "paypal",
+      "user_country": "US",
+      "shipping_speed": "standard",
+      "is_first_time_buyer": false
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "Ask for approval if the payment_method is credit_card and the user_risk_score is between 50 and 70 and the transaction_amount is greater than 300.",
+    "context_data": {
+      "transaction_amount": 350,
+      "currency": "USD",
+      "user_risk_score": 65,
+      "account_age_days": 220,
+      "merchant_category": "electronics",
+      "shipping_address_matches_billing": false,
+      "item_count": 1,
+      "coupon_applied": false,
+      "payment_method": "credit_card",
+      "user_country": "US",
+      "shipping_speed": "standard",
+      "is_first_time_buyer": false
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "Reject if the user_country is in high risk zone CN or NG and the payment_method is crypto (use explicit user_country equality checks).",
+    "context_data": {
+      "transaction_amount": 100,
+      "currency": "USD",
+      "user_risk_score": 40,
+      "account_age_days": 50,
+      "merchant_category": "apparel",
+      "shipping_address_matches_billing": false,
+      "item_count": 1,
+      "coupon_applied": false,
+      "payment_method": "crypto",
+      "user_country": "NG",
+      "shipping_speed": "standard",
+      "is_first_time_buyer": true
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "Approve if the transaction_amount is 0 and the coupon_applied is true (edge free order with coupon).",
+    "context_data": {
+      "transaction_amount": 0,
+      "currency": "USD",
+      "user_risk_score": 10,
+      "account_age_days": 700,
+      "merchant_category": "apparel",
+      "shipping_address_matches_billing": true,
+      "item_count": 1,
+      "coupon_applied": true,
+      "payment_method": "paypal",
+      "user_country": "US",
+      "shipping_speed": "standard",
+      "is_first_time_buyer": false
+    },
+    "expected_outcome": "APPROVE"
+  },
+  {
+    "natural_language_rule": "If the transaction_amount is greater than 750 and the merchant_category is electronics and the shipping_address_matches_billing is false -> REJECT.",
+    "context_data": {
+      "transaction_amount": 900,
+      "currency": "USD",
+      "user_risk_score": 40,
+      "account_age_days": 400,
+      "merchant_category": "electronics",
+      "shipping_address_matches_billing": false,
+      "item_count": 1,
+      "coupon_applied": false,
+      "payment_method": "credit_card",
+      "user_country": "US",
+      "shipping_speed": "standard",
+      "is_first_time_buyer": false
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "Ask for approval if the user_risk_score is greater than 40 and the account_age_days is less than 60 and the transaction_amount is greater than 100.",
+    "context_data": {
+      "transaction_amount": 200,
+      "currency": "USD",
+      "user_risk_score": 45,
+      "account_age_days": 10,
+      "merchant_category": "electronics",
+      "shipping_address_matches_billing": true,
+      "item_count": 1,
+      "coupon_applied": false,
+      "payment_method": "paypal",
+      "user_country": "US",
+      "shipping_speed": "overnight",
+      "is_first_time_buyer": true
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "Approve if the shipping_speed is standard and the transaction_amount is less than 300 and the user_risk_score is less than 35.",
+    "context_data": {
+      "transaction_amount": 250,
+      "currency": "USD",
+      "user_risk_score": 30,
+      "account_age_days": 400,
+      "merchant_category": "apparel",
+      "shipping_address_matches_billing": true,
+      "item_count": 2,
+      "coupon_applied": false,
+      "payment_method": "credit_card",
+      "user_country": "US",
+      "shipping_speed": "standard",
+      "is_first_time_buyer": false
+    },
+    "expected_outcome": "APPROVE"
+  },
+  {
+    "natural_language_rule": "If the transaction_amount is equal to 999.99 and the merchant_category is electronics -> ASK_FOR_APPROVAL (edge float match).",
+    "context_data": {
+      "transaction_amount": 999.99,
+      "currency": "USD",
+      "user_risk_score": 40,
+      "account_age_days": 300,
+      "merchant_category": "electronics",
+      "shipping_address_matches_billing": true,
+      "item_count": 1,
+      "coupon_applied": false,
+      "payment_method": "credit_card",
+      "user_country": "US",
+      "shipping_speed": "standard",
+      "is_first_time_buyer": false
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "Reject if the is_first_time_buyer is true and the shipping_address_matches_billing is false and the transaction_amount is greater than 100.",
+    "context_data": {
+      "transaction_amount": 200,
+      "currency": "USD",
+      "user_risk_score": 50,
+      "account_age_days": 5,
+      "merchant_category": "apparel",
+      "shipping_address_matches_billing": false,
+      "item_count": 2,
+      "coupon_applied": false,
+      "payment_method": "paypal",
+      "user_country": "US",
+      "shipping_speed": "standard",
+      "is_first_time_buyer": true
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "If the merchant_category is electronics and the user_risk_score is less than 20 and the transaction_amount is less than 100 -> APPROVE.",
+    "context_data": {
+      "transaction_amount": 80,
+      "currency": "USD",
+      "user_risk_score": 15,
+      "account_age_days": 600,
+      "merchant_category": "electronics",
+      "shipping_address_matches_billing": true,
+      "item_count": 1,
+      "coupon_applied": false,
+      "payment_method": "credit_card",
+      "user_country": "US",
+      "shipping_speed": "standard",
+      "is_first_time_buyer": false
+    },
+    "expected_outcome": "APPROVE"
+  },
+  {
+    "natural_language_rule": "Ask for approval if the transaction_amount is greater than 400 and the coupon_applied is true and the user_risk_score is greater than 30.",
+    "context_data": {
+      "transaction_amount": 500,
+      "currency": "USD",
+      "user_risk_score": 35,
+      "account_age_days": 220,
+      "merchant_category": "apparel",
+      "shipping_address_matches_billing": true,
+      "item_count": 4,
+      "coupon_applied": true,
+      "payment_method": "credit_card",
+      "user_country": "US",
+      "shipping_speed": "standard",
+      "is_first_time_buyer": false
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "Reject if the payment_method is crypto and the transaction_amount is greater than or equal to 1000.",
+    "context_data": {
+      "transaction_amount": 1000,
+      "currency": "USD",
+      "user_risk_score": 30,
+      "account_age_days": 400,
+      "merchant_category": "electronics",
+      "shipping_address_matches_billing": false,
+      "item_count": 1,
+      "coupon_applied": false,
+      "payment_method": "crypto",
+      "user_country": "US",
+      "shipping_speed": "standard",
+      "is_first_time_buyer": false
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "If the item_count is greater than 10 and the transaction_amount is less than 50 -> REJECT (suspicious many items cheap total).",
+    "context_data": {
+      "transaction_amount": 45,
+      "currency": "USD",
+      "user_risk_score": 30,
+      "account_age_days": 100,
+      "merchant_category": "apparel",
+      "shipping_address_matches_billing": false,
+      "item_count": 12,
+      "coupon_applied": false,
+      "payment_method": "paypal",
+      "user_country": "US",
+      "shipping_speed": "standard",
+      "is_first_time_buyer": true
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "Approve if the account_age_days is greater than 1000 and the shipping_address_matches_billing is true and the user_risk_score is less than 50.",
+    "context_data": {
+      "transaction_amount": 600,
+      "currency": "USD",
+      "user_risk_score": 45,
+      "account_age_days": 1500,
+      "merchant_category": "electronics",
+      "shipping_address_matches_billing": true,
+      "item_count": 1,
+      "coupon_applied": false,
+      "payment_method": "credit_card",
+      "user_country": "US",
+      "shipping_speed": "overnight",
+      "is_first_time_buyer": false
+    },
+    "expected_outcome": "APPROVE"
+  },
+  {
+    "natural_language_rule": "If the currency is EUR and the transaction_amount is greater than 800 -> ASK_FOR_APPROVAL.",
+    "context_data": {
+      "transaction_amount": 900,
+      "currency": "EUR",
+      "user_risk_score": 40,
+      "account_age_days": 600,
+      "merchant_category": "electronics",
+      "shipping_address_matches_billing": true,
+      "item_count": 1,
+      "coupon_applied": false,
+      "payment_method": "credit_card",
+      "user_country": "DE",
+      "shipping_speed": "standard",
+      "is_first_time_buyer": false
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "Reject if the transaction_amount is greater than 300 and the merchant_category is gift_card and the coupon_applied is true (discounted gift card block).",
+    "context_data": {
+      "transaction_amount": 400,
+      "currency": "USD",
+      "user_risk_score": 30,
+      "account_age_days": 250,
+      "merchant_category": "gift_card",
+      "shipping_address_matches_billing": true,
+      "item_count": 2,
+      "coupon_applied": true,
+      "payment_method": "credit_card",
+      "user_country": "US",
+      "shipping_speed": "standard",
+      "is_first_time_buyer": false
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "If the user_risk_score is less than 5 and the transaction_amount is less than 50 and the is_first_time_buyer is false -> APPROVE (trusted low-risk repeat small purchase).",
+    "context_data": {
+      "transaction_amount": 30,
+      "currency": "USD",
+      "user_risk_score": 3,
+      "account_age_days": 900,
+      "merchant_category": "apparel",
+      "shipping_address_matches_billing": true,
+      "item_count": 1,
+      "coupon_applied": false,
+      "payment_method": "paypal",
+      "user_country": "US",
+      "shipping_speed": "standard",
+      "is_first_time_buyer": false
+    },
+    "expected_outcome": "APPROVE"
+  },
+  {
+    "natural_language_rule": "Ask for approval if the transaction_amount is greater than 1200 and the shipping_address_matches_billing is false and the payment_method is credit_card.",
+    "context_data": {
+      "transaction_amount": 1500,
+      "currency": "USD",
+      "user_risk_score": 45,
+      "account_age_days": 100,
+      "merchant_category": "electronics",
+      "shipping_address_matches_billing": false,
+      "item_count": 1,
+      "coupon_applied": false,
+      "payment_method": "credit_card",
+      "user_country": "US",
+      "shipping_speed": "overnight",
+      "is_first_time_buyer": false
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "Reject if the user_country is not US and the transaction_amount is greater than 2000 and the user_risk_score is greater than 40.",
+    "context_data": {
+      "transaction_amount": 3000,
+      "currency": "USD",
+      "user_risk_score": 55,
+      "account_age_days": 400,
+      "merchant_category": "electronics",
+      "shipping_address_matches_billing": false,
+      "item_count": 1,
+      "coupon_applied": false,
+      "payment_method": "credit_card",
+      "user_country": "BR",
+      "shipping_speed": "standard",
+      "is_first_time_buyer": false
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "If the shipping_speed is overnight and the user_risk_score is less than 20 and the transaction_amount is less than 500 -> APPROVE (fast shipping for low risk small order).",
+    "context_data": {
+      "transaction_amount": 300,
+      "currency": "USD",
+      "user_risk_score": 15,
+      "account_age_days": 800,
+      "merchant_category": "electronics",
+      "shipping_address_matches_billing": true,
+      "item_count": 1,
+      "coupon_applied": false,
+      "payment_method": "credit_card",
+      "user_country": "US",
+      "shipping_speed": "overnight",
+      "is_first_time_buyer": false
+    },
+    "expected_outcome": "APPROVE"
+  },
+  {
+    "natural_language_rule": "Reject if the transaction_amount is exactly 1 and the coupon_applied is true and the merchant_category is gift_card (edge micro-transaction with coupon).",
+    "context_data": {
+      "transaction_amount": 1,
+      "currency": "USD",
+      "user_risk_score": 20,
+      "account_age_days": 100,
+      "merchant_category": "gift_card",
+      "shipping_address_matches_billing": true,
+      "item_count": 1,
+      "coupon_applied": true,
+      "payment_method": "paypal",
+      "user_country": "US",
+      "shipping_speed": "standard",
+      "is_first_time_buyer": false
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "Ask for approval if the transaction_amount is greater than 350 and the item_count is greater than 3 and the user_risk_score is greater than 30.",
+    "context_data": {
+      "transaction_amount": 400,
+      "currency": "USD",
+      "user_risk_score": 35,
+      "account_age_days": 250,
+      "merchant_category": "apparel",
+      "shipping_address_matches_billing": true,
+      "item_count": 5,
+      "coupon_applied": false,
+      "payment_method": "credit_card",
+      "user_country": "US",
+      "shipping_speed": "standard",
+      "is_first_time_buyer": false
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "Approve if the merchant_category is apparel and the transaction_amount is less than 150 and the coupon_applied is true.",
+    "context_data": {
+      "transaction_amount": 120,
+      "currency": "USD",
+      "user_risk_score": 25,
+      "account_age_days": 400,
+      "merchant_category": "apparel",
+      "shipping_address_matches_billing": true,
+      "item_count": 2,
+      "coupon_applied": true,
+      "payment_method": "paypal",
+      "user_country": "US",
+      "shipping_speed": "standard",
+      "is_first_time_buyer": false
+    },
+    "expected_outcome": "APPROVE"
+  },
+  {
+    "natural_language_rule": "If the account_age_days is 0 (brand new account) and the transaction_amount is greater than 20 -> ASK_FOR_APPROVAL.",
+    "context_data": {
+      "transaction_amount": 25,
+      "currency": "USD",
+      "user_risk_score": 20,
+      "account_age_days": 0,
+      "merchant_category": "apparel",
+      "shipping_address_matches_billing": true,
+      "item_count": 1,
+      "coupon_applied": false,
+      "payment_method": "credit_card",
+      "user_country": "US",
+      "shipping_speed": "standard",
+      "is_first_time_buyer": true
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "Reject if the transaction_amount is greater than 600 and the user_risk_score is greater than 50 and the payment_method is paypal.",
+    "context_data": {
+      "transaction_amount": 700,
+      "currency": "USD",
+      "user_risk_score": 55,
+      "account_age_days": 120,
+      "merchant_category": "electronics",
+      "shipping_address_matches_billing": false,
+      "item_count": 1,
+      "coupon_applied": false,
+      "payment_method": "paypal",
+      "user_country": "US",
+      "shipping_speed": "standard",
+      "is_first_time_buyer": true
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "Approve if the payment_method is credit_card and the account_age_days is greater than 180 and the user_risk_score is less than or equal to 40.",
+    "context_data": {
+      "transaction_amount": 350,
+      "currency": "USD",
+      "user_risk_score": 40,
+      "account_age_days": 181,
+      "merchant_category": "electronics",
+      "shipping_address_matches_billing": true,
+      "item_count": 1,
+      "coupon_applied": false,
+      "payment_method": "credit_card",
+      "user_country": "US",
+      "shipping_speed": "standard",
+      "is_first_time_buyer": false
+    },
+    "expected_outcome": "APPROVE"
+  },
+  {
+    "natural_language_rule": "If the user_risk_score is between 20 and 40 and the merchant_category is electronics and the transaction_amount is greater than 800 -> ASK_FOR_APPROVAL.",
+    "context_data": {
+      "transaction_amount": 900,
+      "currency": "USD",
+      "user_risk_score": 30,
+      "account_age_days": 400,
+      "merchant_category": "electronics",
+      "shipping_address_matches_billing": true,
+      "item_count": 1,
+      "coupon_applied": false,
+      "payment_method": "credit_card",
+      "user_country": "US",
+      "shipping_speed": "overnight",
+      "is_first_time_buyer": false
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "Reject if the item_count is greater than 100 (absurdly large order edge case).",
+    "context_data": {
+      "transaction_amount": 5000,
+      "currency": "USD",
+      "user_risk_score": 40,
+      "account_age_days": 365,
+      "merchant_category": "apparel",
+      "shipping_address_matches_billing": false,
+      "item_count": 150,
+      "coupon_applied": false,
+      "payment_method": "credit_card",
+      "user_country": "US",
+      "shipping_speed": "standard",
+      "is_first_time_buyer": false
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "If the merchant_category is electronics and the payment_method is paypal and the transaction_amount is less than 20 -> ASK_FOR_APPROVAL (micro electronics via paypal).",
+    "context_data": {
+      "transaction_amount": 15,
+      "currency": "USD",
+      "user_risk_score": 35,
+      "account_age_days": 200,
+      "merchant_category": "electronics",
+      "shipping_address_matches_billing": true,
+      "item_count": 1,
+      "coupon_applied": false,
+      "payment_method": "paypal",
+      "user_country": "US",
+      "shipping_speed": "standard",
+      "is_first_time_buyer": true
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "If the transaction_amount is greater than 1000 then ASK_FOR_APPROVAL.",
+    "context_data": {
+      "transaction_amount": 1500
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "Reject the transaction if the transaction_amount is greater than 5000 and the user_risk_score is above 80.",
+    "context_data": {
+      "transaction_amount": 6000,
+      "user_risk_score": 85
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "Approve if the user_risk_score is less than or equal to 20 and the transaction_amount is less than 200.",
+    "context_data": {
+      "user_risk_score": 15,
+      "transaction_amount": 150
+    },
+    "expected_outcome": "APPROVE"
+  },
+  {
+    "natural_language_rule": "If the merchant_category is 'gift_card' and the transaction_amount is greater than 200 then ASK_FOR_APPROVAL.",
+    "context_data": {
+      "merchant_category": "gift_card",
+      "transaction_amount": 250
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "Reject if shipping_address_matches_billing is false and the user_risk_score is over 70.",
+    "context_data": {
+      "shipping_address_matches_billing": false,
+      "user_risk_score": 75
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "If account_age_days is less than 7 and is_first_time_buyer is true then ASK_FOR_APPROVAL.",
+    "context_data": {
+      "account_age_days": 3,
+      "is_first_time_buyer": true
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "Approve when payment_method is 'paypal' and transaction_amount is less than or equal to 300 and user_risk_score is under 40.",
+    "context_data": {
+      "payment_method": "paypal",
+      "transaction_amount": 250,
+      "user_risk_score": 30
+    },
+    "expected_outcome": "APPROVE"
+  },
+  {
+    "natural_language_rule": "If payment_method is 'crypto' and transaction_amount is greater than 1000 then REJECT.",
+    "context_data": {
+      "payment_method": "crypto",
+      "transaction_amount": 2000
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "If item_count is greater than 10 and coupon_applied is true then ASK_FOR_APPROVAL.",
+    "context_data": {
+      "item_count": 12,
+      "coupon_applied": true
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "Reject if user_country is not 'US' and shipping_speed is 'overnight' and transaction_amount is above 500.",
+    "context_data": {
+      "user_country": "CN",
+      "shipping_speed": "overnight",
+      "transaction_amount": 600
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "If transaction_amount equals 100 then APPROVE.",
+    "context_data": {
+      "transaction_amount": 100
+    },
+    "expected_outcome": "APPROVE"
+  },
+  {
+    "natural_language_rule": "If user_risk_score is exactly 50 and transaction_amount is greater than 1000 then ASK_FOR_APPROVAL.",
+    "context_data": {
+      "user_risk_score": 50,
+      "transaction_amount": 1500
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "Reject when merchant_category is 'electronics' and user_risk_score is greater than or equal to 90.",
+    "context_data": {
+      "merchant_category": "electronics",
+      "user_risk_score": 92
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "Approve if shipping_address_matches_billing is true and account_age_days is greater than 365.",
+    "context_data": {
+      "shipping_address_matches_billing": true,
+      "account_age_days": 400
+    },
+    "expected_outcome": "APPROVE"
+  },
+  {
+    "natural_language_rule": "If coupon_applied is true and transaction_amount is less than 5 then REJECT.",
+    "context_data": {
+      "coupon_applied": true,
+      "transaction_amount": 3
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "Ask for approval when is_first_time_buyer is true and transaction_amount is greater than or equal to 500.",
+    "context_data": {
+      "is_first_time_buyer": true,
+      "transaction_amount": 500
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "Reject if payment_method is 'credit_card' and user_risk_score is above 95 even if transaction_amount is low.",
+    "context_data": {
+      "payment_method": "credit_card",
+      "user_risk_score": 98,
+      "transaction_amount": 20
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "Approve when merchant_category is 'apparel' and item_count is less than or equal to 3 and transaction_amount is under 200.",
+    "context_data": {
+      "merchant_category": "apparel",
+      "item_count": 2,
+      "transaction_amount": 120
+    },
+    "expected_outcome": "APPROVE"
+  },
+  {
+    "natural_language_rule": "If user_country is 'US' and payment_method is 'credit_card' and user_risk_score is below 30 then APPROVE.",
+    "context_data": {
+      "user_country": "US",
+      "payment_method": "credit_card",
+      "user_risk_score": 25
+    },
+    "expected_outcome": "APPROVE"
+  },
+  {
+    "natural_language_rule": "If shipping_speed is 'overnight' and transaction_amount is greater than 1000 then ASK_FOR_APPROVAL.",
+    "context_data": {
+      "shipping_speed": "overnight",
+      "transaction_amount": 1200
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "Reject when merchant_category is 'gift_card' and user_country is not 'US' and transaction_amount is above 100.",
+    "context_data": {
+      "merchant_category": "gift_card",
+      "user_country": "BR",
+      "transaction_amount": 150
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "If account_age_days is equal to 0 and transaction_amount is greater than 10 then ASK_FOR_APPROVAL.",
+    "context_data": {
+      "account_age_days": 0,
+      "transaction_amount": 20
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "Approve if transaction_amount is less than 10 and item_count is 1 and shipping_address_matches_billing is true.",
+    "context_data": {
+      "transaction_amount": 5,
+      "item_count": 1,
+      "shipping_address_matches_billing": true
+    },
+    "expected_outcome": "APPROVE"
+  },
+  {
+    "natural_language_rule": "If coupon_applied is true and payment_method is 'crypto' then REJECT.",
+    "context_data": {
+      "coupon_applied": true,
+      "payment_method": "crypto"
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "Ask for approval when user_risk_score is between 40 and 70 inclusive and transaction_amount is greater than 300.",
+    "context_data": {
+      "user_risk_score": 55,
+      "transaction_amount": 350
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "Reject if item_count is greater than 50 regardless of transaction_amount.",
+    "context_data": {
+      "item_count": 51,
+      "transaction_amount": 10
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "If user_country is 'GB' and currency is 'GBP' and transaction_amount is less than 100 then APPROVE.",
+    "context_data": {
+      "user_country": "GB",
+      "currency": "GBP",
+      "transaction_amount": 80
+    },
+    "expected_outcome": "APPROVE"
+  },
+  {
+    "natural_language_rule": "Reject when shipping_address_matches_billing is false and payment_method is 'paypal' and transaction_amount is over 1000.",
+    "context_data": {
+      "shipping_address_matches_billing": false,
+      "payment_method": "paypal",
+      "transaction_amount": 1500
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "If merchant_category is 'electronics' and item_count is equal to 1 and transaction_amount is greater than 2000 then ASK_FOR_APPROVAL.",
+    "context_data": {
+      "merchant_category": "electronics",
+      "item_count": 1,
+      "transaction_amount": 2500
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "Approve if account_age_days is greater than 1000 and user_risk_score is below 10.",
+    "context_data": {
+      "account_age_days": 1200,
+      "user_risk_score": 5
+    },
+    "expected_outcome": "APPROVE"
+  },
+  {
+    "natural_language_rule": "If is_first_time_buyer is true and user_risk_score is greater than 60 then REJECT.",
+    "context_data": {
+      "is_first_time_buyer": true,
+      "user_risk_score": 75
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "If currency is 'EUR' and transaction_amount is greater than or equal to 1000 and user_country is 'DE' then ASK_FOR_APPROVAL.",
+    "context_data": {
+      "currency": "EUR",
+      "transaction_amount": 1000,
+      "user_country": "DE"
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "Reject when merchant_category is 'electronics' and payment_method is 'crypto' regardless of user_risk_score.",
+    "context_data": {
+      "merchant_category": "electronics",
+      "payment_method": "crypto",
+      "user_risk_score": 10
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "Approve if coupon_applied is false and transaction_amount is under 50 and item_count is less than 5.",
+    "context_data": {
+      "coupon_applied": false,
+      "transaction_amount": 30,
+      "item_count": 2
+    },
+    "expected_outcome": "APPROVE"
+  },
+  {
+    "natural_language_rule": "If user_risk_score is 0 and transaction_amount is greater than 10000 then ASK_FOR_APPROVAL (extreme low risk but very high amount).",
+    "context_data": {
+      "user_risk_score": 0,
+      "transaction_amount": 15000
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "Reject if transaction_amount is NaN-like edge substituted by 0 while item_count is 0 and coupon_applied is true (simulate suspicious empty order).",
+    "context_data": {
+      "transaction_amount": 0,
+      "item_count": 0,
+      "coupon_applied": true
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "If shipping_speed is 'standard' and transaction_amount is less than or equal to 20 then APPROVE.",
+    "context_data": {
+      "shipping_speed": "standard",
+      "transaction_amount": 20
+    },
+    "expected_outcome": "APPROVE"
+  },
+  {
+    "natural_language_rule": "Ask for approval when payment_method is 'credit_card' and merchant_category is 'gift_card' and transaction_amount is above 300.",
+    "context_data": {
+      "payment_method": "credit_card",
+      "merchant_category": "gift_card",
+      "transaction_amount": 350
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "Reject if user_country is 'RU' or user_country is 'IR' and transaction_amount is greater than 0 (high-risk countries block).",
+    "context_data": {
+      "user_country": "RU",
+      "transaction_amount": 10
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "If account_age_days is less than 30 and user_risk_score is greater than 40 then ASK_FOR_APPROVAL.",
+    "context_data": {
+      "account_age_days": 10,
+      "user_risk_score": 45
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "Approve when payment_method is 'credit_card' and shipping_address_matches_billing is true and user_risk_score is less than 25.",
+    "context_data": {
+      "payment_method": "credit_card",
+      "shipping_address_matches_billing": true,
+      "user_risk_score": 20
+    },
+    "expected_outcome": "APPROVE"
+  },
+  {
+    "natural_language_rule": "If item_count is equal to 0 then REJECT (edge case: no items in cart).",
+    "context_data": {
+      "item_count": 0
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "Ask for approval if currency is 'USD' and transaction_amount is greater than 9999 and user_risk_score is under 60.",
+    "context_data": {
+      "currency": "USD",
+      "transaction_amount": 15000,
+      "user_risk_score": 45
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "Reject if shipping_address_matches_billing is false and is_first_time_buyer is true and transaction_amount is above 100.",
+    "context_data": {
+      "shipping_address_matches_billing": false,
+      "is_first_time_buyer": true,
+      "transaction_amount": 150
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "If merchant_category is 'apparel' and coupon_applied is true and transaction_amount is greater than 500 then ASK_FOR_APPROVAL.",
+    "context_data": {
+      "merchant_category": "apparel",
+      "coupon_applied": true,
+      "transaction_amount": 600
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "Approve when user_risk_score is below 5 and payment_method is 'paypal' regardless of transaction_amount.",
+    "context_data": {
+      "user_risk_score": 3,
+      "payment_method": "paypal",
+      "transaction_amount": 5000
+    },
+    "expected_outcome": "APPROVE"
+  },
+  {
+    "natural_language_rule": "If transaction_amount is exactly 0 and coupon_applied is true then REJECT (edge-case free trial or misuse).",
+    "context_data": {
+      "transaction_amount": 0,
+      "coupon_applied": true
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "Ask for approval when user_risk_score is greater than 30 and less than or equal to 60 and merchant_category is 'electronics' and transaction_amount is over 800.",
+    "context_data": {
+      "user_risk_score": 45,
+      "merchant_category": "electronics",
+      "transaction_amount": 900
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "Reject if payment_method is 'crypto' and user_country is not 'US' and transaction_amount is greater than 50.",
+    "context_data": {
+      "payment_method": "crypto",
+      "user_country": "NG",
+      "transaction_amount": 60
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "Approve when account_age_days is greater than or equal to 30 and is_first_time_buyer is false and user_risk_score is below 40.",
+    "context_data": {
+      "account_age_days": 45,
+      "is_first_time_buyer": false,
+      "user_risk_score": 35
+    },
+    "expected_outcome": "APPROVE"
+  },
+  {
+    "natural_language_rule": "If item_count is greater than 5 and merchant_category is 'electronics' then ASK_FOR_APPROVAL (bulk electronics orders).",
+    "context_data": {
+      "item_count": 6,
+      "merchant_category": "electronics"
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "Reject if user_risk_score is greater than or equal to 100 (impossible max edge), treat as REJECT.",
+    "context_data": {
+      "user_risk_score": 100
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "If currency is 'JPY' and transaction_amount is greater than 100000 then ASK_FOR_APPROVAL.",
+    "context_data": {
+      "currency": "JPY",
+      "transaction_amount": 150000
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "Approve when shipping_speed is 'standard' and user_country is 'US' and transaction_amount is under 250.",
+    "context_data": {
+      "shipping_speed": "standard",
+      "user_country": "US",
+      "transaction_amount": 200
+    },
+    "expected_outcome": "APPROVE"
+  },
+  {
+    "natural_language_rule": "If transaction_amount is greater than 2500 and account_age_days is less than 14 then REJECT.",
+    "context_data": {
+      "transaction_amount": 3000,
+      "account_age_days": 10
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "Ask for approval if coupon_applied is true and is_first_time_buyer is true and transaction_amount is over 100.",
+    "context_data": {
+      "coupon_applied": true,
+      "is_first_time_buyer": true,
+      "transaction_amount": 120
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "Reject when merchant_category is 'gift_card' and item_count is greater than 5 (bulk gift card purchases blocked).",
+    "context_data": {
+      "merchant_category": "gift_card",
+      "item_count": 6
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "If payment_method is 'credit_card' and transaction_amount is less than 1 then REJECT (suspicious micro-charge).",
+    "context_data": {
+      "payment_method": "credit_card",
+      "transaction_amount": 0.5
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "Approve if user_country is 'CA' and currency is 'CAD' and user_risk_score is below 20.",
+    "context_data": {
+      "user_country": "CA",
+      "currency": "CAD",
+      "user_risk_score": 10
+    },
+    "expected_outcome": "APPROVE"
+  },
+  {
+    "natural_language_rule": "If the transaction_amount is greater than 100 then ASK_FOR_APPROVAL.",
+    "context_data": {
+      "transaction_amount": 150
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "If the transaction_amount is greater than 5000 and the user_risk_score is greater than 80 then REJECT.",
+    "context_data": {
+      "transaction_amount": 6000,
+      "user_risk_score": 85
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "If the merchant_category is 'electronics' and the user_risk_score is greater than 50 then REJECT.",
+    "context_data": {
+      "merchant_category": "electronics",
+      "user_risk_score": 60
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "If the shipping_address_matches_billing is false and the transaction_amount is greater than 1000 then ASK_FOR_APPROVAL.",
+    "context_data": {
+      "shipping_address_matches_billing": false,
+      "transaction_amount": 1500
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "If the item_count is greater than 10 and the merchant_category is 'gift_card' then ASK_FOR_APPROVAL.",
+    "context_data": {
+      "item_count": 12,
+      "merchant_category": "gift_card"
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "If the payment_method is 'crypto' and the user_country is not 'US' and the transaction_amount is greater than 200 then REJECT.",
+    "context_data": {
+      "payment_method": "crypto",
+      "user_country": "NG",
+      "transaction_amount": 300
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "If the is_first_time_buyer is true and the transaction_amount is greater than 300 then ASK_FOR_APPROVAL.",
+    "context_data": {
+      "is_first_time_buyer": true,
+      "transaction_amount": 350
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "If the account_age_days is less than 7 and the transaction_amount is greater than 50 then ASK_FOR_APPROVAL.",
+    "context_data": {
+      "account_age_days": 3,
+      "transaction_amount": 75
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "If the coupon_applied is true and the user_risk_score is greater than 70 then REJECT.",
+    "context_data": {
+      "coupon_applied": true,
+      "user_risk_score": 75
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "If the shipping_speed is 'overnight' and the transaction_amount is greater than 2000 then ASK_FOR_APPROVAL.",
+    "context_data": {
+      "shipping_speed": "overnight",
+      "transaction_amount": 2500
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "If the merchant_category is 'apparel' and the item_count is greater than 20 then ASK_FOR_APPROVAL.",
+    "context_data": {
+      "merchant_category": "apparel",
+      "item_count": 25
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "If the user_country is 'NG' and the user_risk_score is greater than 60 then REJECT.",
+    "context_data": {
+      "user_country": "NG",
+      "user_risk_score": 70
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "If the currency is not 'USD' and the transaction_amount is greater than 10000 then ASK_FOR_APPROVAL.",
+    "context_data": {
+      "currency": "EUR",
+      "transaction_amount": 15000
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "If the payment_method is 'paypal' and the shipping_address_matches_billing is false and the transaction_amount is greater than 500 then ASK_FOR_APPROVAL.",
+    "context_data": {
+      "payment_method": "paypal",
+      "shipping_address_matches_billing": false,
+      "transaction_amount": 600
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "If the account_age_days is greater than 3650 and the user_risk_score is less than 10 then APPROVE.",
+    "context_data": {
+      "account_age_days": 4000,
+      "user_risk_score": 5
+    },
+    "expected_outcome": "APPROVE"
+  },
+  {
+    "natural_language_rule": "If the item_count is equal to 0 then REJECT.",
+    "context_data": {
+      "item_count": 0
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "If the coupon_applied is true and the transaction_amount is less than 1 then REJECT.",
+    "context_data": {
+      "coupon_applied": true,
+      "transaction_amount": 0.5
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "If the merchant_category is 'gift_card' and the transaction_amount is greater than 1000 then ASK_FOR_APPROVAL.",
+    "context_data": {
+      "merchant_category": "gift_card",
+      "transaction_amount": 1500
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "If the shipping_address_matches_billing is false and the user_country is not 'US' and the transaction_amount is greater than 300 then REJECT.",
+    "context_data": {
+      "shipping_address_matches_billing": false,
+      "user_country": "BR",
+      "transaction_amount": 400
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "If the payment_method is 'credit_card' and the user_risk_score is less than 20 and the transaction_amount is less than 200 then APPROVE.",
+    "context_data": {
+      "payment_method": "credit_card",
+      "user_risk_score": 15,
+      "transaction_amount": 150
+    },
+    "expected_outcome": "APPROVE"
+  },
+  {
+    "natural_language_rule": "If the is_first_time_buyer is true and the coupon_applied is true and the transaction_amount is greater than 500 then ASK_FOR_APPROVAL.",
+    "context_data": {
+      "is_first_time_buyer": true,
+      "coupon_applied": true,
+      "transaction_amount": 600
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "If the user_risk_score is equal to 0 and the transaction_amount is greater than 0 then ASK_FOR_APPROVAL.",
+    "context_data": {
+      "user_risk_score": 0,
+      "transaction_amount": 50
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "If the account_age_days is less than 1 and the payment_method is 'crypto' then REJECT.",
+    "context_data": {
+      "account_age_days": 0,
+      "payment_method": "crypto"
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "If the shipping_speed is 'standard' and the item_count is greater than 100 then ASK_FOR_APPROVAL.",
+    "context_data": {
+      "shipping_speed": "standard",
+      "item_count": 150
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "If the merchant_category is 'electronics' and the shipping_address_matches_billing is false and the user_risk_score is greater than 40 then REJECT.",
+    "context_data": {
+      "merchant_category": "electronics",
+      "shipping_address_matches_billing": false,
+      "user_risk_score": 45
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "If the currency is 'EUR' and the user_country is 'DE' and the transaction_amount is less than 10 then APPROVE.",
+    "context_data": {
+      "currency": "EUR",
+      "user_country": "DE",
+      "transaction_amount": 5
+    },
+    "expected_outcome": "APPROVE"
+  },
+  {
+    "natural_language_rule": "If the payment_method is 'crypto' and the user_risk_score is greater than 30 then ASK_FOR_APPROVAL.",
+    "context_data": {
+      "payment_method": "crypto",
+      "user_risk_score": 35
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "If the transaction_amount is equal to 1000 and the user_risk_score is less than 30 then APPROVE.",
+    "context_data": {
+      "transaction_amount": 1000,
+      "user_risk_score": 25
+    },
+    "expected_outcome": "APPROVE"
+  },
+  {
+    "natural_language_rule": "If the transaction_amount is greater than or equal to 10000 and the user_risk_score is greater than 90 then REJECT.",
+    "context_data": {
+      "transaction_amount": 12000,
+      "user_risk_score": 95
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "If the account_age_days is less than or equal to 30 and the is_first_time_buyer is true and the transaction_amount is greater than 50 then ASK_FOR_APPROVAL.",
+    "context_data": {
+      "account_age_days": 30,
+      "is_first_time_buyer": true,
+      "transaction_amount": 100
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "If the shipping_speed is 'overnight' and the user_country is not 'US' and the transaction_amount is greater than 1500 then REJECT.",
+    "context_data": {
+      "shipping_speed": "overnight",
+      "user_country": "CA",
+      "transaction_amount": 2000
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "If the merchant_category is 'electronics' and the coupon_applied is true and the transaction_amount is less than 50 then REJECT.",
+    "context_data": {
+      "merchant_category": "electronics",
+      "coupon_applied": true,
+      "transaction_amount": 30
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "If the item_count is greater than 1 and the payment_method is 'paypal' and the shipping_address_matches_billing is false then ASK_FOR_APPROVAL.",
+    "context_data": {
+      "item_count": 3,
+      "payment_method": "paypal",
+      "shipping_address_matches_billing": false
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "If the user_country is 'US' and the account_age_days is greater than 365 and the user_risk_score is less than 20 then APPROVE.",
+    "context_data": {
+      "user_country": "US",
+      "account_age_days": 400,
+      "user_risk_score": 10
+    },
+    "expected_outcome": "APPROVE"
+  },
+  {
+    "natural_language_rule": "If the coupon_applied is true and the merchant_category is 'apparel' and the transaction_amount is greater than 200 then ASK_FOR_APPROVAL.",
+    "context_data": {
+      "coupon_applied": true,
+      "merchant_category": "apparel",
+      "transaction_amount": 250
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "If the transaction_amount is less than 0 then REJECT.",
+    "context_data": {
+      "transaction_amount": -5
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "If the payment_method is 'credit_card' and the user_risk_score is greater than 75 then ASK_FOR_APPROVAL.",
+    "context_data": {
+      "payment_method": "credit_card",
+      "user_risk_score": 80
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "If the merchant_category is 'gift_card' and the item_count is greater than 50 then REJECT.",
+    "context_data": {
+      "merchant_category": "gift_card",
+      "item_count": 60
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "If the transaction_amount is greater than 2500 and the currency is 'JPY' then ASK_FOR_APPROVAL.",
+    "context_data": {
+      "transaction_amount": 3000,
+      "currency": "JPY"
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "If the account_age_days is equal to 0 and the transaction_amount is greater than 1 then ASK_FOR_APPROVAL.",
+    "context_data": {
+      "account_age_days": 0,
+      "transaction_amount": 10
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "If the is_first_time_buyer is false and the user_risk_score is less than 10 and the transaction_amount is less than 100 then APPROVE.",
+    "context_data": {
+      "is_first_time_buyer": false,
+      "user_risk_score": 5,
+      "transaction_amount": 50
+    },
+    "expected_outcome": "APPROVE"
+  },
+  {
+    "natural_language_rule": "If the shipping_address_matches_billing is true and the payment_method is 'credit_card' and the user_risk_score is less than 50 and the transaction_amount is less than 500 then APPROVE.",
+    "context_data": {
+      "shipping_address_matches_billing": true,
+      "payment_method": "credit_card",
+      "user_risk_score": 40,
+      "transaction_amount": 300
+    },
+    "expected_outcome": "APPROVE"
+  },
+  {
+    "natural_language_rule": "If the currency is 'GBP' and the user_country is 'GB' and the transaction_amount is greater than 5000 then ASK_FOR_APPROVAL.",
+    "context_data": {
+      "currency": "GBP",
+      "user_country": "GB",
+      "transaction_amount": 6000
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "If the merchant_category is 'electronics' and the item_count is equal to 1 and the transaction_amount is greater than 3000 and the user_risk_score is greater than 60 then REJECT.",
+    "context_data": {
+      "merchant_category": "electronics",
+      "item_count": 1,
+      "transaction_amount": 3500,
+      "user_risk_score": 70
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "If the coupon_applied is false and the transaction_amount is greater than 20000 then ASK_FOR_APPROVAL.",
+    "context_data": {
+      "coupon_applied": false,
+      "transaction_amount": 25000
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "If the payment_method is 'paypal' and the user_country is 'FR' and the transaction_amount is greater than 1000 and the shipping_speed is 'overnight' then REJECT.",
+    "context_data": {
+      "payment_method": "paypal",
+      "user_country": "FR",
+      "transaction_amount": 1500,
+      "shipping_speed": "overnight"
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "If the user_risk_score is greater than or equal to 95 then REJECT.",
+    "context_data": {
+      "user_risk_score": 95
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "If the payment_method is 'crypto' and the currency is 'BTC' and the transaction_amount is greater than 0 then ASK_FOR_APPROVAL.",
+    "context_data": {
+      "payment_method": "crypto",
+      "currency": "BTC",
+      "transaction_amount": 0.001
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "If the item_count is equal to 1 and the merchant_category is 'gift_card' and the transaction_amount is greater than 500 then ASK_FOR_APPROVAL.",
+    "context_data": {
+      "item_count": 1,
+      "merchant_category": "gift_card",
+      "transaction_amount": 600
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "If the account_age_days is greater than 30 and the payment_method is 'credit_card' and the coupon_applied is true and the user_risk_score is less than 40 then APPROVE.",
+    "context_data": {
+      "account_age_days": 60,
+      "payment_method": "credit_card",
+      "coupon_applied": true,
+      "user_risk_score": 30
+    },
+    "expected_outcome": "APPROVE"
+  },
+  {
+    "natural_language_rule": "If the transaction_amount is greater than 100 then ASK_FOR_APPROVAL.",
+    "context_data": {
+      "transaction_amount": 150
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "If the transaction_amount is less than or equal to 100 then APPROVE.",
+    "context_data": {
+      "transaction_amount": 100
+    },
+    "expected_outcome": "APPROVE"
+  },
+  {
+    "natural_language_rule": "If the merchant_category is 'electronics' and the user_risk_score is greater than 50 then REJECT.",
+    "context_data": {
+      "merchant_category": "electronics",
+      "user_risk_score": 75
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "If the merchant_category is 'gift_card' and the transaction_amount is greater than 200 then ASK_FOR_APPROVAL.",
+    "context_data": {
+      "merchant_category": "gift_card",
+      "transaction_amount": 250
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "If the shipping_address_matches_billing is false and the account_age_days is less than 30 then ASK_FOR_APPROVAL.",
+    "context_data": {
+      "shipping_address_matches_billing": false,
+      "account_age_days": 10
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "If the payment_method is 'crypto' and the transaction_amount is greater than 1000 then REJECT.",
+    "context_data": {
+      "payment_method": "crypto",
+      "transaction_amount": 1500
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "If the item_count is equal to 0 then REJECT.",
+    "context_data": {
+      "item_count": 0
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "If the is_first_time_buyer is true and the transaction_amount is greater than 500 and the shipping_address_matches_billing is false then ASK_FOR_APPROVAL.",
+    "context_data": {
+      "is_first_time_buyer": true,
+      "transaction_amount": 600,
+      "shipping_address_matches_billing": false
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "If the user_country is 'NG' and the user_risk_score is greater than 40 then REJECT.",
+    "context_data": {
+      "user_country": "NG",
+      "user_risk_score": 60
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "If the currency is not 'USD' and the payment_method is 'credit_card' then ASK_FOR_APPROVAL.",
+    "context_data": {
+      "currency": "EUR",
+      "payment_method": "credit_card"
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "If the account_age_days is less than 1 and is_first_time_buyer is true then ASK_FOR_APPROVAL.",
+    "context_data": {
+      "account_age_days": 0,
+      "is_first_time_buyer": true
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "If the transaction_amount is greater than 10000 then REJECT.",
+    "context_data": {
+      "transaction_amount": 15000
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "If the merchant_category is 'apparel' and item_count is greater than 10 then ASK_FOR_APPROVAL.",
+    "context_data": {
+      "merchant_category": "apparel",
+      "item_count": 12
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "If the user_risk_score is less than or equal to 20 and shipping_address_matches_billing is true then APPROVE.",
+    "context_data": {
+      "user_risk_score": 15,
+      "shipping_address_matches_billing": true
+    },
+    "expected_outcome": "APPROVE"
+  },
+  {
+    "natural_language_rule": "If the shipping_speed is 'overnight' and transaction_amount is greater than 500 then ASK_FOR_APPROVAL.",
+    "context_data": {
+      "shipping_speed": "overnight",
+      "transaction_amount": 600
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "If the coupon_applied is true and transaction_amount is less than 1 then REJECT.",
+    "context_data": {
+      "coupon_applied": true,
+      "transaction_amount": 0
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "If the payment_method is 'paypal' and user_risk_score is less than 30 then APPROVE.",
+    "context_data": {
+      "payment_method": "paypal",
+      "user_risk_score": 20
+    },
+    "expected_outcome": "APPROVE"
+  },
+  {
+    "natural_language_rule": "If the merchant_category is 'electronics' and shipping_address_matches_billing is false and user_risk_score is greater than 30 then ASK_FOR_APPROVAL.",
+    "context_data": {
+      "merchant_category": "electronics",
+      "shipping_address_matches_billing": false,
+      "user_risk_score": 40
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "If the transaction_amount is exactly 999 and is_first_time_buyer is true then ASK_FOR_APPROVAL.",
+    "context_data": {
+      "transaction_amount": 999,
+      "is_first_time_buyer": true
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "If the user_country is 'US' and payment_method is 'credit_card' and account_age_days is greater than 365 then APPROVE.",
+    "context_data": {
+      "user_country": "US",
+      "payment_method": "credit_card",
+      "account_age_days": 400
+    },
+    "expected_outcome": "APPROVE"
+  },
+  {
+    "natural_language_rule": "If the merchant_category is 'gift_card' and item_count is greater than 5 then REJECT.",
+    "context_data": {
+      "merchant_category": "gift_card",
+      "item_count": 6
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "If the transaction_amount is less than 0 then REJECT.",
+    "context_data": {
+      "transaction_amount": -10
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "If the payment_method is 'credit_card' and transaction_amount is greater than 2000 and user_risk_score is greater than 70 then REJECT.",
+    "context_data": {
+      "payment_method": "credit_card",
+      "transaction_amount": 2500,
+      "user_risk_score": 85
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "If the coupon_applied is true and merchant_category is 'electronics' and transaction_amount is greater than 100 then ASK_FOR_APPROVAL.",
+    "context_data": {
+      "coupon_applied": true,
+      "merchant_category": "electronics",
+      "transaction_amount": 150
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "If shipping_address_matches_billing is true and account_age_days is greater than 30 and user_risk_score is less than 50 then APPROVE.",
+    "context_data": {
+      "shipping_address_matches_billing": true,
+      "account_age_days": 100,
+      "user_risk_score": 40
+    },
+    "expected_outcome": "APPROVE"
+  },
+  {
+    "natural_language_rule": "If the item_count is greater than 100 then REJECT.",
+    "context_data": {
+      "item_count": 150
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "If the currency is 'EUR' and transaction_amount is greater than 1000 then ASK_FOR_APPROVAL.",
+    "context_data": {
+      "currency": "EUR",
+      "transaction_amount": 1500
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "If the user_risk_score is greater than or equal to 90 then REJECT.",
+    "context_data": {
+      "user_risk_score": 95
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "If the payment_method is 'crypto' and shipping_address_matches_billing is true and user_risk_score is less than 20 then APPROVE.",
+    "context_data": {
+      "payment_method": "crypto",
+      "shipping_address_matches_billing": true,
+      "user_risk_score": 10
+    },
+    "expected_outcome": "APPROVE"
+  },
+  {
+    "natural_language_rule": "If the merchant_category is 'electronics' and transaction_amount is between 500 and 2000 and user_risk_score is greater than 40 then ASK_FOR_APPROVAL.",
+    "context_data": {
+      "merchant_category": "electronics",
+      "transaction_amount": 1000,
+      "user_risk_score": 60
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "If is_first_time_buyer is true and coupon_applied is true and transaction_amount is greater than 50 then ASK_FOR_APPROVAL.",
+    "context_data": {
+      "is_first_time_buyer": true,
+      "coupon_applied": true,
+      "transaction_amount": 60
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "If the user_country is 'CN' and payment_method is 'credit_card' then REJECT.",
+    "context_data": {
+      "user_country": "CN",
+      "payment_method": "credit_card"
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "If the shipping_speed is 'standard' and transaction_amount is less than 50 then APPROVE.",
+    "context_data": {
+      "shipping_speed": "standard",
+      "transaction_amount": 20
+    },
+    "expected_outcome": "APPROVE"
+  },
+  {
+    "natural_language_rule": "If the account_age_days is greater than 3650 then ASK_FOR_APPROVAL.",
+    "context_data": {
+      "account_age_days": 4000
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "If the merchant_category is 'electronics' and item_count is equal to 1 and transaction_amount is greater than 3000 then REJECT.",
+    "context_data": {
+      "merchant_category": "electronics",
+      "item_count": 1,
+      "transaction_amount": 3500
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "If the user_risk_score is exactly 50 and transaction_amount is greater than 100 then ASK_FOR_APPROVAL.",
+    "context_data": {
+      "user_risk_score": 50,
+      "transaction_amount": 200
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "If the payment_method is 'credit_card' and shipping_address_matches_billing is false and user_country is not 'US' then ASK_FOR_APPROVAL.",
+    "context_data": {
+      "payment_method": "credit_card",
+      "shipping_address_matches_billing": false,
+      "user_country": "FR"
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "If the coupon_applied is false and transaction_amount is greater than 0 and item_count is greater than 0 then APPROVE.",
+    "context_data": {
+      "coupon_applied": false,
+      "transaction_amount": 20,
+      "item_count": 2
+    },
+    "expected_outcome": "APPROVE"
+  },
+  {
+    "natural_language_rule": "If the transaction_amount is greater than 750 but less than or equal to 1000 and user_risk_score is greater than 60 then ASK_FOR_APPROVAL.",
+    "context_data": {
+      "transaction_amount": 800,
+      "user_risk_score": 70
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "If the merchant_category is 'apparel' and user_country is 'US' and shipping_speed is 'overnight' then ASK_FOR_APPROVAL.",
+    "context_data": {
+      "merchant_category": "apparel",
+      "user_country": "US",
+      "shipping_speed": "overnight"
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "If the transaction_amount is equal to 1 and coupon_applied is true then REJECT.",
+    "context_data": {
+      "transaction_amount": 1,
+      "coupon_applied": true
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "If the payment_method is 'paypal' and transaction_amount is greater than 5000 then REJECT.",
+    "context_data": {
+      "payment_method": "paypal",
+      "transaction_amount": 6000
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "If the user_risk_score is less than 5 and transaction_amount is less than 10 then APPROVE.",
+    "context_data": {
+      "user_risk_score": 3,
+      "transaction_amount": 5
+    },
+    "expected_outcome": "APPROVE"
+  },
+  {
+    "natural_language_rule": "If the account_age_days is less than 7 and payment_method is 'credit_card' and transaction_amount is greater than 300 then ASK_FOR_APPROVAL.",
+    "context_data": {
+      "account_age_days": 3,
+      "payment_method": "credit_card",
+      "transaction_amount": 400
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "If the merchant_category is 'gift_card' and user_country is 'US' and transaction_amount is greater than 1000 then REJECT.",
+    "context_data": {
+      "merchant_category": "gift_card",
+      "user_country": "US",
+      "transaction_amount": 1500
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "If the shipping_address_matches_billing is false and item_count is greater than 10 then REJECT.",
+    "context_data": {
+      "shipping_address_matches_billing": false,
+      "item_count": 15
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "If the currency is 'USD' and transaction_amount is greater than 0 and user_country is 'US' and payment_method is 'credit_card' and user_risk_score is less than 30 then APPROVE.",
+    "context_data": {
+      "currency": "USD",
+      "transaction_amount": 100,
+      "user_country": "US",
+      "payment_method": "credit_card",
+      "user_risk_score": 20
+    },
+    "expected_outcome": "APPROVE"
+  },
+  {
+    "natural_language_rule": "If the transaction_amount is divisible by 7 and transaction_amount is greater than 7 then ASK_FOR_APPROVAL.",
+    "context_data": {
+      "transaction_amount": 21
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "If the item_count is 1 and merchant_category is 'gift_card' and transaction_amount is greater than 300 then REJECT.",
+    "context_data": {
+      "item_count": 1,
+      "merchant_category": "gift_card",
+      "transaction_amount": 350
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "If the user_country is 'US' and is_first_time_buyer is true and account_age_days is less than 2 and transaction_amount is greater than 100 then ASK_FOR_APPROVAL.",
+    "context_data": {
+      "user_country": "US",
+      "is_first_time_buyer": true,
+      "account_age_days": 1,
+      "transaction_amount": 150
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "If the transaction_amount is greater than 100 then the decision should be ASK_FOR_APPROVAL.",
+    "context_data": {
+      "transaction_amount": 150
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "Reject the order if the merchant_category is 'electronics' and the user_risk_score is greater than 50.",
+    "context_data": {
+      "merchant_category": "electronics",
+      "user_risk_score": 72
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "If the transaction_amount equals 0 and the item_count equals 0 then REJECT as it appears fraudulent.",
+    "context_data": {
+      "transaction_amount": 0,
+      "item_count": 0
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "If the account_age_days is less than 7 and is_first_time_buyer is true and the transaction_amount is greater than 500 then ASK_FOR_APPROVAL.",
+    "context_data": {
+      "account_age_days": 3,
+      "is_first_time_buyer": true,
+      "transaction_amount": 750
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "If the shipping_address_matches_billing is false and the user_country is not 'US' and the transaction_amount is greater than 1000 then REJECT.",
+    "context_data": {
+      "shipping_address_matches_billing": false,
+      "user_country": "DE",
+      "transaction_amount": 1500
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "If the coupon_applied is true and the transaction_amount is less than 5 then REJECT as suspicious.",
+    "context_data": {
+      "coupon_applied": true,
+      "transaction_amount": 3.5
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "If the payment_method is 'crypto' and the user_risk_score is greater than 30 then REJECT.",
+    "context_data": {
+      "payment_method": "crypto",
+      "user_risk_score": 45
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "If the payment_method is 'paypal' and the account_age_days is less than 30 and the transaction_amount is greater than 200 then ASK_FOR_APPROVAL.",
+    "context_data": {
+      "payment_method": "paypal",
+      "account_age_days": 12,
+      "transaction_amount": 350
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "If the merchant_category is 'gift_card' and the item_count is greater than 10 then REJECT for bulk gift card orders.",
+    "context_data": {
+      "merchant_category": "gift_card",
+      "item_count": 25
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "If the shipping_speed is 'overnight' and the transaction_amount is greater than 2000 then ASK_FOR_APPROVAL.",
+    "context_data": {
+      "shipping_speed": "overnight",
+      "transaction_amount": 2500
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "If is_first_time_buyer is true and shipping_address_matches_billing is false and transaction_amount is greater than 300 then REJECT.",
+    "context_data": {
+      "is_first_time_buyer": true,
+      "shipping_address_matches_billing": false,
+      "transaction_amount": 400
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "If the user_country is 'GB' and the currency is 'USD' and the transaction_amount is greater than 1000 then ASK_FOR_APPROVAL for cross-currency high value.",
+    "context_data": {
+      "user_country": "GB",
+      "currency": "USD",
+      "transaction_amount": 1200
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "If the item_count is greater than 100 then REJECT as likely bot or scraper activity.",
+    "context_data": {
+      "item_count": 120
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "If the transaction_amount is greater than or equal to 50 and the transaction_amount is less than or equal to 100 and coupon_applied is true then ASK_FOR_APPROVAL.",
+    "context_data": {
+      "transaction_amount": 75,
+      "coupon_applied": true
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "If the account_age_days is greater than 3650 and the user_risk_score is less than 10 then APPROVE.",
+    "context_data": {
+      "account_age_days": 4000,
+      "user_risk_score": 5
+    },
+    "expected_outcome": "APPROVE"
+  },
+  {
+    "natural_language_rule": "If the currency is 'EUR' and the merchant_category is 'apparel' and the transaction_amount is greater than 500 then ASK_FOR_APPROVAL.",
+    "context_data": {
+      "currency": "EUR",
+      "merchant_category": "apparel",
+      "transaction_amount": 650
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "If the shipping_speed is 'standard' and the transaction_amount is less than 20 and coupon_applied is true then APPROVE.",
+    "context_data": {
+      "shipping_speed": "standard",
+      "transaction_amount": 12,
+      "coupon_applied": true
+    },
+    "expected_outcome": "APPROVE"
+  },
+  {
+    "natural_language_rule": "If the user_risk_score equals 100 then REJECT immediately.",
+    "context_data": {
+      "user_risk_score": 100
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "If the payment_method is 'credit_card' and the transaction_amount is greater than 10000 then ASK_FOR_APPROVAL.",
+    "context_data": {
+      "payment_method": "credit_card",
+      "transaction_amount": 15000
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "If shipping_address_matches_billing is true and user_risk_score is less than 20 and account_age_days is greater than 30 then APPROVE.",
+    "context_data": {
+      "shipping_address_matches_billing": true,
+      "user_risk_score": 10,
+      "account_age_days": 90
+    },
+    "expected_outcome": "APPROVE"
+  },
+  {
+    "natural_language_rule": "If the merchant_category is 'electronics' and the item_count equals 0 then REJECT as data inconsistency.",
+    "context_data": {
+      "merchant_category": "electronics",
+      "item_count": 0
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "If the transaction_amount is greater than 9999.99 then ASK_FOR_APPROVAL for very high precision values.",
+    "context_data": {
+      "transaction_amount": 15000.49
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "If is_first_time_buyer is true and account_age_days equals 0 then ASK_FOR_APPROVAL.",
+    "context_data": {
+      "is_first_time_buyer": true,
+      "account_age_days": 0
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "If user_country is 'CN' and payment_method is 'crypto' then REJECT.",
+    "context_data": {
+      "user_country": "CN",
+      "payment_method": "crypto"
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "If coupon_applied is true and payment_method is 'crypto' and transaction_amount is greater than 50 then REJECT.",
+    "context_data": {
+      "coupon_applied": true,
+      "payment_method": "crypto",
+      "transaction_amount": 75
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "If shipping_speed is 'overnight' and shipping_address_matches_billing is false then ASK_FOR_APPROVAL.",
+    "context_data": {
+      "shipping_speed": "overnight",
+      "shipping_address_matches_billing": false
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "If the transaction_amount is less than 0 then REJECT because negative totals are invalid.",
+    "context_data": {
+      "transaction_amount": -10
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "If the merchant_category is 'gift_card' and the transaction_amount is greater than 500 then REJECT for large gift card purchases.",
+    "context_data": {
+      "merchant_category": "gift_card",
+      "transaction_amount": 750
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "If the account_age_days is less than or equal to 1 and the transaction_amount is greater than 2000 then ASK_FOR_APPROVAL.",
+    "context_data": {
+      "account_age_days": 1,
+      "transaction_amount": 3000
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "If the user_country is 'US' and shipping_address_matches_billing is false and the transaction_amount is greater than 500 then ASK_FOR_APPROVAL.",
+    "context_data": {
+      "user_country": "US",
+      "shipping_address_matches_billing": false,
+      "transaction_amount": 850
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "If the item_count equals 1 and the merchant_category is 'gift_card' and the transaction_amount is greater than 100 then ASK_FOR_APPROVAL.",
+    "context_data": {
+      "item_count": 1,
+      "merchant_category": "gift_card",
+      "transaction_amount": 150
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "If the transaction_amount equals 100 and coupon_applied is true then ASK_FOR_APPROVAL (exact match rule).",
+    "context_data": {
+      "transaction_amount": 100,
+      "coupon_applied": true
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "If the user_risk_score is greater than or equal to 30 and the user_risk_score is less than or equal to 60 and the transaction_amount is greater than 300 then ASK_FOR_APPROVAL.",
+    "context_data": {
+      "user_risk_score": 45,
+      "transaction_amount": 350
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "If the payment_method is 'paypal' and the merchant_category is 'electronics' and the user_risk_score is greater than 70 then REJECT.",
+    "context_data": {
+      "payment_method": "paypal",
+      "merchant_category": "electronics",
+      "user_risk_score": 85
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "If is_first_time_buyer is true and account_age_days is greater than 0 then ASK_FOR_APPROVAL for contradictory first-time status with positive age.",
+    "context_data": {
+      "is_first_time_buyer": true,
+      "account_age_days": 10
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "If the currency is 'USD' and the transaction_amount equals 1 then REJECT as an extremely low USD amount.",
+    "context_data": {
+      "currency": "USD",
+      "transaction_amount": 1
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "If the merchant_category is 'apparel' and the item_count is greater than 5 and coupon_applied is true then ASK_FOR_APPROVAL.",
+    "context_data": {
+      "merchant_category": "apparel",
+      "item_count": 8,
+      "coupon_applied": true
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "If the user_country is 'FR' and the currency is 'EUR' and the transaction_amount is greater than 800 then ASK_FOR_APPROVAL.",
+    "context_data": {
+      "user_country": "FR",
+      "currency": "EUR",
+      "transaction_amount": 900
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "If the shipping_speed is 'standard' and the item_count is greater than 50 then REJECT for excessive bulk on standard delivery.",
+    "context_data": {
+      "shipping_speed": "standard",
+      "item_count": 75
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "If the payment_method is 'credit_card' and the user_risk_score is less than 5 and the transaction_amount is less than 50 then APPROVE.",
+    "context_data": {
+      "payment_method": "credit_card",
+      "user_risk_score": 3,
+      "transaction_amount": 20
+    },
+    "expected_outcome": "APPROVE"
+  },
+  {
+    "natural_language_rule": "If coupon_applied is false and the transaction_amount is greater than 5000 and the user_risk_score is greater than 90 then REJECT.",
+    "context_data": {
+      "coupon_applied": false,
+      "transaction_amount": 6000,
+      "user_risk_score": 95
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "If the account_age_days is less than 0 then REJECT as invalid account age.",
+    "context_data": {
+      "account_age_days": -5
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "If the merchant_category is 'electronics' and the shipping_speed is 'overnight' and the transaction_amount is greater than 1500 then ASK_FOR_APPROVAL.",
+    "context_data": {
+      "merchant_category": "electronics",
+      "shipping_speed": "overnight",
+      "transaction_amount": 2000
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "If is_first_time_buyer is false and account_age_days is less than 30 and transaction_amount is greater than 1000 then ASK_FOR_APPROVAL.",
+    "context_data": {
+      "is_first_time_buyer": false,
+      "account_age_days": 20,
+      "transaction_amount": 1500
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "If the user_country is 'CA' and the currency is 'USD' and the transaction_amount is greater than 2000 then ASK_FOR_APPROVAL for cross-border high value.",
+    "context_data": {
+      "user_country": "CA",
+      "currency": "USD",
+      "transaction_amount": 2500
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "If the payment_method is 'paypal' and shipping_address_matches_billing is true and user_risk_score is less than 20 then APPROVE.",
+    "context_data": {
+      "payment_method": "paypal",
+      "shipping_address_matches_billing": true,
+      "user_risk_score": 15
+    },
+    "expected_outcome": "APPROVE"
+  },
+  {
+    "natural_language_rule": "If the merchant_category is 'gift_card' and the item_count equals 1 and the transaction_amount is less than 10 then REJECT for unusually small gift card purchase.",
+    "context_data": {
+      "merchant_category": "gift_card",
+      "item_count": 1,
+      "transaction_amount": 5
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "If shipping_address_matches_billing is false and item_count is greater than 3 and transaction_amount is greater than 1000 then REJECT.",
+    "context_data": {
+      "shipping_address_matches_billing": false,
+      "item_count": 5,
+      "transaction_amount": 1200
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "If the transaction_amount is greater than or equal to 10 and the transaction_amount is less than or equal to 15 and the payment_method is 'crypto' then REJECT for micro crypto payments.",
+    "context_data": {
+      "transaction_amount": 12,
+      "payment_method": "crypto"
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "If the currency is 'JPY' and the transaction_amount is greater than 100000 then ASK_FOR_APPROVAL for large JPY orders.",
+    "context_data": {
+      "currency": "JPY",
+      "transaction_amount": 150000
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "If the transaction_amount is greater than 100 then ASK_FOR_APPROVAL.",
+    "context_data": {
+      "transaction_amount": 150
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "Reject the transaction if the transaction_amount is greater than 5000 and the user_risk_score is greater than 80.",
+    "context_data": {
+      "transaction_amount": 6000,
+      "user_risk_score": 85
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "Approve when the transaction_amount is less than or equal to 10 and the item_count equals 1.",
+    "context_data": {
+      "transaction_amount": 10,
+      "item_count": 1
+    },
+    "expected_outcome": "APPROVE"
+  },
+  {
+    "natural_language_rule": "If the merchant_category is 'electronics' and the user_risk_score is greater than 50 then REJECT.",
+    "context_data": {
+      "merchant_category": "electronics",
+      "user_risk_score": 51
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "If the payment_method is 'crypto' and shipping_address_matches_billing is false then ASK_FOR_APPROVAL.",
+    "context_data": {
+      "payment_method": "crypto",
+      "shipping_address_matches_billing": false
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "If the account_age_days is less than 7 and is_first_time_buyer is true then ASK_FOR_APPROVAL.",
+    "context_data": {
+      "account_age_days": 3,
+      "is_first_time_buyer": true
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "Reject if coupon_applied is true and transaction_amount is greater than 1000 and user_risk_score is greater than 70.",
+    "context_data": {
+      "coupon_applied": true,
+      "transaction_amount": 1500,
+      "user_risk_score": 75
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "If user_country equals 'US' and shipping_speed is 'overnight' and transaction_amount is greater than 2000 then ASK_FOR_APPROVAL.",
+    "context_data": {
+      "user_country": "US",
+      "shipping_speed": "overnight",
+      "transaction_amount": 2500
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "If the item_count equals 0 then REJECT.",
+    "context_data": {
+      "item_count": 0
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "Approve if shipping_address_matches_billing is true and user_risk_score is less than 20.",
+    "context_data": {
+      "shipping_address_matches_billing": true,
+      "user_risk_score": 10
+    },
+    "expected_outcome": "APPROVE"
+  },
+  {
+    "natural_language_rule": "If currency is 'JPY' and transaction_amount is greater than 100000 then ASK_FOR_APPROVAL.",
+    "context_data": {
+      "currency": "JPY",
+      "transaction_amount": 150000
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "Reject if payment_method is 'credit_card' and user_risk_score is greater than or equal to 95 and account_age_days is less than 30.",
+    "context_data": {
+      "payment_method": "credit_card",
+      "user_risk_score": 96,
+      "account_age_days": 10
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "If merchant_category is 'gift_card' and transaction_amount is greater than 0 then ASK_FOR_APPROVAL.",
+    "context_data": {
+      "merchant_category": "gift_card",
+      "transaction_amount": 25
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "Approve if account_age_days is greater than or equal to 365 and user_risk_score is less than 10 and transaction_amount is less than 1000.",
+    "context_data": {
+      "account_age_days": 400,
+      "user_risk_score": 5,
+      "transaction_amount": 500
+    },
+    "expected_outcome": "APPROVE"
+  },
+  {
+    "natural_language_rule": "If transaction_amount equals 1000 and coupon_applied is true then REJECT.",
+    "context_data": {
+      "transaction_amount": 1000,
+      "coupon_applied": true
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "If is_first_time_buyer is true and payment_method is 'paypal' and user_country is not 'US' then ASK_FOR_APPROVAL.",
+    "context_data": {
+      "is_first_time_buyer": true,
+      "payment_method": "paypal",
+      "user_country": "CA"
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "Reject if transaction_amount is greater than 10000.",
+    "context_data": {
+      "transaction_amount": 15000
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "If shipping_speed is 'standard' and item_count is greater than 10 then ASK_FOR_APPROVAL.",
+    "context_data": {
+      "shipping_speed": "standard",
+      "item_count": 12
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "Approve if coupon_applied is false and transaction_amount is greater than or equal to 20 and transaction_amount is less than or equal to 200.",
+    "context_data": {
+      "coupon_applied": false,
+      "transaction_amount": 50
+    },
+    "expected_outcome": "APPROVE"
+  },
+  {
+    "natural_language_rule": "If user_risk_score is greater than 30 and user_risk_score is less than or equal to 60 then ASK_FOR_APPROVAL.",
+    "context_data": {
+      "user_risk_score": 45
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "Reject if merchant_category is 'electronics' and payment_method is 'crypto' and shipping_address_matches_billing is false.",
+    "context_data": {
+      "merchant_category": "electronics",
+      "payment_method": "crypto",
+      "shipping_address_matches_billing": false
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "Approve if transaction_amount is 0 and item_count is 0.",
+    "context_data": {
+      "transaction_amount": 0,
+      "item_count": 0
+    },
+    "expected_outcome": "APPROVE"
+  },
+  {
+    "natural_language_rule": "If currency equals 'USD' and account_age_days equals 0 then ASK_FOR_APPROVAL.",
+    "context_data": {
+      "currency": "USD",
+      "account_age_days": 0
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "Reject if user_country is 'NG' and transaction_amount is greater than 50.",
+    "context_data": {
+      "user_country": "NG",
+      "transaction_amount": 100
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "If payment_method is 'paypal' and coupon_applied is true and transaction_amount is less than 5 then REJECT.",
+    "context_data": {
+      "payment_method": "paypal",
+      "coupon_applied": true,
+      "transaction_amount": 4
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "Approve if shipping_address_matches_billing is true and merchant_category is 'apparel' and item_count is less than or equal to 5.",
+    "context_data": {
+      "shipping_address_matches_billing": true,
+      "merchant_category": "apparel",
+      "item_count": 3
+    },
+    "expected_outcome": "APPROVE"
+  },
+  {
+    "natural_language_rule": "If user_risk_score is equal to 50 and transaction_amount is greater than 500 then ASK_FOR_APPROVAL.",
+    "context_data": {
+      "user_risk_score": 50,
+      "transaction_amount": 600
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "Reject if is_first_time_buyer is true and user_risk_score is greater than 40 and transaction_amount is greater than 1000.",
+    "context_data": {
+      "is_first_time_buyer": true,
+      "user_risk_score": 45,
+      "transaction_amount": 1200
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "Approve if payment_method is 'credit_card' and user_risk_score is less than 30 and account_age_days is greater than 180.",
+    "context_data": {
+      "payment_method": "credit_card",
+      "user_risk_score": 25,
+      "account_age_days": 200
+    },
+    "expected_outcome": "APPROVE"
+  },
+  {
+    "natural_language_rule": "If merchant_category is 'electronics' and item_count is greater than 3 then ASK_FOR_APPROVAL.",
+    "context_data": {
+      "merchant_category": "electronics",
+      "item_count": 4
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "Reject if currency is 'EUR' and transaction_amount is greater than or equal to 20000.",
+    "context_data": {
+      "currency": "EUR",
+      "transaction_amount": 20000
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "If shipping_speed is 'overnight' and account_age_days is less than 1 then ASK_FOR_APPROVAL.",
+    "context_data": {
+      "shipping_speed": "overnight",
+      "account_age_days": 0
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "Approve if coupon_applied is false and payment_method is 'credit_card' and transaction_amount is less than 50.",
+    "context_data": {
+      "coupon_applied": false,
+      "payment_method": "credit_card",
+      "transaction_amount": 30
+    },
+    "expected_outcome": "APPROVE"
+  },
+  {
+    "natural_language_rule": "Reject if item_count is greater than 100.",
+    "context_data": {
+      "item_count": 150
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "If user_country is 'US' and merchant_category is 'gift_card' and transaction_amount is greater than 500 then ASK_FOR_APPROVAL.",
+    "context_data": {
+      "user_country": "US",
+      "merchant_category": "gift_card",
+      "transaction_amount": 600
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "Approve if transaction_amount is less than 0 and user_risk_score is less than 100.",
+    "context_data": {
+      "transaction_amount": -10,
+      "user_risk_score": 20
+    },
+    "expected_outcome": "APPROVE"
+  },
+  {
+    "natural_language_rule": "Reject if payment_method is 'crypto' and user_country is 'RU'.",
+    "context_data": {
+      "payment_method": "crypto",
+      "user_country": "RU"
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "If transaction_amount is greater than 250 and currency is 'USD' and shipping_address_matches_billing is false then ASK_FOR_APPROVAL.",
+    "context_data": {
+      "transaction_amount": 300,
+      "currency": "USD",
+      "shipping_address_matches_billing": false
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "Approve if account_age_days equals 1000 and user_risk_score equals 0.",
+    "context_data": {
+      "account_age_days": 1000,
+      "user_risk_score": 0
+    },
+    "expected_outcome": "APPROVE"
+  },
+  {
+    "natural_language_rule": "Reject if merchant_category is 'apparel' and item_count equals 0 and transaction_amount is greater than 0.",
+    "context_data": {
+      "merchant_category": "apparel",
+      "item_count": 0,
+      "transaction_amount": 20
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "If shipping_speed is not 'standard' and transaction_amount is greater than 1000 then ASK_FOR_APPROVAL.",
+    "context_data": {
+      "shipping_speed": "overnight",
+      "transaction_amount": 1500
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "Approve if payment_method is 'paypal' and shipping_address_matches_billing is true and is_first_time_buyer is false.",
+    "context_data": {
+      "payment_method": "paypal",
+      "shipping_address_matches_billing": true,
+      "is_first_time_buyer": false
+    },
+    "expected_outcome": "APPROVE"
+  },
+  {
+    "natural_language_rule": "Reject if coupon_applied is true and transaction_amount is greater than 10000 and user_risk_score is greater than 90.",
+    "context_data": {
+      "coupon_applied": true,
+      "transaction_amount": 15000,
+      "user_risk_score": 91
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "If user_risk_score is less than 1 and transaction_amount is greater than 5000 then ASK_FOR_APPROVAL.",
+    "context_data": {
+      "user_risk_score": 0,
+      "transaction_amount": 6000
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "Approve if currency is 'GBP' and account_age_days is greater than 30 and user_risk_score is less than 40.",
+    "context_data": {
+      "currency": "GBP",
+      "account_age_days": 60,
+      "user_risk_score": 20
+    },
+    "expected_outcome": "APPROVE"
+  },
+  {
+    "natural_language_rule": "Reject if merchant_category is 'electronics' and (transaction_amount is greater than 3000 or item_count is greater than 10).",
+    "context_data": {
+      "merchant_category": "electronics",
+      "transaction_amount": 3500,
+      "item_count": 2
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "If shipping_address_matches_billing is false and user_country is not 'US' and transaction_amount is greater than 200 then ASK_FOR_APPROVAL.",
+    "context_data": {
+      "shipping_address_matches_billing": false,
+      "user_country": "FR",
+      "transaction_amount": 250
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "Approve if item_count equals 1 and merchant_category is 'apparel' and transaction_amount equals 49.99.",
+    "context_data": {
+      "item_count": 1,
+      "merchant_category": "apparel",
+      "transaction_amount": 49.99
+    },
+    "expected_outcome": "APPROVE"
+  },
+  {
+    "natural_language_rule": "Reject if account_age_days is less than or equal to 2 and user_risk_score is greater than or equal to 70.",
+    "context_data": {
+      "account_age_days": 2,
+      "user_risk_score": 70
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "If transaction_amount equals 999.99 and currency is 'USD' and payment_method is 'credit_card' then ASK_FOR_APPROVAL.",
+    "context_data": {
+      "transaction_amount": 999.99,
+      "currency": "USD",
+      "payment_method": "credit_card"
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "If the transaction_amount is greater than 100 then ASK_FOR_APPROVAL.",
+    "context_data": {
+      "transaction_amount": 150
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "Reject the transaction if the transaction_amount is greater than 5000 and the user_risk_score is above 80.",
+    "context_data": {
+      "transaction_amount": 6000,
+      "user_risk_score": 85
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "Approve if the user_risk_score is less than or equal to 20 and the account_age_days is greater than 365.",
+    "context_data": {
+      "user_risk_score": 15,
+      "account_age_days": 400
+    },
+    "expected_outcome": "APPROVE"
+  },
+  {
+    "natural_language_rule": "If the merchant_category is 'electronics' and the user_risk_score is greater than 50 then REJECT.",
+    "context_data": {
+      "merchant_category": "electronics",
+      "user_risk_score": 65
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "If the payment_method is 'crypto' OR the shipping_address_matches_billing is false then ASK_FOR_APPROVAL.",
+    "context_data": {
+      "payment_method": "crypto",
+      "shipping_address_matches_billing": true
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "If the transaction_amount is equal to 0 then REJECT.",
+    "context_data": {
+      "transaction_amount": 0
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "If the item_count is greater than 10 and the coupon_applied is true then ASK_FOR_APPROVAL.",
+    "context_data": {
+      "item_count": 12,
+      "coupon_applied": true
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "Approve if the shipping_speed is 'overnight' and the transaction_amount is less than or equal to 200.",
+    "context_data": {
+      "shipping_speed": "overnight",
+      "transaction_amount": 150
+    },
+    "expected_outcome": "APPROVE"
+  },
+  {
+    "natural_language_rule": "If the user_country is 'US' and the payment_method is 'paypal' and the transaction_amount is greater than 1000 then ASK_FOR_APPROVAL.",
+    "context_data": {
+      "user_country": "US",
+      "payment_method": "paypal",
+      "transaction_amount": 1500
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "If the account_age_days is less than 7 and is_first_time_buyer is true then ASK_FOR_APPROVAL.",
+    "context_data": {
+      "account_age_days": 3,
+      "is_first_time_buyer": true
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "Reject if the merchant_category is 'gift_card' and the transaction_amount is greater than 200.",
+    "context_data": {
+      "merchant_category": "gift_card",
+      "transaction_amount": 250
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "If the currency is 'EUR' and the transaction_amount is greater than 10000 then REJECT.",
+    "context_data": {
+      "currency": "EUR",
+      "transaction_amount": 15000
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "If the shipping_address_matches_billing is false and the user_risk_score is greater than 40 then ASK_FOR_APPROVAL.",
+    "context_data": {
+      "shipping_address_matches_billing": false,
+      "user_risk_score": 45
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "Approve if the transaction_amount is less than 5 and item_count is 1 and coupon_applied is false.",
+    "context_data": {
+      "transaction_amount": 4,
+      "item_count": 1,
+      "coupon_applied": false
+    },
+    "expected_outcome": "APPROVE"
+  },
+  {
+    "natural_language_rule": "If the payment_method is 'credit_card' and user_risk_score is greater than or equal to 90 then REJECT.",
+    "context_data": {
+      "payment_method": "credit_card",
+      "user_risk_score": 92
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "If the is_first_time_buyer is true and transaction_amount is greater than 1000 then ASK_FOR_APPROVAL.",
+    "context_data": {
+      "is_first_time_buyer": true,
+      "transaction_amount": 1200
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "If the user_country is 'CN' AND payment_method is 'credit_card' AND shipping_address_matches_billing is false then REJECT.",
+    "context_data": {
+      "user_country": "CN",
+      "payment_method": "credit_card",
+      "shipping_address_matches_billing": false
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "Approve if coupon_applied is true and transaction_amount is less than or equal to 50 and user_risk_score is less than 30.",
+    "context_data": {
+      "coupon_applied": true,
+      "transaction_amount": 40,
+      "user_risk_score": 20
+    },
+    "expected_outcome": "APPROVE"
+  },
+  {
+    "natural_language_rule": "If the merchant_category is 'apparel' and item_count is greater than or equal to 20 then ASK_FOR_APPROVAL.",
+    "context_data": {
+      "merchant_category": "apparel",
+      "item_count": 25
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "Reject if transaction_amount is negative (transaction_amount is less than 0).",
+    "context_data": {
+      "transaction_amount": -10
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "If the shipping_speed is 'standard' and transaction_amount is greater than 2000 and user_risk_score is above 70 then REJECT.",
+    "context_data": {
+      "shipping_speed": "standard",
+      "transaction_amount": 2500,
+      "user_risk_score": 75
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "If the transaction_amount is exactly 100 then ASK_FOR_APPROVAL (edge case: equals threshold triggers approval request).",
+    "context_data": {
+      "transaction_amount": 100
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "Approve if account_age_days is greater than or equal to 1000 and user_risk_score is less than 10.",
+    "context_data": {
+      "account_age_days": 1200,
+      "user_risk_score": 5
+    },
+    "expected_outcome": "APPROVE"
+  },
+  {
+    "natural_language_rule": "If the payment_method is 'paypal' and merchant_category is 'electronics' and transaction_amount is greater than 2000 then ASK_FOR_APPROVAL.",
+    "context_data": {
+      "payment_method": "paypal",
+      "merchant_category": "electronics",
+      "transaction_amount": 2500
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "If the user_country is 'FR' and currency is not 'EUR' then ASK_FOR_APPROVAL.",
+    "context_data": {
+      "user_country": "FR",
+      "currency": "USD"
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "Reject if item_count is 0 (item_count is equal to 0).",
+    "context_data": {
+      "item_count": 0
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "If the transaction_amount is greater than 2500 and (payment_method is 'credit_card' OR payment_method is 'paypal') then ASK_FOR_APPROVAL.",
+    "context_data": {
+      "transaction_amount": 3000,
+      "payment_method": "credit_card"
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "Approve if shipping_address_matches_billing is true and user_risk_score is less than or equal to 25.",
+    "context_data": {
+      "shipping_address_matches_billing": true,
+      "user_risk_score": 20
+    },
+    "expected_outcome": "APPROVE"
+  },
+  {
+    "natural_language_rule": "If the merchant_category is 'electronics' AND transaction_amount is greater than 1000 AND account_age_days is less than 30 then REJECT.",
+    "context_data": {
+      "merchant_category": "electronics",
+      "transaction_amount": 1500,
+      "account_age_days": 10
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "If is_first_time_buyer is true and coupon_applied is true and transaction_amount is greater than 500 then ASK_FOR_APPROVAL.",
+    "context_data": {
+      "is_first_time_buyer": true,
+      "coupon_applied": true,
+      "transaction_amount": 600
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "Approve if user_country is 'CA' and currency is 'CAD' and transaction_amount is less than 300.",
+    "context_data": {
+      "user_country": "CA",
+      "currency": "CAD",
+      "transaction_amount": 250
+    },
+    "expected_outcome": "APPROVE"
+  },
+  {
+    "natural_language_rule": "If payment_method is 'credit_card' and cardholder is unknown (edge case simulated by high user_risk_score) where user_risk_score is greater than 85 then REJECT.",
+    "context_data": {
+      "payment_method": "credit_card",
+      "user_risk_score": 90
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "If merchant_category is 'gift_card' and item_count is greater than 5 then REJECT.",
+    "context_data": {
+      "merchant_category": "gift_card",
+      "item_count": 6
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "If transaction_amount is greater than 50 and transaction_amount is less than or equal to 100 and user_risk_score is greater than 60 then ASK_FOR_APPROVAL.",
+    "context_data": {
+      "transaction_amount": 80,
+      "user_risk_score": 65
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "Approve if account_age_days is equal to 0 and is_first_time_buyer is true and transaction_amount is less than or equal to 20 (very small first order).",
+    "context_data": {
+      "account_age_days": 0,
+      "is_first_time_buyer": true,
+      "transaction_amount": 15
+    },
+    "expected_outcome": "APPROVE"
+  },
+  {
+    "natural_language_rule": "If shipping_speed is 'overnight' and merchant_category is 'electronics' and transaction_amount is greater than 1500 then ASK_FOR_APPROVAL.",
+    "context_data": {
+      "shipping_speed": "overnight",
+      "merchant_category": "electronics",
+      "transaction_amount": 1800
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "Reject if user_risk_score is greater than 95 regardless of other factors.",
+    "context_data": {
+      "user_risk_score": 97
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "If coupon_applied is true and shipping_address_matches_billing is false then ASK_FOR_APPROVAL.",
+    "context_data": {
+      "coupon_applied": true,
+      "shipping_address_matches_billing": false
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "Approve if payment_method is 'credit_card' and transaction_amount is less than 10 and user_risk_score is less than 50.",
+    "context_data": {
+      "payment_method": "credit_card",
+      "transaction_amount": 5,
+      "user_risk_score": 30
+    },
+    "expected_outcome": "APPROVE"
+  },
+  {
+    "natural_language_rule": "If user_country is 'GB' and currency is 'EUR' (mismatched currency for country) then ASK_FOR_APPROVAL (edge case).",
+    "context_data": {
+      "user_country": "GB",
+      "currency": "EUR"
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "If the transaction_amount is greater than or equal to 10000 and user_risk_score is greater than 50 then REJECT.",
+    "context_data": {
+      "transaction_amount": 10000,
+      "user_risk_score": 60
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "If payment_method is 'paypal' and is_first_time_buyer is true and transaction_amount is greater than 300 then ASK_FOR_APPROVAL.",
+    "context_data": {
+      "payment_method": "paypal",
+      "is_first_time_buyer": true,
+      "transaction_amount": 350
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "Approve if merchant_category is 'apparel' and transaction_amount is less than 100 and item_count is less than or equal to 3.",
+    "context_data": {
+      "merchant_category": "apparel",
+      "transaction_amount": 75,
+      "item_count": 2
+    },
+    "expected_outcome": "APPROVE"
+  },
+  {
+    "natural_language_rule": "Reject if shipping_address_matches_billing is false and user_country is not equal to 'US' and user_risk_score is greater than 50.",
+    "context_data": {
+      "shipping_address_matches_billing": false,
+      "user_country": "RU",
+      "user_risk_score": 55
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "If merchant_category is 'electronics' and coupon_applied is true and transaction_amount is greater than 800 then ASK_FOR_APPROVAL.",
+    "context_data": {
+      "merchant_category": "electronics",
+      "coupon_applied": true,
+      "transaction_amount": 900
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "Approve if account_age_days is greater than 30 and is_first_time_buyer is false and user_risk_score is less than 40.",
+    "context_data": {
+      "account_age_days": 60,
+      "is_first_time_buyer": false,
+      "user_risk_score": 35
+    },
+    "expected_outcome": "APPROVE"
+  },
+  {
+    "natural_language_rule": "If transaction_amount is greater than 750 and payment_method is 'crypto' then REJECT (high-value crypto transactions blocked).",
+    "context_data": {
+      "transaction_amount": 800,
+      "payment_method": "crypto"
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "If item_count is greater than 50 or transaction_amount is greater than 20000 then REJECT (bulk or extremely large order).",
+    "context_data": {
+      "item_count": 60,
+      "transaction_amount": 1500
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "If user_country is 'JP' and currency is 'JPY' and transaction_amount is less than 1 then REJECT (suspicious micro-amount).",
+    "context_data": {
+      "user_country": "JP",
+      "currency": "JPY",
+      "transaction_amount": 0.5
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "If shipping_speed is 'standard' and item_count is greater than 30 and coupon_applied is true then ASK_FOR_APPROVAL (edge: large discounted bulk orders).",
+    "context_data": {
+      "shipping_speed": "standard",
+      "item_count": 35,
+      "coupon_applied": true
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "Approve if transaction_amount is less than or equal to 1 and user_risk_score is less than 5 (tiny trusted payments).",
+    "context_data": {
+      "transaction_amount": 1,
+      "user_risk_score": 4
+    },
+    "expected_outcome": "APPROVE"
+  },
+  {
+    "natural_language_rule": "If merchant_category is 'electronics' and user_country is 'US' and transaction_amount is greater than 3000 then REJECT.",
+    "context_data": {
+      "merchant_category": "electronics",
+      "user_country": "US",
+      "transaction_amount": 3500
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "If payment_method is 'credit_card' and account_age_days is less than 1 and is_first_time_buyer is true then ASK_FOR_APPROVAL (brand new signups using credit card).",
+    "context_data": {
+      "payment_method": "credit_card",
+      "account_age_days": 0,
+      "is_first_time_buyer": true
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "Reject if currency is an empty string (currency is equal to '').",
+    "context_data": {
+      "currency": ""
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "If user_risk_score is between 40 and 60 inclusive and transaction_amount is greater than 500 then ASK_FOR_APPROVAL.",
+    "context_data": {
+      "user_risk_score": 50,
+      "transaction_amount": 600
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "If the transaction_amount is greater than 100 then ASK_FOR_APPROVAL.",
+    "context_data": {
+      "transaction_amount": 150
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "If the transaction_amount is greater than 5000 and the user_risk_score is greater than 80 then REJECT the order.",
+    "context_data": {
+      "transaction_amount": 7500,
+      "user_risk_score": 85
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "If the merchant_category is 'electronics' and the user_risk_score is greater than 50 then REJECT.",
+    "context_data": {
+      "merchant_category": "electronics",
+      "user_risk_score": 65
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "If the account_age_days is less than 7 and the transaction_amount is greater than 1000 then ASK_FOR_APPROVAL.",
+    "context_data": {
+      "account_age_days": 3,
+      "transaction_amount": 1500
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "If shipping_address_matches_billing is false and the transaction_amount is greater than 200 then ASK_FOR_APPROVAL.",
+    "context_data": {
+      "shipping_address_matches_billing": false,
+      "transaction_amount": 250
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "If the payment_method is 'crypto' and the transaction_amount is greater than 50 then ASK_FOR_APPROVAL.",
+    "context_data": {
+      "payment_method": "crypto",
+      "transaction_amount": 75
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "If the item_count is greater than 10 and the merchant_category is 'gift_card' then REJECT.",
+    "context_data": {
+      "item_count": 12,
+      "merchant_category": "gift_card"
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "If the coupon_applied is true and the transaction_amount is equal to 0 then REJECT.",
+    "context_data": {
+      "coupon_applied": true,
+      "transaction_amount": 0
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "If the user_country is 'NG' and the user_risk_score is greater than 40 then ASK_FOR_APPROVAL.",
+    "context_data": {
+      "user_country": "NG",
+      "user_risk_score": 45
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "If the shipping_speed is 'overnight' and the transaction_amount is greater than 2000 then ASK_FOR_APPROVAL.",
+    "context_data": {
+      "shipping_speed": "overnight",
+      "transaction_amount": 2500
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "If is_first_time_buyer is true and account_age_days is less than 1 then ASK_FOR_APPROVAL.",
+    "context_data": {
+      "is_first_time_buyer": true,
+      "account_age_days": 0
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "If the transaction_amount is less than or equal to 10 then APPROVE.",
+    "context_data": {
+      "transaction_amount": 5
+    },
+    "expected_outcome": "APPROVE"
+  },
+  {
+    "natural_language_rule": "If the user_risk_score is less than 20 and shipping_address_matches_billing is true then APPROVE.",
+    "context_data": {
+      "user_risk_score": 10,
+      "shipping_address_matches_billing": true
+    },
+    "expected_outcome": "APPROVE"
+  },
+  {
+    "natural_language_rule": "If currency is 'EUR' and transaction_amount is greater than 10000 then REJECT.",
+    "context_data": {
+      "currency": "EUR",
+      "transaction_amount": 15000
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "If the merchant_category is 'apparel' and item_count is greater than 20 then ASK_FOR_APPROVAL.",
+    "context_data": {
+      "merchant_category": "apparel",
+      "item_count": 25
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "If the payment_method is 'paypal' and user_risk_score is greater than 70 then ASK_FOR_APPROVAL.",
+    "context_data": {
+      "payment_method": "paypal",
+      "user_risk_score": 75
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "If the user_country is 'US' and account_age_days is less than 30 and transaction_amount is greater than 2000 then ASK_FOR_APPROVAL.",
+    "context_data": {
+      "user_country": "US",
+      "account_age_days": 10,
+      "transaction_amount": 3000
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "If the transaction_amount is exactly 999 and the coupon_applied is true then ASK_FOR_APPROVAL (edge-case exact match).",
+    "context_data": {
+      "transaction_amount": 999,
+      "coupon_applied": true
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "If the user_risk_score is greater than or equal to 95 then REJECT.",
+    "context_data": {
+      "user_risk_score": 96
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "If shipping_address_matches_billing is false and is_first_time_buyer is true then ASK_FOR_APPROVAL.",
+    "context_data": {
+      "shipping_address_matches_billing": false,
+      "is_first_time_buyer": true
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "If the merchant_category is 'electronics' and payment_method is 'credit_card' and transaction_amount is greater than 3000 then ASK_FOR_APPROVAL.",
+    "context_data": {
+      "merchant_category": "electronics",
+      "payment_method": "credit_card",
+      "transaction_amount": 3500
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "If the item_count is 1 and merchant_category is 'gift_card' and transaction_amount is greater than 500 then REJECT (suspicious single high-value gift card).",
+    "context_data": {
+      "item_count": 1,
+      "merchant_category": "gift_card",
+      "transaction_amount": 750
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "If the account_age_days is greater than 365 and user_risk_score is less than 30 then APPROVE.",
+    "context_data": {
+      "account_age_days": 500,
+      "user_risk_score": 20
+    },
+    "expected_outcome": "APPROVE"
+  },
+  {
+    "natural_language_rule": "If the transaction_amount is negative then REJECT (invalid amount edge case).",
+    "context_data": {
+      "transaction_amount": -5
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "If the payment_method is 'credit_card' and coupon_applied is true and transaction_amount is greater than 2000 then ASK_FOR_APPROVAL.",
+    "context_data": {
+      "payment_method": "credit_card",
+      "coupon_applied": true,
+      "transaction_amount": 2500
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "If the user_country is 'CN' and shipping_address_matches_billing is false then REJECT.",
+    "context_data": {
+      "user_country": "CN",
+      "shipping_address_matches_billing": false
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "If the shipping_speed is 'standard' and transaction_amount is less than 20 then APPROVE.",
+    "context_data": {
+      "shipping_speed": "standard",
+      "transaction_amount": 15
+    },
+    "expected_outcome": "APPROVE"
+  },
+  {
+    "natural_language_rule": "If is_first_time_buyer is true and transaction_amount is greater than 300 and user_risk_score is greater than 40 then ASK_FOR_APPROVAL.",
+    "context_data": {
+      "is_first_time_buyer": true,
+      "transaction_amount": 400,
+      "user_risk_score": 50
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "If merchant_category is 'electronics' and item_count is greater than 5 and account_age_days is less than 14 then ASK_FOR_APPROVAL.",
+    "context_data": {
+      "merchant_category": "electronics",
+      "item_count": 6,
+      "account_age_days": 10
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "If currency is 'USD' and transaction_amount is exactly 100 then APPROVE (boundary exact match).",
+    "context_data": {
+      "currency": "USD",
+      "transaction_amount": 100
+    },
+    "expected_outcome": "APPROVE"
+  },
+  {
+    "natural_language_rule": "If the user_risk_score is between 30 and 60 inclusive and transaction_amount is greater than 1000 then ASK_FOR_APPROVAL.",
+    "context_data": {
+      "user_risk_score": 45,
+      "transaction_amount": 1500
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "If payment_method is 'credit_card' and shipping_address_matches_billing is true and user_risk_score is less than 25 then APPROVE.",
+    "context_data": {
+      "payment_method": "credit_card",
+      "shipping_address_matches_billing": true,
+      "user_risk_score": 10
+    },
+    "expected_outcome": "APPROVE"
+  },
+  {
+    "natural_language_rule": "If merchant_category is 'gift_card' and coupon_applied is true then REJECT (suspicious stacking).",
+    "context_data": {
+      "merchant_category": "gift_card",
+      "coupon_applied": true
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "If transaction_amount is greater than 250 and shipping_speed is 'overnight' and user_risk_score is greater than 60 then ASK_FOR_APPROVAL.",
+    "context_data": {
+      "transaction_amount": 300,
+      "shipping_speed": "overnight",
+      "user_risk_score": 75
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "If account_age_days is 0 and is_first_time_buyer is true and transaction_amount is greater than 50 then ASK_FOR_APPROVAL.",
+    "context_data": {
+      "account_age_days": 0,
+      "is_first_time_buyer": true,
+      "transaction_amount": 60
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "If user_country is 'GB' and currency is 'GBP' and transaction_amount is less than 100 then APPROVE.",
+    "context_data": {
+      "user_country": "GB",
+      "currency": "GBP",
+      "transaction_amount": 50
+    },
+    "expected_outcome": "APPROVE"
+  },
+  {
+    "natural_language_rule": "If payment_method is 'crypto' and user_risk_score is greater than 30 then REJECT.",
+    "context_data": {
+      "payment_method": "crypto",
+      "user_risk_score": 45
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "If the shipping_address_matches_billing is true and merchant_category is 'apparel' and transaction_amount is less than 300 then APPROVE.",
+    "context_data": {
+      "shipping_address_matches_billing": true,
+      "merchant_category": "apparel",
+      "transaction_amount": 250
+    },
+    "expected_outcome": "APPROVE"
+  },
+  {
+    "natural_language_rule": "If user_risk_score equals 50 exactly then ASK_FOR_APPROVAL (edge-case exact threshold).",
+    "context_data": {
+      "user_risk_score": 50
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "If merchant_category is 'electronics' and user_country is 'BR' and transaction_amount is greater than 800 then ASK_FOR_APPROVAL.",
+    "context_data": {
+      "merchant_category": "electronics",
+      "user_country": "BR",
+      "transaction_amount": 900
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "If item_count is 0 then REJECT (invalid cart edge case).",
+    "context_data": {
+      "item_count": 0
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "If coupon_applied is false and transaction_amount is greater than 10000 then ASK_FOR_APPROVAL (high ticket without coupon).",
+    "context_data": {
+      "coupon_applied": false,
+      "transaction_amount": 15000
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "If is_first_time_buyer is false and account_age_days is greater than 100 and user_risk_score is less than 40 then APPROVE.",
+    "context_data": {
+      "is_first_time_buyer": false,
+      "account_age_days": 200,
+      "user_risk_score": 25
+    },
+    "expected_outcome": "APPROVE"
+  },
+  {
+    "natural_language_rule": "If shipping_speed is 'overnight' and merchant_category is 'gift_card' then REJECT (risky expedited gift card).",
+    "context_data": {
+      "shipping_speed": "overnight",
+      "merchant_category": "gift_card"
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "If user_country is 'RU' and payment_method is 'paypal' and user_risk_score is greater than 30 then REJECT.",
+    "context_data": {
+      "user_country": "RU",
+      "payment_method": "paypal",
+      "user_risk_score": 35
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "If transaction_amount is greater than or equal to 100000 then REJECT (extremely large order).",
+    "context_data": {
+      "transaction_amount": 150000
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "If currency is 'JPY' and transaction_amount is less than 1000 then APPROVE (low-value in JPY).",
+    "context_data": {
+      "currency": "JPY",
+      "transaction_amount": 900
+    },
+    "expected_outcome": "APPROVE"
+  },
+  {
+    "natural_language_rule": "If merchant_category is 'electronics' and coupon_applied is true and user_risk_score is greater than 60 then ASK_FOR_APPROVAL.",
+    "context_data": {
+      "merchant_category": "electronics",
+      "coupon_applied": true,
+      "user_risk_score": 70
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "If is_first_time_buyer is true and merchant_category is 'gift_card' then REJECT (first-time gift card purchases are high risk).",
+    "context_data": {
+      "is_first_time_buyer": true,
+      "merchant_category": "gift_card"
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "If payment_method is 'credit_card' and transaction_amount is less than 50 and user_risk_score is less than 20 then APPROVE.",
+    "context_data": {
+      "payment_method": "credit_card",
+      "transaction_amount": 20,
+      "user_risk_score": 10
+    },
+    "expected_outcome": "APPROVE"
+  },
+  {
+    "natural_language_rule": "If user_country is 'AU' and shipping_address_matches_billing is false and transaction_amount is greater than 500 then ASK_FOR_APPROVAL.",
+    "context_data": {
+      "user_country": "AU",
+      "shipping_address_matches_billing": false,
+      "transaction_amount": 600
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "If account_age_days is less than 2 and payment_method is 'paypal' and transaction_amount is greater than 100 then ASK_FOR_APPROVAL (new account + paypal).",
+    "context_data": {
+      "account_age_days": 1,
+      "payment_method": "paypal",
+      "transaction_amount": 150
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "If transaction_amount is 1 and coupon_applied is true then REJECT (suspicious penny-order with coupon).",
+    "context_data": {
+      "transaction_amount": 1,
+      "coupon_applied": true
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "If user_risk_score is 0 and transaction_amount is less than 1000 then APPROVE (lowest risk).",
+    "context_data": {
+      "user_risk_score": 0,
+      "transaction_amount": 500
+    },
+    "expected_outcome": "APPROVE"
+  },
+  {
+    "natural_language_rule": "If merchant_category is 'apparel' and item_count is exactly 100 then ASK_FOR_APPROVAL (bulk extreme edge case).",
+    "context_data": {
+      "merchant_category": "apparel",
+      "item_count": 100
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "If payment_method is 'credit_card' and user_country is 'US' and transaction_amount is less than 25 then APPROVE.",
+    "context_data": {
+      "payment_method": "credit_card",
+      "user_country": "US",
+      "transaction_amount": 20
+    },
+    "expected_outcome": "APPROVE"
+  },
+  {
+    "natural_language_rule": "If the transaction_amount is greater than 100 then the decision must be ASK_FOR_APPROVAL.",
+    "context_data": {
+      "transaction_amount": 150
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "Reject the transaction if the transaction_amount is greater than 5000 and the user_risk_score is greater than 80.",
+    "context_data": {
+      "transaction_amount": 6000,
+      "user_risk_score": 85
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "If the merchant_category is 'gift_card' and the transaction_amount is greater than 200 then ASK_FOR_APPROVAL.",
+    "context_data": {
+      "merchant_category": "gift_card",
+      "transaction_amount": 250
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "If the shipping_address_matches_billing is false and the user_risk_score is greater than 60 then ASK_FOR_APPROVAL.",
+    "context_data": {
+      "shipping_address_matches_billing": false,
+      "user_risk_score": 65
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "If is_first_time_buyer is true and the transaction_amount is greater than 1000 then ASK_FOR_APPROVAL.",
+    "context_data": {
+      "is_first_time_buyer": true,
+      "transaction_amount": 1500
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "Reject if the payment_method is 'crypto' and the transaction_amount is greater than 200.",
+    "context_data": {
+      "payment_method": "crypto",
+      "transaction_amount": 300
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "If the account_age_days is less than 7 and the user_risk_score is greater than 40 then ASK_FOR_APPROVAL.",
+    "context_data": {
+      "account_age_days": 3,
+      "user_risk_score": 50
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "If coupon_applied is true and the transaction_amount is equal to 0 and the user_risk_score is less than 20 then APPROVE.",
+    "context_data": {
+      "coupon_applied": true,
+      "transaction_amount": 0,
+      "user_risk_score": 10
+    },
+    "expected_outcome": "APPROVE"
+  },
+  {
+    "natural_language_rule": "Reject the order if the merchant_category is 'electronics' and the user_risk_score is greater than 50.",
+    "context_data": {
+      "merchant_category": "electronics",
+      "user_risk_score": 60
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "If the user_country is 'US' and the shipping_speed is 'overnight' and the transaction_amount is greater than 2000 then ASK_FOR_APPROVAL.",
+    "context_data": {
+      "user_country": "US",
+      "shipping_speed": "overnight",
+      "transaction_amount": 2500
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "If the item_count is greater than 10 and the transaction_amount is greater than 1000 then ASK_FOR_APPROVAL.",
+    "context_data": {
+      "item_count": 12,
+      "transaction_amount": 1500
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "If the shipping_address_matches_billing is true and the user_risk_score is less than 20 then APPROVE.",
+    "context_data": {
+      "shipping_address_matches_billing": true,
+      "user_risk_score": 10
+    },
+    "expected_outcome": "APPROVE"
+  },
+  {
+    "natural_language_rule": "If the payment_method is 'paypal' and the user_country is not equal to 'US' and the transaction_amount is greater than 500 then ASK_FOR_APPROVAL.",
+    "context_data": {
+      "payment_method": "paypal",
+      "user_country": "FR",
+      "transaction_amount": 600
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "If the transaction_amount is equal to 100 and coupon_applied is true then REJECT.",
+    "context_data": {
+      "transaction_amount": 100,
+      "coupon_applied": true
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "If the account_age_days is greater than 3650 and is_first_time_buyer is true then REJECT.",
+    "context_data": {
+      "account_age_days": 4000,
+      "is_first_time_buyer": true
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "If the currency is 'BTC' then REJECT the transaction.",
+    "context_data": {
+      "currency": "BTC",
+      "transaction_amount": 100
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "If the merchant_category is 'apparel' and the item_count is greater than or equal to 1 and the transaction_amount is less than 50 then APPROVE.",
+    "context_data": {
+      "merchant_category": "apparel",
+      "item_count": 2,
+      "transaction_amount": 45
+    },
+    "expected_outcome": "APPROVE"
+  },
+  {
+    "natural_language_rule": "Reject if the user_risk_score is greater than or equal to 90 or the transaction_amount is greater than or equal to 10000.",
+    "context_data": {
+      "user_risk_score": 92,
+      "transaction_amount": 100
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "If the shipping_speed is 'standard' and shipping_address_matches_billing is false and the transaction_amount is greater than 50 then ASK_FOR_APPROVAL.",
+    "context_data": {
+      "shipping_speed": "standard",
+      "shipping_address_matches_billing": false,
+      "transaction_amount": 75
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "If the user_country is 'NG' and the payment_method is 'credit_card' and the user_risk_score is greater than 30 then REJECT.",
+    "context_data": {
+      "user_country": "NG",
+      "payment_method": "credit_card",
+      "user_risk_score": 40
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "If is_first_time_buyer is true and account_age_days is less than 30 and the transaction_amount is greater than 300 then ASK_FOR_APPROVAL.",
+    "context_data": {
+      "is_first_time_buyer": true,
+      "account_age_days": 10,
+      "transaction_amount": 350
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "If coupon_applied is true and the item_count is equal to 0 then REJECT.",
+    "context_data": {
+      "coupon_applied": true,
+      "item_count": 0
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "If the merchant_category is 'electronics' and the payment_method is 'paypal' and shipping_address_matches_billing is false then ASK_FOR_APPROVAL.",
+    "context_data": {
+      "merchant_category": "electronics",
+      "payment_method": "paypal",
+      "shipping_address_matches_billing": false
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "If the transaction_amount is less than or equal to 5 then APPROVE.",
+    "context_data": {
+      "transaction_amount": 3
+    },
+    "expected_outcome": "APPROVE"
+  },
+  {
+    "natural_language_rule": "If the user_risk_score is greater than or equal to 30 and the user_risk_score is less than or equal to 70 and the transaction_amount is greater than 2000 then ASK_FOR_APPROVAL.",
+    "context_data": {
+      "user_risk_score": 50,
+      "transaction_amount": 2500
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "If the currency is 'EUR' and the user_country is 'DE' and the transaction_amount is greater than 5000 then ASK_FOR_APPROVAL.",
+    "context_data": {
+      "currency": "EUR",
+      "user_country": "DE",
+      "transaction_amount": 6000
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "If the payment_method is 'credit_card' and the transaction_amount is equal to 0 then REJECT.",
+    "context_data": {
+      "payment_method": "credit_card",
+      "transaction_amount": 0
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "If the item_count is greater than 50 then ASK_FOR_APPROVAL.",
+    "context_data": {
+      "item_count": 60
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "Reject if the merchant_category is 'gift_card' and is_first_time_buyer is true and the transaction_amount is greater than 100.",
+    "context_data": {
+      "merchant_category": "gift_card",
+      "is_first_time_buyer": true,
+      "transaction_amount": 150
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "If the user_country is 'US' and the currency is not equal to 'USD' then ASK_FOR_APPROVAL.",
+    "context_data": {
+      "user_country": "US",
+      "currency": "EUR"
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "If account_age_days is equal to 0 and is_first_time_buyer is true then ASK_FOR_APPROVAL.",
+    "context_data": {
+      "account_age_days": 0,
+      "is_first_time_buyer": true,
+      "transaction_amount": 20
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "If the shipping_speed is 'overnight' and the transaction_amount is less than 10 then REJECT.",
+    "context_data": {
+      "shipping_speed": "overnight",
+      "transaction_amount": 5
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "If the payment_method is 'paypal' and coupon_applied is true and the user_risk_score is greater than 70 then REJECT.",
+    "context_data": {
+      "payment_method": "paypal",
+      "coupon_applied": true,
+      "user_risk_score": 75
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "If the merchant_category is 'electronics' and the item_count is greater than 5 and the transaction_amount is greater than 2000 then ASK_FOR_APPROVAL.",
+    "context_data": {
+      "merchant_category": "electronics",
+      "item_count": 6,
+      "transaction_amount": 2500
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "If the user_risk_score is less than 20 and the transaction_amount is less than 500 and shipping_address_matches_billing is true then APPROVE.",
+    "context_data": {
+      "user_risk_score": 15,
+      "transaction_amount": 200,
+      "shipping_address_matches_billing": true
+    },
+    "expected_outcome": "APPROVE"
+  },
+  {
+    "natural_language_rule": "If the user_country is 'CN' and the payment_method is 'crypto' then REJECT.",
+    "context_data": {
+      "user_country": "CN",
+      "payment_method": "crypto",
+      "transaction_amount": 100
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "If coupon_applied is true and the transaction_amount is greater than or equal to 1000 and the user_risk_score is greater than 50 then ASK_FOR_APPROVAL.",
+    "context_data": {
+      "coupon_applied": true,
+      "transaction_amount": 1200,
+      "user_risk_score": 55
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "If the item_count is equal to 1 and the merchant_category is 'gift_card' and the transaction_amount is greater than 500 then REJECT.",
+    "context_data": {
+      "item_count": 1,
+      "merchant_category": "gift_card",
+      "transaction_amount": 600
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "If account_age_days is greater than 1 and account_age_days is less than 365 and is_first_time_buyer is true and the transaction_amount is greater than 100 then ASK_FOR_APPROVAL.",
+    "context_data": {
+      "account_age_days": 200,
+      "is_first_time_buyer": true,
+      "transaction_amount": 150
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "If the transaction_amount is less than 0 then REJECT (negative transaction_amount is invalid).",
+    "context_data": {
+      "transaction_amount": -10
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "If the payment_method is 'credit_card' and the user_risk_score is less than or equal to 30 and the transaction_amount is less than 100 then APPROVE.",
+    "context_data": {
+      "payment_method": "credit_card",
+      "user_risk_score": 25,
+      "transaction_amount": 50
+    },
+    "expected_outcome": "APPROVE"
+  },
+  {
+    "natural_language_rule": "If shipping_address_matches_billing is false and user_country is not equal to 'US' and the transaction_amount is greater than 300 then ASK_FOR_APPROVAL.",
+    "context_data": {
+      "shipping_address_matches_billing": false,
+      "user_country": "GB",
+      "transaction_amount": 400
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "If coupon_applied is false and the transaction_amount is greater than 5000 and the user_risk_score is less than 50 then ASK_FOR_APPROVAL.",
+    "context_data": {
+      "coupon_applied": false,
+      "transaction_amount": 6000,
+      "user_risk_score": 30
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "If the merchant_category is 'apparel' and the item_count is equal to 0 then REJECT.",
+    "context_data": {
+      "merchant_category": "apparel",
+      "item_count": 0
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "Reject if the user_risk_score is greater than 70 or (is_first_time_buyer is true and the transaction_amount is greater than 2000).",
+    "context_data": {
+      "is_first_time_buyer": true,
+      "transaction_amount": 2500,
+      "user_risk_score": 50
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "If the currency is 'USD' and the user_country is 'US' and the payment_method is 'credit_card' and shipping_address_matches_billing is true then APPROVE.",
+    "context_data": {
+      "currency": "USD",
+      "user_country": "US",
+      "payment_method": "credit_card",
+      "shipping_address_matches_billing": true
+    },
+    "expected_outcome": "APPROVE"
+  },
+  {
+    "natural_language_rule": "If the shipping_speed is 'standard' and the transaction_amount is equal to 50 and coupon_applied is true then APPROVE.",
+    "context_data": {
+      "shipping_speed": "standard",
+      "transaction_amount": 50,
+      "coupon_applied": true
+    },
+    "expected_outcome": "APPROVE"
+  },
+  {
+    "natural_language_rule": "If the item_count is greater than 0 and the transaction_amount divided by item_count is less than 1 then REJECT.",
+    "context_data": {
+      "item_count": 10,
+      "transaction_amount": 5
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "If the user_country is 'JP' and the currency is 'JPY' and the transaction_amount is greater than 100000 then ASK_FOR_APPROVAL.",
+    "context_data": {
+      "user_country": "JP",
+      "currency": "JPY",
+      "transaction_amount": 150000
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "If the payment_method is 'paypal' and is_first_time_buyer is true and account_age_days is less than 2 and the transaction_amount is greater than 300 then REJECT.",
+    "context_data": {
+      "payment_method": "paypal",
+      "is_first_time_buyer": true,
+      "account_age_days": 1,
+      "transaction_amount": 350
+    },
+    "expected_outcome": "REJECT"
+  }
+]

@@ -33,7 +33,9 @@ class RuleStore:
             feature=rule_create.feature,
             datapoints=rule_create.datapoints,
             edge_cases=rule_create.edge_cases,
-            rule_logic=rule_create.rule_logic
+            edge_cases_json=rule_create.edge_cases_json,
+            rule_logic=rule_create.rule_logic,
+            rule_logic_json=rule_create.rule_logic_json
         )
         group.rules.append(rule)
         return rule

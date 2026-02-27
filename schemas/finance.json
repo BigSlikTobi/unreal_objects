@@ -1,0 +1,18 @@
+{
+  "name": "finance_blueprint",
+  "description": "Standard schema for banking, loans, and financial transactions.",
+  "schema": {
+    "withdrawal_amount": "number (amount requested for withdrawal)",
+    "account_balance": "number (current available funds)",
+    "daily_withdrawal_limit": "number (maximum allowed withdrawal per day)",
+    "is_corporate_account": "boolean",
+    "kyc_verified": "boolean",
+    "transaction_time_hour": "number (0-23 hour of the transaction)",
+    "beneficiary_country": "string (ISO country code of receiver)",
+    "aml_risk_score": "number (Anti-Money Laundering score 0-100)",
+    "loan_amount_requested": "number",
+    "user_credit_score": "number (e.g., 300-850)",
+    "failed_login_attempts": "number",
+    "device_trust_score": "number (0-100)"
+  }
+}

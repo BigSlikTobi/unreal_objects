@@ -1,0 +1,18 @@
+{
+  "name": "ecommerce_blueprint",
+  "description": "Standard schema for e-commerce transactions and user sessions.",
+  "schema": {
+    "transaction_amount": "number (the total cost of the order)",
+    "currency": "string (e.g., 'USD', 'EUR')",
+    "user_risk_score": "number (0-100 risk assessment)",
+    "account_age_days": "number (days since user registration)",
+    "merchant_category": "string (e.g., 'electronics', 'apparel', 'gift_card')",
+    "shipping_address_matches_billing": "boolean",
+    "item_count": "number (total items in cart)",
+    "coupon_applied": "boolean",
+    "payment_method": "string (e.g., 'credit_card', 'paypal', 'crypto')",
+    "user_country": "string (ISO country code)",
+    "shipping_speed": "string (e.g., 'standard', 'overnight')",
+    "is_first_time_buyer": "boolean"
+  }
+}

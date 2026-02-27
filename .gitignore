@@ -6,3 +6,4 @@ __pycache__/
 test_sse.py
 test_cors.py
 make_transparent.py
+.env

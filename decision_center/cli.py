@@ -153,6 +153,34 @@ def prompt_rule_creation(group_id: str, llm_config: dict | None = None) -> dict:
         feature = input("Feature (e.g. Fraud Check): ").strip()
     
     if llm_config:
+        context_schema = None
+        print("\n--- Optional Schema Enforcement ---")
+        print("  1. None (Freeform)")
+        print("  2. E-Commerce Blueprint (schemas/ecommerce.json)")
+        print("  3. Finance Blueprint (schemas/finance.json)")
+        print("  4. Custom Schema Path")
+        schema_choice = input("Select an option [1-4, Default: 1]: ").strip()
+        
+        if schema_choice == "2":
+            schema_path = "schemas/ecommerce.json"
+        elif schema_choice == "3":
+            schema_path = "schemas/finance.json"
+        elif schema_choice == "4":
+            schema_path = input("Enter path to your JSON schema relative to project root: ").strip()
+        else:
+            schema_path = None
+            
+        if schema_path and os.path.exists(schema_path):
+            with open(schema_path, "r") as f:
+                try:
+                    schema_data = json.load(f)
+                    context_schema = schema_data.get("schema", schema_data)
+                    print(f"Loaded schema from {schema_path}")
+                except json.JSONDecodeError:
+                    print("Invalid JSON, skipping schema enforcement")
+        elif schema_path:
+             print(f"File {schema_path} not found, skipping schema enforcement")
+
         if existing_rule_obj:
             print(f"Current Logic: {existing_rule_obj.get('rule_logic')}")
             if existing_rule_obj.get('edge_cases'):
@@ -179,7 +207,8 @@ def prompt_rule_creation(group_id: str, llm_config: dict | None = None) -> dict:
                     name=name,
                     provider=llm_config["provider"],
                     model=llm_config["model"],
-                    api_key=llm_config["api_key"]
+                    api_key=llm_config["api_key"],
+                    context_schema=context_schema
                 )
                 datapoints = translation["datapoints"]
                 edge_cases = translation.get("edge_cases", [])
