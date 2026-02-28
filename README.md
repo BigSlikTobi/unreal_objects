@@ -22,12 +22,12 @@ Think of it as **Autonomy with Receipts.** 🧾
 
 Unreal Objects is cleanly decoupled into modular services:
 
-| Service | Port | Purpose |
-|---|---|---|
-| 📏 **Rule Engine** | `:8001` | CRUD for rule groups, rules, and datapoint definitions |
-| 🧠 **Decision Center** | `:8002` | Evaluates actions against rules; maintains immutable audit log |
-| 🔌 **MCP Server** | `:8000` | [Model Context Protocol](https://modelcontextprotocol.io) bridge for AI agents |
-| 🖥️ **React UI** | `:5173` | Visual rule builder with structured fill-in-the-blank editor and test console |
+| Service                | Port    | Purpose                                                                        |
+| ---------------------- | ------- | ------------------------------------------------------------------------------ |
+| 📏 **Rule Engine**     | `:8001` | CRUD for rule groups, rules, and datapoint definitions                         |
+| 🧠 **Decision Center** | `:8002` | Evaluates actions against rules; maintains immutable audit log                 |
+| 🔌 **MCP Server**      | `:8000` | [Model Context Protocol](https://modelcontextprotocol.io) bridge for AI agents |
+| 🖥️ **React UI**        | `:5173` | Visual rule builder with structured fill-in-the-blank editor and test console  |
 
 ---
 
@@ -100,23 +100,34 @@ pipeline safely governed by the Rule Engine's stored groups.
 
 ### 📐 Schema Blueprints — Why They Matter
 
-When the LLM translates a plain-English rule into JSON Logic it has to choose variable names. Without guidance it invents them freely — the same concept might become `amount` in one rule, `transaction_amount` in the next, and `purchase_amount` in a third. Your AI agent only sends one name in its payload, so the other two rules silently fail to match.
+When the LLM translates a plain-English rule into JSON Logic it has to choose
+variable names. Without guidance it invents them freely — the same concept might
+become `amount` in one rule, `transaction_amount` in the next, and
+`purchase_amount` in a third. Your AI agent only sends one name in its payload,
+so the other two rules silently fail to match.
 
-**Schemas fix this by locking the LLM to a pre-approved vocabulary.** Every rule that uses the E-Commerce schema will always call the order total `transaction_amount`, no matter how it was phrased in plain English — so all rules stay consistent and your agent only needs to send one predictable payload.
+**Schemas fix this by locking the LLM to a pre-approved vocabulary.** Every rule
+that uses the E-Commerce schema will always call the order total
+`transaction_amount`, no matter how it was phrased in plain English — so all
+rules stay consistent and your agent only needs to send one predictable payload.
 
-| Schema | Use when your rules are about… |
-|---|---|
-| **No schema** | Custom domains, or when your variable names are already decided |
-| **E-Commerce** | Orders, payments, cart contents, shipping, user accounts |
-| **Finance** | Withdrawals, balances, loans, KYC verification, AML risk scores |
+| Schema         | Use when your rules are about…                                  |
+| -------------- | --------------------------------------------------------------- |
+| **No schema**  | Custom domains, or when your variable names are already decided |
+| **E-Commerce** | Orders, payments, cart contents, shipping, user accounts        |
+| **Finance**    | Withdrawals, balances, loans, KYC verification, AML risk scores |
 
-> **Note:** Schemas are a strong nudge, not a hard validator. They work best when your rules genuinely belong to the domain the blueprint covers. For concepts outside the schema the LLM may still invent a name — if that happens, switch to No schema and name the variable explicitly in your condition.
+> **Note:** Schemas are a strong nudge, not a hard validator. They work best
+> when your rules genuinely belong to the domain the blueprint covers. For
+> concepts outside the schema the LLM may still invent a name — if that happens,
+> switch to No schema and name the variable explicitly in your condition.
 
 ---
 
 ## 🖥️ React UI — Visual Rule Builder
 
-The React UI gives you a point-and-click interface for building and testing governance rules — no terminal required.
+The React UI gives you a point-and-click interface for building and testing
+governance rules — no terminal required.
 
 ### Start the UI
 
@@ -129,7 +140,8 @@ npm run dev   # → http://localhost:5173
 
 ### Structured Rule Builder
 
-Instead of typing free-form text, the UI uses a **fill-in-the-blank builder** that eliminates ambiguity and prevents edge-case overwrites:
+Instead of typing free-form text, the UI uses a **fill-in-the-blank builder**
+that eliminates ambiguity and prevents edge-case overwrites:
 
 ```
 IF [amount > 500 ──────────────────] THEN [ASK_FOR_APPROVAL ▼] ELSE [─── ▼]
@@ -139,16 +151,23 @@ IF [amount > 500 ──────────────────] THEN [A
 [+ Add Edge Case]                              [✦ Translate with AI →]
 ```
 
-- **Main rule row** — condition input + `THEN` outcome dropdown + optional `ELSE` branch
-- **Edge case rows** — amber-bordered rows, each with their own condition + outcome + remove button
-- **"Translate with AI"** — sends the complete structured state to the LLM in one shot; every translate is a fresh complete translation, so edge cases can never silently overwrite each other
+- **Main rule row** — condition input + `THEN` outcome dropdown + optional
+  `ELSE` branch
+- **Edge case rows** — amber-bordered rows, each with their own condition +
+  outcome + remove button
+- **"Translate with AI"** — sends the complete structured state to the LLM in
+  one shot; every translate is a fresh complete translation, so edge cases can
+  never silently overwrite each other
 
 ### LLM Wizard Flow
 
-1. Fill in the condition (`amount > 500`) and select an outcome (`ASK_FOR_APPROVAL`)
+1. Fill in the condition (`amount > 500`) and select an outcome
+   (`ASK_FOR_APPROVAL`)
 2. Optionally add edge cases with **+ Add Edge Case**
-3. Click **Translate with AI** — the UI builds a precise structured prompt and sends it to your configured LLM (OpenAI / Anthropic / Gemini)
-4. Review the **Proposed Logic** card — inspect extracted datapoints, edge cases, and main rule logic
+3. Click **Translate with AI** — the UI builds a precise structured prompt and
+   sends it to your configured LLM (OpenAI / Anthropic / Gemini)
+4. Review the **Proposed Logic** card — inspect extracted datapoints, edge
+   cases, and main rule logic
 5. Choose an action:
    - **Accept & Save** — persist the rule to the Rule Engine
    - **Save & Test** — save and open the Test Console immediately
@@ -158,50 +177,66 @@ IF [amount > 500 ──────────────────] THEN [A
 
 ### Test Console
 
-After saving a rule, the built-in **Test Console** lets you simulate agent payloads and see the exact decision outcome in real time — no separate tool needed.
+After saving a rule, the built-in **Test Console** lets you simulate agent
+payloads and see the exact decision outcome in real time — no separate tool
+needed.
 
 ---
 
-## 🎮 How To Use (The Interactive CLI Wizard)
+## 🎮 Interactive CLI Wizard
 
 We've built a native CLI tool hooked up to modern LLMs (OpenAI, Anthropic,
-Gemini) that allows you to draft these complex JsonLogic rules entirely in
-English.
+Gemini) that lets you create and test governance rules entirely from the
+terminal using the same **fill-in-the-blank builder** as the React UI.
 
 ### 1. Boot the Core Servers
 
-Start the Rule Engine and Decision Center servers in the background. Note: The
-CLI will offer to start these for you automatically!
+The CLI will offer to start the servers automatically, or run them manually:
 
 ```bash
-# Terminal 1: Rule Engine
 source .venv/bin/activate
-uvicorn rule_engine.app:app --port 8001
-
-# Terminal 2: Decision Center
-source .venv/bin/activate
-uvicorn decision_center.app:app --port 8002
+uvicorn rule_engine.app:app --port 8001 &
+uvicorn decision_center.app:app --port 8002 &
 ```
 
-### 2. Launch the LLM Rule Wizard
-
-Run the interactive CLI loop. You can pass your API keys securely, or source
-them straight from your environment variables (`OPENAI_API_KEY`,
-`ANTHROPIC_API_KEY`, etc.)
+### 2. Launch the Rule Wizard
 
 ```bash
 python decision_center/cli.py
 ```
 
-1. **Pick a Provider:** Select your preferred reasoning model.
-2. **Create/Update Rules:** Describe what you want exactly how you'd say it:
-   > _"If the transaction originates in California, or if the user owes more
-   > than $100, then ask them for manual approval immediately."_
-3. **Iterative Refinement:** Don't like the generated JSON Logic structure? The
-   wizard lets you type `E` to seamlessly append additional **Edge Cases** on
-   the fly without breaking the main logic branch.
-4. **Auto-Test:** Instantly simulate agent requests and review exactly which
-   expression node triggered the outcome securely within the wizard console.
+### 3. Wizard Flow
+
+1. **Pick a Provider** — select OpenAI, Anthropic, or Gemini and enter your API key (or set `OPENAI_API_KEY` / `ANTHROPIC_API_KEY` / `GEMINI_API_KEY` in your environment).
+2. **Select a Group** — choose an existing rule group or create a new one.
+3. **Name your rule** and set a **Feature** label (e.g. `Fraud Check`).
+4. **Choose a Schema** — optionally lock the LLM to the E-Commerce or Finance blueprint (see [Schema Blueprints](#-schema-blueprints--why-they-matter) above).
+5. **Fill in the builder** — the same structured IF / THEN / ELSE pattern as the UI:
+
+```
+--- Rule Builder ---
+  IF   : amount > 500
+
+  THEN :
+    1. APPROVE
+    2. ASK_FOR_APPROVAL
+    3. REJECT
+  Select [1-3]: 2
+
+  ELSE : (optional)
+    4. (none — skip ELSE branch)
+  Select [1-4]: 4
+
+  Add an edge case? [y/N]: y
+    IF   : open_bills_count > 10
+    THEN : REJECT
+
+  Add an edge case? [y/N]: n
+```
+
+6. **Review the proposal** — the wizard shows extracted datapoints, edge cases, and the generated JSON Logic.
+7. **Accept, Edit, or fall back to Manual** — `[A]` saves the rule, `[E]` re-opens the builder for a clean re-translate, `[M]` drops to manual entry.
+8. **Auto-Test** — immediately simulate an agent payload against the saved rule and see the exact decision outcome.
 
 ---
 
@@ -238,20 +273,49 @@ Your infrastructure is now fully governed and transparent! ✨
 
 ## 📊 Evaluation
 
-We ran a five-iteration generative evaluation to validate that the full pipeline — natural language rule → LLM translation → JSON Logic → Decision Center evaluation — works correctly at scale.
+We ran a five-iteration generative evaluation to validate that the full pipeline
+— natural language rule → LLM translation → JSON Logic → Decision Center
+evaluation — works correctly at scale.
 
-**What we evaluated:** The end-to-end accuracy of translating 532 business rules written in plain English into executable JSON Logic, and then evaluating those rules against matching context payloads. Each test case was generated by GPT-5-mini (`gpt-5-mini-2025-08-07`): the model wrote a natural language rule, produced a realistic context payload, and declared the expected outcome (`APPROVE`, `REJECT`, or `ASK_FOR_APPROVAL`). A separate LLM call then translated the rule through `decision_center.translator` into JSON Logic, which was uploaded to the Rule Engine and evaluated by the Decision Center. A "pass" means the engine returned the expected outcome; a "fail" is always a safe fail-closed outcome (`ASK_FOR_APPROVAL` or `REJECT`), never a silent insecure approval.
+**What we evaluated:** The end-to-end accuracy of translating 532 business rules
+written in plain English into executable JSON Logic, and then evaluating those
+rules against matching context payloads. Each test case was generated by
+GPT-5-mini (`gpt-5-mini-2025-08-07`): the model wrote a natural language rule,
+produced a realistic context payload, and declared the expected outcome
+(`APPROVE`, `REJECT`, or `ASK_FOR_APPROVAL`). A separate LLM call then
+translated the rule through `decision_center.translator` into JSON Logic, which
+was uploaded to the Rule Engine and evaluated by the Decision Center. A "pass"
+means the engine returned the expected outcome; a "fail" is always a safe
+fail-closed outcome (`ASK_FOR_APPROVAL` or `REJECT`), never a silent insecure
+approval.
 
-**How we iterated:** Over five evaluation runs we progressively fixed both the pipeline and the test harness. V1 (baseline, no schema constraints) reached 46.9% accuracy. V2 added strict variable-naming instructions to the system prompt, reaching 60%. V3 introduced schema injection (constraining the LLM to a curated `ecommerce.json` variable dictionary) and a fuzzy context-mapping pre-processor (resolving minor naming mismatches via `difflib`) — but accuracy appeared to drop to 51.5% because the test dataset itself was flawed: `context_data` did not always include every variable the rule referenced, causing the engine's correct fail-closed behaviour to register as a mismatch. V4 fixed an async variable-shadowing bug in the translation pipeline. V5 corrected the dataset generation so every variable mentioned in a rule is guaranteed present in `context_data`.
+**How we iterated:** Over five evaluation runs we progressively fixed both the
+pipeline and the test harness. V1 (baseline, no schema constraints) reached
+46.9% accuracy. V2 added strict variable-naming instructions to the system
+prompt, reaching 60%. V3 introduced schema injection (constraining the LLM to a
+curated `ecommerce.json` variable dictionary) and a fuzzy context-mapping
+pre-processor (resolving minor naming mismatches via `difflib`) — but accuracy
+appeared to drop to 51.5% because the test dataset itself was flawed:
+`context_data` did not always include every variable the rule referenced,
+causing the engine's correct fail-closed behaviour to register as a mismatch. V4
+fixed an async variable-shadowing bug in the translation pipeline. V5 corrected
+the dataset generation so every variable mentioned in a rule is guaranteed
+present in `context_data`.
 
-**Result:** V5 achieved **98.7% accuracy** across 532 cases with 0 parse errors and 0 insecure approvals. The remaining 1.3% are the engine's deliberate fail-closed safety behaviour firing on legitimately incomplete context — correct and expected in production. The evaluation confirms that the translation pipeline is production-ready and that the fail-closed guarantee holds unconditionally across all evaluated inputs.
+**Result:** V5 achieved **98.7% accuracy** across 532 cases with 0 parse errors
+and 0 insecure approvals. The remaining 1.3% are the engine's deliberate
+fail-closed safety behaviour firing on legitimately incomplete context — correct
+and expected in production. The evaluation confirms that the translation
+pipeline is production-ready and that the fail-closed guarantee holds
+unconditionally across all evaluated inputs.
 
-| Version | Key Change | Accuracy |
-|---------|-----------|----------|
-| V1 | Baseline — no schema, no pre-processor | 46.9% |
-| V2 | Strict variable-naming prompts | 60.0% |
-| V3 | Schema injection + fuzzy context mapping + null EC filter | 51.5%* |
-| V4 | Async pipeline bug fix | 51.5% |
-| V5 | Context-complete test data | **98.7%** |
+| Version | Key Change                                                | Accuracy  |
+| ------- | --------------------------------------------------------- | --------- |
+| V1      | Baseline — no schema, no pre-processor                    | 46.9%     |
+| V2      | Strict variable-naming prompts                            | 60.0%     |
+| V3      | Schema injection + fuzzy context mapping + null EC filter | 51.5%*    |
+| V4      | Async pipeline bug fix                                    | 51.5%     |
+| V5      | Context-complete test data                                | **98.7%** |
 
-> *V3/V4 accuracy reflects a dataset generation flaw (missing context variables), not a translation regression.
+> *V3/V4 accuracy reflects a dataset generation flaw (missing context
+> variables), not a translation regression.
