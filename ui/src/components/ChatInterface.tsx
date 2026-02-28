@@ -28,6 +28,43 @@ interface ChatInterfaceProps {
 
 const OUTCOMES = ['APPROVE', 'ASK_FOR_APPROVAL', 'REJECT'] as const;
 
+const SCHEMAS: Record<string, { label: string; schema: Record<string, string> }> = {
+  ecommerce: {
+    label: 'E-Commerce Blueprint',
+    schema: {
+      transaction_amount: 'number (the total cost of the order)',
+      currency: "string (e.g., 'USD', 'EUR')",
+      user_risk_score: 'number (0-100 risk assessment)',
+      account_age_days: 'number (days since user registration)',
+      merchant_category: "string (e.g., 'electronics', 'apparel', 'gift_card')",
+      shipping_address_matches_billing: 'boolean',
+      item_count: 'number (total items in cart)',
+      coupon_applied: 'boolean',
+      payment_method: "string (e.g., 'credit_card', 'paypal', 'crypto')",
+      user_country: 'string (ISO country code)',
+      shipping_speed: "string (e.g., 'standard', 'overnight')",
+      is_first_time_buyer: 'boolean',
+    },
+  },
+  finance: {
+    label: 'Finance Blueprint',
+    schema: {
+      withdrawal_amount: 'number (amount requested for withdrawal)',
+      account_balance: 'number (current available funds)',
+      daily_withdrawal_limit: 'number (maximum allowed withdrawal per day)',
+      is_corporate_account: 'boolean',
+      kyc_verified: 'boolean',
+      transaction_time_hour: 'number (0-23 hour of the transaction)',
+      beneficiary_country: 'string (ISO country code of receiver)',
+      aml_risk_score: 'number (Anti-Money Laundering score 0-100)',
+      loan_amount_requested: 'number',
+      user_credit_score: 'number (e.g., 300-850)',
+      failed_login_attempts: 'number',
+      device_trust_score: 'number (0-100)',
+    },
+  },
+};
+
 const outcomeColor = (value: string) => {
   if (value === 'APPROVE') return 'text-green-700 dark:text-green-400';
   if (value === 'REJECT') return 'text-red-600 dark:text-red-400';
@@ -67,6 +104,9 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
     content: "Fill in the builder below — set your condition and outcome, add edge cases, then click Translate."
   }]);
 
+  const [ruleName, setRuleName] = useState('');
+  const [feature, setFeature] = useState('');
+  const [selectedSchema, setSelectedSchema] = useState('');
   const [condition, setCondition] = useState('');
   const [thenOutcome, setThenOutcome] = useState('ASK_FOR_APPROVAL');
   const [elseOutcome, setElseOutcome] = useState('');
@@ -94,6 +134,9 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
   }, [groupId]);
 
   const clearBuilder = () => {
+    setRuleName('');
+    setFeature('');
+    setSelectedSchema('');
     setCondition('');
     setThenOutcome('ASK_FOR_APPROVAL');
     setElseOutcome('');
@@ -109,7 +152,13 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
   };
 
   const buildDisplayText = (): string => {
-    let text = `IF ${condition || '…'} THEN ${thenOutcome}`;
+    const header = [
+      ruleName && `"${ruleName}"`,
+      feature && `[${feature}]`,
+      selectedSchema && `{${SCHEMAS[selectedSchema]?.label}}`,
+    ].filter(Boolean).join(' ');
+    let text = header ? `${header}\n` : '';
+    text += `IF ${condition || '…'} THEN ${thenOutcome}`;
     if (elseOutcome) text += ` ELSE ${elseOutcome}`;
     for (const ec of edgeCaseRows) {
       text += `\n↳ EDGE  IF ${ec.condition || '…'} THEN ${ec.outcome}`;
@@ -141,11 +190,12 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
     try {
       const res = await translateRule({
         natural_language: buildPrompt(),
-        feature: "General",
-        name: `Rule ${Date.now()}`,
+        feature: feature.trim() || 'General',
+        name: ruleName.trim() || `Rule ${Date.now()}`,
         provider: llmConfig.provider,
         model: llmConfig.model,
         api_key: llmConfig.api_key,
+        context_schema: selectedSchema ? SCHEMAS[selectedSchema].schema : undefined,
         datapoint_definitions: datapointDefs
       });
 
@@ -216,8 +266,8 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
     try {
       setIsLoading(true);
       const created = await createRule(groupId, {
-          name: ruleData.name || `Rule ${Date.now()}`,
-          feature: "General",
+          name: ruleName.trim() || ruleData.name || `Rule ${Date.now()}`,
+          feature: feature.trim() || 'General',
           ...ruleData
       });
 
@@ -243,8 +293,8 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
     try {
       setIsLoading(true);
       const created = await createRule(groupId, {
-        name: ruleData.name || `Rule ${Date.now()}`,
-        feature: 'General',
+        name: ruleName.trim() || ruleData.name || `Rule ${Date.now()}`,
+        feature: feature.trim() || 'General',
         ...ruleData,
       });
       setMessages(prev => [...prev, {
@@ -459,6 +509,36 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
             </div>
           ) : (
             <div className="space-y-2">
+              {/* Metadata row: name, feature, schema */}
+              <div className="flex items-center gap-2">
+                <input
+                  type="text"
+                  value={ruleName}
+                  onChange={(e) => setRuleName(e.target.value)}
+                  onKeyDown={handleKeyDown}
+                  placeholder="Rule name"
+                  className="w-40 bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none text-gray-900 dark:text-white placeholder-gray-400"
+                />
+                <input
+                  type="text"
+                  value={feature}
+                  onChange={(e) => setFeature(e.target.value)}
+                  onKeyDown={handleKeyDown}
+                  placeholder="Feature (e.g. Fraud Check)"
+                  className="flex-1 bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none text-gray-900 dark:text-white placeholder-gray-400"
+                />
+                <select
+                  value={selectedSchema}
+                  onChange={(e) => setSelectedSchema(e.target.value)}
+                  className="bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm text-gray-700 dark:text-gray-300 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                >
+                  <option value="">No schema</option>
+                  {Object.entries(SCHEMAS).map(([key, s]) => (
+                    <option key={key} value={key}>{s.label}</option>
+                  ))}
+                </select>
+              </div>
+
               {/* Main rule row */}
               <div className="flex items-center gap-2">
                 <span className="text-xs font-semibold text-gray-500 dark:text-gray-400 w-4 shrink-0">IF</span>
