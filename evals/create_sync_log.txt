@@ -1,0 +1,4 @@
+📦 Generating 532 translations concurrently...
+✅ Generated scripts/stress_test/batch_results.jsonl directly without Batch API!
+
+Next step: Run `python3 scripts/stress_test/batch_3_evaluate.py` to evaluate.

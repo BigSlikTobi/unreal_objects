@@ -1,16 +1,27 @@
 from fastapi import FastAPI, HTTPException, Request
+from fastapi.middleware.cors import CORSMiddleware
 from typing import List
 import json
 
 from .models import (
     DecisionOutcome, DecisionState, EvaluateRequest, DecisionResult,
-    ApprovalSubmission, AtomicLogEntry, DecisionChain
+    ApprovalSubmission, AtomicLogEntry, DecisionChain, LLMConnectionRequest, RuleTranslationRequest
 )
 from .store import DecisionStore
 from .evaluator import evaluate_request
+from .translator import check_llm_connection, translate_rule
 import uuid
 
 app = FastAPI(title="Unreal Objects Decision Center API")
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
 store = DecisionStore()
 
 def _outcome_to_state(outcome: DecisionOutcome) -> DecisionState:
@@ -87,3 +98,26 @@ async def get_chain(request_id: str):
         raise HTTPException(status_code=404, detail="Chain not found")
     return chain
 
+@app.post("/v1/llm/connection")
+async def check_connection(req: LLMConnectionRequest):
+    success = check_llm_connection(req.provider, req.model, req.api_key)
+    if not success:
+        raise HTTPException(status_code=400, detail="Connection failed. Check your API key and model.")
+    return {"status": "ok"}
+
+@app.post("/v1/llm/translate")
+async def translate_rule_api(req: RuleTranslationRequest):
+    try:
+        result = translate_rule(
+            natural_language=req.natural_language,
+            feature=req.feature,
+            name=req.name,
+            provider=req.provider,
+            model=req.model,
+            api_key=req.api_key,
+            context_schema=req.context_schema,
+            datapoint_definitions=req.datapoint_definitions
+        )
+        return result
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))

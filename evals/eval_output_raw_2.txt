@@ -1,0 +1,1088 @@
+🧪 Starting End-to-End LLM Generative Evaluation from Batch Results...
+
+Beginning evaluation of 515 processed cases out of 515 total...
+
+❌ [3] Mismatch!
+   NL Rule: If the merchant_category equals "electronics" and the user_risk_score is greater than 50 then REJECT.
+   Expected: REJECT | Actual Computed: APPROVE
+   Missing Variables (Fail-Closed Hit) - Context supplied vs Schema expected differed.
+
+❌ [7] Mismatch!
+   NL Rule: If the payment_method equals "gift_card" and the transaction_amount is greater than 50 then ASK_FOR_APPROVAL.
+   Expected: ASK_FOR_APPROVAL | Actual Computed: APPROVE
+   Missing Variables (Fail-Closed Hit) - Context supplied vs Schema expected differed.
+
+❌ [8] Mismatch!
+   NL Rule: If the subscription_status equals "trial" and the transaction_amount is greater than 0 then ASK_FOR_APPROVAL.
+   Expected: ASK_FOR_APPROVAL | Actual Computed: APPROVE
+   Missing Variables (Fail-Closed Hit) - Context supplied vs Schema expected differed.
+
+❌ [10] Mismatch!
+   NL Rule: If the device_id is present in suspicious_device_ids then REJECT.
+   Expected: REJECT | Actual Computed: APPROVE
+   Missing Variables (Fail-Closed Hit) - Context supplied vs Schema expected differed.
+   ...evaluated 10 cases.
+
+❌ [18] Mismatch!
+   NL Rule: If the ip_address_country is not equal to billing_country and ip_address_country is not equal to user_country then ASK_FOR_APPROVAL.
+   Expected: ASK_FOR_APPROVAL | Actual Computed: APPROVE
+   Missing Variables (Fail-Closed Hit) - Context supplied vs Schema expected differed.
+   ...evaluated 20 cases.
+
+❌ [21] Mismatch!
+   NL Rule: If the customer_tenure_years is greater than or equal to 5 and the user_risk_score is less than 20 then APPROVE.
+   Expected: APPROVE | Actual Computed: ASK_FOR_APPROVAL
+   Matched Triggers: ['IF customer_tenure_years >= 5 AND user_risk_score < 20 THEN APPROVE']
+
+❌ [22] Mismatch!
+   NL Rule: If phone_number_verified is false and the transaction_amount is greater than 500 then ASK_FOR_APPROVAL.
+   Expected: ASK_FOR_APPROVAL | Actual Computed: APPROVE
+   Missing Variables (Fail-Closed Hit) - Context supplied vs Schema expected differed.
+
+❌ [27] Mismatch!
+   NL Rule: If the user_email_domain is present in disposable_email_domains then ASK_FOR_APPROVAL.
+   Expected: ASK_FOR_APPROVAL | Actual Computed: APPROVE
+   Missing Variables (Fail-Closed Hit) - Context supplied vs Schema expected differed.
+
+❌ [29] Mismatch!
+   NL Rule: If sku is null or sku is an empty string then REJECT.
+   Expected: REJECT | Actual Computed: APPROVE
+   Missing Variables (Fail-Closed Hit) - Context supplied vs Schema expected differed.
+   ...evaluated 30 cases.
+
+❌ [32] Mismatch!
+   NL Rule: If vat_id_provided is true and vat_id_valid is false then ASK_FOR_APPROVAL.
+   Expected: ASK_FOR_APPROVAL | Actual Computed: APPROVE
+   Missing Variables (Fail-Closed Hit) - Context supplied vs Schema expected differed.
+
+❌ [36] Mismatch!
+   NL Rule: If order_contains_age_restricted_items is true and user_age is less than 21 then REJECT.
+   Expected: REJECT | Actual Computed: ASK_FOR_APPROVAL
+   Matched Triggers: ['IF user_age == null THEN ASK_FOR_APPROVAL']
+
+❌ [38] Mismatch!
+   NL Rule: If shipping_speed equals "overnight" and order_total is less than 50 then REJECT.
+   Expected: REJECT | Actual Computed: APPROVE
+   Missing Variables (Fail-Closed Hit) - Context supplied vs Schema expected differed.
+   ...evaluated 40 cases.
+
+❌ [42] Mismatch!
+   NL Rule: If subscription_plan equals "enterprise" and number_of_seats is greater than 100 then ASK_FOR_APPROVAL.
+   Expected: ASK_FOR_APPROVAL | Actual Computed: APPROVE
+   Missing Variables (Fail-Closed Hit) - Context supplied vs Schema expected differed.
+
+❌ [44] Mismatch!
+   NL Rule: If transaction_time_hour is less than 6 and the transaction_amount is greater than 1000 then ASK_FOR_APPROVAL.
+   Expected: ASK_FOR_APPROVAL | Actual Computed: REJECT
+   Matched Triggers: ['IF transaction_time_hour == null THEN REJECT']
+
+❌ [45] Mismatch!
+   NL Rule: If invoice_sent is false and invoiced_amount is greater than 0 then ASK_FOR_APPROVAL.
+   Expected: ASK_FOR_APPROVAL | Actual Computed: APPROVE
+   Missing Variables (Fail-Closed Hit) - Context supplied vs Schema expected differed.
+
+❌ [49] Mismatch!
+   NL Rule: If user_locale is not present in supported_locales and the transaction_amount is greater than 0 then REJECT.
+   Expected: REJECT | Actual Computed: APPROVE
+   Missing Variables (Fail-Closed Hit) - Context supplied vs Schema expected differed.
+
+❌ [50] Mismatch!
+   NL Rule: If first_time_buyer is true and referral_bonus_applied is true and the transaction_amount is less than 10 then APPROVE.
+   Expected: APPROVE | Actual Computed: ASK_FOR_APPROVAL
+   Matched Triggers: ['IF first_time_buyer == true AND referral_bonus_applied == true AND transaction_amount < 10 THEN APPROVE']
+   ...evaluated 50 cases.
+
+❌ [53] Mismatch!
+   NL Rule: Approve the transaction if the transaction_amount is less than or equal to 50 and the user_tenure_days is greater than 365.
+   Expected: APPROVE | Actual Computed: ASK_FOR_APPROVAL
+   Matched Triggers: ['IF transaction_amount <= 50 AND user_tenure_days > 365 THEN APPROVE']
+
+❌ [54] Mismatch!
+   NL Rule: If the category is 'electronics' and the user_risk_score is greater than 50 then REJECT.
+   Expected: REJECT | Actual Computed: APPROVE
+   Missing Variables (Fail-Closed Hit) - Context supplied vs Schema expected differed.
+
+❌ [58] Mismatch!
+   NL Rule: If the discount_rate is greater than 0.5 (50%) and the user_status is 'new' then ASK_FOR_APPROVAL.
+   Expected: ASK_FOR_APPROVAL | Actual Computed: REJECT
+   Matched Triggers: ['IF discount_rate < 0 OR discount_rate > 1 THEN REJECT (invalid discount_rate)']
+
+❌ [59] Mismatch!
+   NL Rule: Approve if the loan_amount is less than 10000 and the user_credit_score is greater than or equal to 700.
+   Expected: APPROVE | Actual Computed: ASK_FOR_APPROVAL
+   Matched Triggers: ['IF loan_amount < 10000 AND user_credit_score >= 700 THEN APPROVE ELSE REJECT']
+   ...evaluated 60 cases.
+
+❌ [62] Mismatch!
+   NL Rule: If the country is 'US' and the transaction_amount is greater than 5000 then ASK_FOR_APPROVAL.
+   Expected: ASK_FOR_APPROVAL | Actual Computed: APPROVE
+   Missing Variables (Fail-Closed Hit) - Context supplied vs Schema expected differed.
+
+❌ [63] Mismatch!
+   NL Rule: Reject if the item_category is 'gift_card' and the user_verified is false.
+   Expected: REJECT | Actual Computed: APPROVE
+   Missing Variables (Fail-Closed Hit) - Context supplied vs Schema expected differed.
+
+❌ [64] Mismatch!
+   NL Rule: If the transaction_time_hour is less than 6 or greater than 22 then ASK_FOR_APPROVAL for transaction_amounts above 100.
+   Expected: ASK_FOR_APPROVAL | Actual Computed: REJECT
+   Matched Triggers: ['IF transaction_time_hour < 0 OR transaction_time_hour > 23 THEN REJECT (invalid hour value)']
+
+❌ [67] Mismatch!
+   NL Rule: If the shipping_address_matches_billing is false and the transaction_amount is greater than 300 then ASK_FOR_APPROVAL.
+   Expected: ASK_FOR_APPROVAL | Actual Computed: REJECT
+   Matched Triggers: ['IF shipping_address_matches_billing == null THEN REJECT']
+
+❌ [68] Mismatch!
+   NL Rule: If the item_category is 'furniture' and the weight_kg is greater than 100 then ASK_FOR_APPROVAL.
+   Expected: ASK_FOR_APPROVAL | Actual Computed: APPROVE
+   Missing Variables (Fail-Closed Hit) - Context supplied vs Schema expected differed.
+   ...evaluated 70 cases.
+
+❌ [72] Mismatch!
+   NL Rule: If the coupon_code is 'WELCOME100' and the user_has_used_coupon is true then REJECT.
+   Expected: REJECT | Actual Computed: APPROVE
+   Missing Variables (Fail-Closed Hit) - Context supplied vs Schema expected differed.
+
+❌ [73] Mismatch!
+   NL Rule: If the ip_address is in ip_blacklist then REJECT.
+   Expected: REJECT | Actual Computed: APPROVE
+   Missing Variables (Fail-Closed Hit) - Context supplied vs Schema expected differed.
+
+❌ [79] Failed to load translated rule. Status: 422
+   API Response: {"detail":[{"type":"missing","loc":["body","edge_cases"],"msg":"Field required","input":{"datapoints":["number_of_failed_payments"],"rule_logic":"IF number_of_failed_payments >= 3 THEN REJECT","rule_logic_json":{"if":[{">=":[{"var":"number_of_failed_payments"},3]},"REJECT",null]},"name":"E2E Rule 78","feature":"e2e_feature"}}]}
+   ...evaluated 80 cases.
+
+❌ [83] Mismatch!
+   NL Rule: If the refund_rate_percent is greater than 20 and the merchant_risk_score is greater than 50 then REJECT.
+   Expected: REJECT | Actual Computed: ASK_FOR_APPROVAL
+   Matched Triggers: ['IF refund_rate_percent < 0 OR refund_rate_percent > 100 THEN ASK_FOR_APPROVAL']
+
+❌ [85] Mismatch!
+   NL Rule: If the authentication_method is 'sms' and the user_verified is false then ASK_FOR_APPROVAL for transaction_amounts above 100.
+   Expected: ASK_FOR_APPROVAL | Actual Computed: REJECT
+   Matched Triggers: ['IF user_verified == null THEN REJECT']
+
+❌ [87] Mismatch!
+   NL Rule: Approve if the referral_code is not null and the referral_source_trusted is true.
+   Expected: APPROVE | Actual Computed: ASK_FOR_APPROVAL
+   Matched Triggers: ['IF referral_source_trusted == null THEN ASK_FOR_APPROVAL']
+
+❌ [88] Mismatch!
+   NL Rule: Reject if the transaction_currency is 'BTC' and the aml_score is greater than 40.
+   Expected: REJECT | Actual Computed: APPROVE
+   Missing Variables (Fail-Closed Hit) - Context supplied vs Schema expected differed.
+   ...evaluated 90 cases.
+
+❌ [93] Mismatch!
+   NL Rule: Approve if the recurring_payment is true and the payment_method_stored is true.
+   Expected: APPROVE | Actual Computed: ASK_FOR_APPROVAL
+   Matched Triggers: ['IF recurring_payment == true AND payment_method_stored == true THEN APPROVE']
+
+❌ [94] Mismatch!
+   NL Rule: If the billing_postcode is not equal to shipping_postcode and the transaction_amount is greater than 200 then ASK_FOR_APPROVAL.
+   Expected: ASK_FOR_APPROVAL | Actual Computed: REJECT
+   Matched Triggers: ['IF transaction_amount == null OR transaction_amount <= 0 THEN REJECT']
+
+❌ [96] Mismatch!
+   NL Rule: If the user_country is in high_risk_countries and the transaction_amount is greater than 50 then REJECT.
+   Expected: REJECT | Actual Computed: APPROVE
+   Missing Variables (Fail-Closed Hit) - Context supplied vs Schema expected differed.
+
+❌ [97] Mismatch!
+   NL Rule: If the transaction_date is before account_creation_date then REJECT (impossible transaction date).
+   Expected: REJECT | Actual Computed: APPROVE
+   Missing Variables (Fail-Closed Hit) - Context supplied vs Schema expected differed.
+
+❌ [98] Mismatch!
+   NL Rule: If the items is an array whose length is greater than 20 then ASK_FOR_APPROVAL.
+   Expected: ASK_FOR_APPROVAL | Actual Computed: APPROVE
+   Missing Variables (Fail-Closed Hit) - Context supplied vs Schema expected differed.
+
+❌ [99] Mismatch!
+   NL Rule: Approve if the average_rating is greater than or equal to 4.5 and the ratings_count is greater than 100.
+   Expected: APPROVE | Actual Computed: ASK_FOR_APPROVAL
+   Matched Triggers: ['IF average_rating >= 4.5 AND ratings_count > 100 THEN APPROVE ELSE REJECT']
+   ...evaluated 100 cases.
+
+❌ [102] Mismatch!
+   NL Rule: If the address_line2 is null and the transaction_amount is greater than 1000 then ASK_FOR_APPROVAL (missing address detail).
+   Expected: ASK_FOR_APPROVAL | Actual Computed: APPROVE
+   Missing Variables (Fail-Closed Hit) - Context supplied vs Schema expected differed.
+
+❌ [103] Mismatch!
+   NL Rule: If the promotional_balance is greater than 0 and the transaction_amount is less than or equal to promotional_balance then APPROVE.
+   Expected: APPROVE | Actual Computed: ASK_FOR_APPROVAL
+   Matched Triggers: ['IF promotional_balance > 0 AND transaction_amount <= promotional_balance THEN APPROVE']
+
+❌ [105] Mismatch!
+   NL Rule: If the payout_method is 'wire' and the payout_amount is greater than 10000 then ASK_FOR_APPROVAL.
+   Expected: ASK_FOR_APPROVAL | Actual Computed: APPROVE
+   Missing Variables (Fail-Closed Hit) - Context supplied vs Schema expected differed.
+
+❌ [109] Mismatch!
+   NL Rule: If the tax_id_provided is false and the payout_amount is greater than 600 then ASK_FOR_APPROVAL.
+   Expected: ASK_FOR_APPROVAL | Actual Computed: REJECT
+   Matched Triggers: ['IF payout_amount == null THEN REJECT']
+   ...evaluated 110 cases.
+
+❌ [113] Mismatch!
+   NL Rule: If the user_risk_score is less than 20 and the transaction_amount is less than or equal to 100 then APPROVE.
+   Expected: APPROVE | Actual Computed: ASK_FOR_APPROVAL
+   Matched Triggers: ['IF user_risk_score < 20 AND transaction_amount <= 100 THEN APPROVE']
+
+❌ [114] Mismatch!
+   NL Rule: If the country equals "US" and the transaction_amount is greater than 2000 then ASK_FOR_APPROVAL.
+   Expected: ASK_FOR_APPROVAL | Actual Computed: APPROVE
+   Missing Variables (Fail-Closed Hit) - Context supplied vs Schema expected differed.
+
+❌ [116] Mismatch!
+   NL Rule: If the payment_method equals "wire_transfer" and the transaction_amount is greater than 10000 then ASK_FOR_APPROVAL.
+   Expected: ASK_FOR_APPROVAL | Actual Computed: APPROVE
+   Missing Variables (Fail-Closed Hit) - Context supplied vs Schema expected differed.
+
+❌ [117] Mismatch!
+   NL Rule: If the payment_method equals "credit_card" and the card_age_days is less than 30 and the transaction_amount is greater than 1000 then ASK_FOR_APPROVAL.
+   Expected: ASK_FOR_APPROVAL | Actual Computed: APPROVE
+   Missing Variables (Fail-Closed Hit) - Context supplied vs Schema expected differed.
+
+❌ [120] Mismatch!
+   NL Rule: If user_verified is false and the transaction_amount is greater than 500 then ASK_FOR_APPROVAL.
+   Expected: ASK_FOR_APPROVAL | Actual Computed: REJECT
+   Matched Triggers: ['IF transaction_amount == null THEN REJECT (missing transaction_amount)']
+   ...evaluated 120 cases.
+
+❌ [123] Mismatch!
+   NL Rule: If shipping_address_different is true and the transaction_amount is greater than 200 then ASK_FOR_APPROVAL.
+   Expected: ASK_FOR_APPROVAL | Actual Computed: APPROVE
+   Missing Variables (Fail-Closed Hit) - Context supplied vs Schema expected differed.
+
+❌ [124] Mismatch!
+   NL Rule: If item_category equals "electronics" and the user_risk_score is greater than 50 then REJECT.
+   Expected: REJECT | Actual Computed: APPROVE
+   Missing Variables (Fail-Closed Hit) - Context supplied vs Schema expected differed.
+
+❌ [125] Mismatch!
+   NL Rule: If item_category is "gift_card" or item_category is "cryptocurrency" and the transaction_amount is greater than 100 then REJECT.
+   Expected: REJECT | Actual Computed: APPROVE
+   Missing Variables (Fail-Closed Hit) - Context supplied vs Schema expected differed.
+
+❌ [126] Mismatch!
+   NL Rule: If the length of user_previous_addresses is greater than 5 then ASK_FOR_APPROVAL.
+   Expected: ASK_FOR_APPROVAL | Actual Computed: APPROVE
+   Missing Variables (Fail-Closed Hit) - Context supplied vs Schema expected differed.
+   ...evaluated 130 cases.
+
+❌ [132] Mismatch!
+   NL Rule: If daily_volume_for_account plus transaction_amount is greater than daily_limit then ASK_FOR_APPROVAL.
+   Expected: ASK_FOR_APPROVAL | Actual Computed: APPROVE
+   Missing Variables (Fail-Closed Hit) - Context supplied vs Schema expected differed.
+
+❌ [134] Mismatch!
+   NL Rule: If shipping_country equals "RU" or shipping_country equals "IR" then REJECT.
+   Expected: REJECT | Actual Computed: APPROVE
+   Missing Variables (Fail-Closed Hit) - Context supplied vs Schema expected differed.
+
+❌ [136] Mismatch!
+   NL Rule: If phone_number_verified is false and user_email_verified is false and transaction_amount is greater than 10 then ASK_FOR_APPROVAL.
+   Expected: ASK_FOR_APPROVAL | Actual Computed: APPROVE
+   Missing Variables (Fail-Closed Hit) - Context supplied vs Schema expected differed.
+
+❌ [137] Mismatch!
+   NL Rule: If refund_request_pending is true then ASK_FOR_APPROVAL.
+   Expected: ASK_FOR_APPROVAL | Actual Computed: APPROVE
+   Missing Variables (Fail-Closed Hit) - Context supplied vs Schema expected differed.
+
+❌ [138] Mismatch!
+   NL Rule: If is_high_value_customer is true and the transaction_amount is less than 5000 then APPROVE.
+   Expected: APPROVE | Actual Computed: ASK_FOR_APPROVAL
+   Matched Triggers: ['IF is_high_value_customer == true AND transaction_amount < 5000 THEN APPROVE']
+
+❌ [139] Mismatch!
+   NL Rule: If account_age_days is greater than or equal to 3650 and user_risk_score is less than 40 and transaction_amount is less than 10000 then APPROVE.
+   Expected: APPROVE | Actual Computed: ASK_FOR_APPROVAL
+   Matched Triggers: ['IF account_age_days >= 3650 AND user_risk_score < 40 AND transaction_amount < 10000 THEN APPROVE']
+   ...evaluated 140 cases.
+
+❌ [141] Mismatch!
+   NL Rule: If billing_country is "DE" or billing_country is "FR" or billing_country is "ES" and the transaction_amount is greater than 1000 then ASK_FOR_APPROVAL.
+   Expected: ASK_FOR_APPROVAL | Actual Computed: APPROVE
+   Missing Variables (Fail-Closed Hit) - Context supplied vs Schema expected differed.
+
+❌ [143] Mismatch!
+   NL Rule: If customer_type equals "new" and the transaction_amount is greater than 2000 then ASK_FOR_APPROVAL.
+   Expected: ASK_FOR_APPROVAL | Actual Computed: REJECT
+   Matched Triggers: ['IF transaction_amount == null THEN REJECT']
+
+❌ [144] Mismatch!
+   NL Rule: If basket_contains_age_restricted_item is true and user_age is less than 21 then REJECT.
+   Expected: REJECT | Actual Computed: ASK_FOR_APPROVAL
+   Matched Triggers: ['IF basket_contains_age_restricted_item == true AND (user_age is null OR user_age == "") THEN ASK_FOR_APPROVAL']
+
+❌ [147] Mismatch!
+   NL Rule: If metadata.tags contains "suspicious" then REJECT.
+   Expected: REJECT | Actual Computed: APPROVE
+   Missing Variables (Fail-Closed Hit) - Context supplied vs Schema expected differed.
+
+❌ [149] Mismatch!
+   NL Rule: If currency equals "BTC" or currency equals "ETH" then REJECT.
+   Expected: REJECT | Actual Computed: APPROVE
+   Missing Variables (Fail-Closed Hit) - Context supplied vs Schema expected differed.
+   ...evaluated 150 cases.
+
+❌ [151] Mismatch!
+   NL Rule: If beneficiary_account_number is an empty string then REJECT.
+   Expected: REJECT | Actual Computed: APPROVE
+   Missing Variables (Fail-Closed Hit) - Context supplied vs Schema expected differed.
+
+❌ [152] Mismatch!
+   NL Rule: If external_watchlist_hit is true then REJECT.
+   Expected: REJECT | Actual Computed: APPROVE
+   Missing Variables (Fail-Closed Hit) - Context supplied vs Schema expected differed.
+
+❌ [153] Mismatch!
+   NL Rule: If (time_of_day_hour is less than 6 or time_of_day_hour is greater than 22) and transaction_amount is greater than 1000 then ASK_FOR_APPROVAL.
+   Expected: ASK_FOR_APPROVAL | Actual Computed: REJECT
+   Matched Triggers: ['IF time_of_day_hour < 0 OR time_of_day_hour > 23 THEN REJECT']
+
+❌ [154] Mismatch!
+   NL Rule: If settlement_method equals "instant" and settlement_risk_score is greater than 60 then REJECT.
+   Expected: REJECT | Actual Computed: APPROVE
+   Missing Variables (Fail-Closed Hit) - Context supplied vs Schema expected differed.
+
+❌ [159] Mismatch!
+   NL Rule: If user_risk_score is greater than or equal to 30 and user_risk_score is less than or equal to 60 and device_trust_score is greater than or equal to 40 and transaction_amount is less than or equal to 2000 then APPROVE.
+   Expected: APPROVE | Actual Computed: REJECT
+   Matched Triggers: ['IF user_risk_score < 0 OR device_trust_score < 0 OR transaction_amount < 0 THEN REJECT']
+   ...evaluated 160 cases.
+
+❌ [161] Mismatch!
+   NL Rule: Reject the transaction if the merchant_category is "electronics" and the user_risk_score is greater than 50.
+   Expected: REJECT | Actual Computed: APPROVE
+   Missing Variables (Fail-Closed Hit) - Context supplied vs Schema expected differed.
+
+❌ [164] Mismatch!
+   NL Rule: If the payment_method is "wire_transfer" and the transaction_amount is greater than 10000 then ASK_FOR_APPROVAL.
+   Expected: ASK_FOR_APPROVAL | Actual Computed: APPROVE
+   Missing Variables (Fail-Closed Hit) - Context supplied vs Schema expected differed.
+
+❌ [167] Mismatch!
+   NL Rule: If is_high_value_customer is true and the transaction_amount is less than 10000 then APPROVE.
+   Expected: APPROVE | Actual Computed: ASK_FOR_APPROVAL
+   Matched Triggers: ['IF is_high_value_customer == true AND transaction_amount < 10000 THEN APPROVE']
+
+❌ [168] Mismatch!
+   NL Rule: If daily_withdrawal_total plus transaction_amount is greater than daily_withdrawal_limit then REJECT.
+   Expected: REJECT | Actual Computed: APPROVE
+   Missing Variables (Fail-Closed Hit) - Context supplied vs Schema expected differed.
+   ...evaluated 170 cases.
+
+❌ [172] Mismatch!
+   NL Rule: If transaction_time_hour is between 0 and 5 and card_present is false and transaction_amount is greater than 200 then ASK_FOR_APPROVAL.
+   Expected: ASK_FOR_APPROVAL | Actual Computed: REJECT
+   Matched Triggers: ['IF transaction_time_hour < 0 OR transaction_time_hour > 23 THEN REJECT']
+
+❌ [174] Mismatch!
+   NL Rule: If subscription_status is "inactive" and recurring_payment is true then ASK_FOR_APPROVAL.
+   Expected: ASK_FOR_APPROVAL | Actual Computed: APPROVE
+   Missing Variables (Fail-Closed Hit) - Context supplied vs Schema expected differed.
+
+❌ [177] Mismatch!
+   NL Rule: If item_category is "alcohol" and age_verified is false then REJECT.
+   Expected: REJECT | Actual Computed: APPROVE
+   Missing Variables (Fail-Closed Hit) - Context supplied vs Schema expected differed.
+
+❌ [179] Mismatch!
+   NL Rule: If corporate_account is true and approvals_count is less than 2 then ASK_FOR_APPROVAL.
+   Expected: ASK_FOR_APPROVAL | Actual Computed: APPROVE
+   Missing Variables (Fail-Closed Hit) - Context supplied vs Schema expected differed.
+   ...evaluated 180 cases.
+
+❌ [184] Mismatch!
+   NL Rule: If application_age_days is less than 7 and employer_verified is true and credit_score is greater than 700 then APPROVE.
+   Expected: APPROVE | Actual Computed: ASK_FOR_APPROVAL
+   Matched Triggers: ['IF application_age_days < 7 AND employer_verified == true AND credit_score > 700 THEN APPROVE']
+
+❌ [186] Mismatch!
+   NL Rule: If invoice_amount is greater than vendor_kyc_score multiplied by 1000 then ASK_FOR_APPROVAL.
+   Expected: ASK_FOR_APPROVAL | Actual Computed: REJECT
+   Matched Triggers: ['IF invoice_amount == null THEN REJECT']
+
+❌ [187] Mismatch!
+   NL Rule: If contract_signed is false and budget_remaining is less than invoice_amount then REJECT.
+   Expected: REJECT | Actual Computed: APPROVE
+   Missing Variables (Fail-Closed Hit) - Context supplied vs Schema expected differed.
+
+❌ [188] Mismatch!
+   NL Rule: If project_code_valid is false then REJECT.
+   Expected: REJECT | Actual Computed: APPROVE
+   Missing Variables (Fail-Closed Hit) - Context supplied vs Schema expected differed.
+   ...evaluated 190 cases.
+
+❌ [195] Mismatch!
+   NL Rule: If scheduled_maintenance_window is true and system_load_percentage is greater than 80 then ASK_FOR_APPROVAL.
+   Expected: ASK_FOR_APPROVAL | Actual Computed: APPROVE
+   Missing Variables (Fail-Closed Hit) - Context supplied vs Schema expected differed.
+
+❌ [196] Mismatch!
+   NL Rule: If backup_recent is false and critical_service is true then ASK_FOR_APPROVAL.
+   Expected: ASK_FOR_APPROVAL | Actual Computed: APPROVE
+   Missing Variables (Fail-Closed Hit) - Context supplied vs Schema expected differed.
+
+❌ [198] Failed to load translated rule. Status: 422
+   API Response: {"detail":[{"type":"missing","loc":["body","edge_cases"],"msg":"Field required","input":{"datapoints":["api_call_count_minute","rate_limit_threshold"],"rule_logic":"IF api_call_count_minute > rate_limit_threshold THEN REJECT","rule_logic_json":{"if":[{">":[{"var":"api_call_count_minute"},{"var":"rate_limit_threshold"}]},"REJECT",null]},"name":"E2E Rule 197","feature":"e2e_feature"}}]}
+
+❌ [200] Mismatch!
+   NL Rule: If card_present is true and transaction_amount is less than or equal to 50 then APPROVE.
+   Expected: APPROVE | Actual Computed: ASK_FOR_APPROVAL
+   Matched Triggers: ['IF card_present == true AND transaction_amount <= 50 THEN APPROVE ELSE REJECT']
+   ...evaluated 200 cases.
+
+❌ [203] Mismatch!
+   NL Rule: If exchange_rate_suspicious is false and currency is "USD" and transaction_amount is less than 1000 then APPROVE.
+   Expected: APPROVE | Actual Computed: ASK_FOR_APPROVAL
+   Matched Triggers: ['IF exchange_rate_suspicious == false AND currency == "USD" AND transaction_amount < 1000 THEN APPROVE']
+
+❌ [205] Mismatch!
+   NL Rule: If merchant_category is "gift_card" and order_items_count is greater than 5 then REJECT.
+   Expected: REJECT | Actual Computed: APPROVE
+   Missing Variables (Fail-Closed Hit) - Context supplied vs Schema expected differed.
+
+❌ [206] Mismatch!
+   NL Rule: If payroll_frequency is "weekly" and payroll_amount divided by 4 is greater than 50000 then ASK_FOR_APPROVAL.
+   Expected: ASK_FOR_APPROVAL | Actual Computed: REJECT
+   Matched Triggers: ['IF payroll_amount == null THEN REJECT']
+
+❌ [207] Mismatch!
+   NL Rule: If approvals_count is greater than or equal to 3 or corporate_account is false then APPROVE.
+   Expected: APPROVE | Actual Computed: ASK_FOR_APPROVAL
+   Matched Triggers: ['IF approvals_count >= 3 OR corporate_account == false THEN APPROVE']
+   ...evaluated 210 cases.
+
+❌ [212] Mismatch!
+   NL Rule: If the category is "electronics" and the user_risk_score is greater than 50 then REJECT.
+   Expected: REJECT | Actual Computed: APPROVE
+   Missing Variables (Fail-Closed Hit) - Context supplied vs Schema expected differed.
+
+❌ [215] Mismatch!
+   NL Rule: If the user_account_age_days is less than 30 and the transaction_amount is greater than 200 then ASK_FOR_APPROVAL.
+   Expected: ASK_FOR_APPROVAL | Actual Computed: REJECT
+   Matched Triggers: ['IF user_account_age_days == null THEN REJECT']
+
+❌ [217] Mismatch!
+   NL Rule: If the kyc_verified is false and the transaction_amount is greater than 1000 then ASK_FOR_APPROVAL.
+   Expected: ASK_FOR_APPROVAL | Actual Computed: REJECT
+   Matched Triggers: ['IF kyc_verified == null THEN REJECT']
+
+❌ [218] Mismatch!
+   NL Rule: If the beneficiary_country is "COUNTRY_X" and the sanctions_list_hit is true then REJECT.
+   Expected: REJECT | Actual Computed: APPROVE
+   Missing Variables (Fail-Closed Hit) - Context supplied vs Schema expected differed.
+
+❌ [220] Mismatch!
+   NL Rule: If the simultaneous_sessions is greater than 3 and the last_password_change_days is greater than 365 then REJECT.
+   Expected: REJECT | Actual Computed: ASK_FOR_APPROVAL
+   Matched Triggers: ['IF simultaneous_sessions == null OR last_password_change_days == null THEN ASK_FOR_APPROVAL']
+   ...evaluated 220 cases.
+
+❌ [221] Mismatch!
+   NL Rule: If the transaction_amount is greater than twice the average_monthly_spend then ASK_FOR_APPROVAL.
+   Expected: ASK_FOR_APPROVAL | Actual Computed: REJECT
+   Matched Triggers: ['IF average_monthly_spend <= 0 OR transaction_amount < 0 THEN REJECT']
+
+❌ [225] Mismatch!
+   NL Rule: If the account_balance is less than 0 and the overdraft_protection is true then APPROVE.
+   Expected: APPROVE | Actual Computed: ASK_FOR_APPROVAL
+   Matched Triggers: ['IF account_balance < 0 AND overdraft_protection == true THEN APPROVE ELSE REJECT']
+
+❌ [226] Mismatch!
+   NL Rule: If the subscription_active is false and the past_due_amount is greater than 0 then REJECT.
+   Expected: REJECT | Actual Computed: APPROVE
+   Missing Variables (Fail-Closed Hit) - Context supplied vs Schema expected differed.
+
+❌ [227] Mismatch!
+   NL Rule: If the payment_method is "virtual_card" and the transaction_amount is greater than 1000 then ASK_FOR_APPROVAL.
+   Expected: ASK_FOR_APPROVAL | Actual Computed: REJECT
+   Matched Triggers: ['IF transaction_amount == null THEN REJECT']
+
+❌ [230] Mismatch!
+   NL Rule: If the coupon_applied is true and the transaction_amount is less than 5 then APPROVE.
+   Expected: APPROVE | Actual Computed: ASK_FOR_APPROVAL
+   Matched Triggers: ['IF coupon_applied == true AND transaction_amount < 5 THEN APPROVE']
+   ...evaluated 230 cases.
+
+❌ [237] Mismatch!
+   NL Rule: If the email_domain is in ["tempmail.com", "disposable.com"] and the kyc_verified is false then REJECT.
+   Expected: REJECT | Actual Computed: APPROVE
+   Missing Variables (Fail-Closed Hit) - Context supplied vs Schema expected differed.
+
+❌ [238] Mismatch!
+   NL Rule: If the recurring_payment is true and the payment_cycle_days is less than 7 then ASK_FOR_APPROVAL.
+   Expected: ASK_FOR_APPROVAL | Actual Computed: REJECT
+   Matched Triggers: ['IF payment_cycle_days == null THEN REJECT']
+
+❌ [240] Mismatch!
+   NL Rule: If the refund_requested is true and the days_since_original_purchase is less than 7 then APPROVE.
+   Expected: APPROVE | Actual Computed: ASK_FOR_APPROVAL
+   Matched Triggers: ['IF refund_requested == true AND days_since_original_purchase < 7 THEN APPROVE']
+   ...evaluated 240 cases.
+
+❌ [247] Mismatch!
+   NL Rule: If the inventory_status is "out_of_stock" and the preorder_allowed is false then REJECT.
+   Expected: REJECT | Actual Computed: APPROVE
+   Missing Variables (Fail-Closed Hit) - Context supplied vs Schema expected differed.
+   ...evaluated 250 cases.
+
+❌ [253] Mismatch!
+   NL Rule: If the merchant_category_code is "5411" and the transaction_amount is greater than 1000 then ASK_FOR_APPROVAL.
+   Expected: ASK_FOR_APPROVAL | Actual Computed: APPROVE
+   Missing Variables (Fail-Closed Hit) - Context supplied vs Schema expected differed.
+
+❌ [254] Mismatch!
+   NL Rule: If the card_type is "prepaid" and the transaction_amount is greater than 500 then ASK_FOR_APPROVAL.
+   Expected: ASK_FOR_APPROVAL | Actual Computed: APPROVE
+   Missing Variables (Fail-Closed Hit) - Context supplied vs Schema expected differed.
+
+❌ [258] Mismatch!
+   NL Rule: If the has_promotional_balance is true and the promotional_balance is less than the transaction_amount then ASK_FOR_APPROVAL.
+   Expected: ASK_FOR_APPROVAL | Actual Computed: APPROVE
+   Missing Variables (Fail-Closed Hit) - Context supplied vs Schema expected differed.
+
+❌ [259] Mismatch!
+   NL Rule: If the ip_latitude is null or the ip_longitude is null then ASK_FOR_APPROVAL.
+   Expected: ASK_FOR_APPROVAL | Actual Computed: APPROVE
+   Missing Variables (Fail-Closed Hit) - Context supplied vs Schema expected differed.
+
+❌ [260] Mismatch!
+   NL Rule: If the transaction_amount is greater than 100 then ASK_FOR_APPROVAL.
+   Expected: ASK_FOR_APPROVAL | Actual Computed: REJECT
+   Matched Triggers: ['IF transaction_amount == null THEN REJECT']
+   ...evaluated 260 cases.
+
+❌ [263] Mismatch!
+   NL Rule: If the category is "electronics" and the user_risk_score is greater than 50 then REJECT.
+   Expected: REJECT | Actual Computed: APPROVE
+   Missing Variables (Fail-Closed Hit) - Context supplied vs Schema expected differed.
+
+❌ [264] Mismatch!
+   NL Rule: If the shipping_country is not in ["US", "CA"] and the transaction_amount is greater than 300 then ASK_FOR_APPROVAL.
+   Expected: ASK_FOR_APPROVAL | Actual Computed: APPROVE
+   Missing Variables (Fail-Closed Hit) - Context supplied vs Schema expected differed.
+
+❌ [265] Mismatch!
+   NL Rule: If the coupon_applied is true and the transaction_amount is equal to 0 then APPROVE.
+   Expected: APPROVE | Actual Computed: ASK_FOR_APPROVAL
+   Matched Triggers: ['IF coupon_applied == true AND transaction_amount == 0 THEN APPROVE']
+
+❌ [267] Mismatch!
+   NL Rule: If the single_item_flag is true and the transaction_amount is greater than or equal to 10000 then REJECT.
+   Expected: REJECT | Actual Computed: APPROVE
+   Missing Variables (Fail-Closed Hit) - Context supplied vs Schema expected differed.
+   ...evaluated 270 cases.
+
+❌ [271] Mismatch!
+   NL Rule: If the address_age_days is less than 7 and the transaction_amount is greater than 200 then ASK_FOR_APPROVAL.
+   Expected: ASK_FOR_APPROVAL | Actual Computed: REJECT
+   Matched Triggers: ['IF address_age_days == null OR transaction_amount == null THEN REJECT']
+
+❌ [272] Mismatch!
+   NL Rule: If the payment_method is "bank_transfer" and the transaction_amount is greater than 2000 then ASK_FOR_APPROVAL.
+   Expected: ASK_FOR_APPROVAL | Actual Computed: APPROVE
+   Missing Variables (Fail-Closed Hit) - Context supplied vs Schema expected differed.
+
+❌ [274] Mismatch!
+   NL Rule: If the promo_code is "BLACKFRIDAY" and the transaction_hour is less than 6 then ASK_FOR_APPROVAL.
+   Expected: ASK_FOR_APPROVAL | Actual Computed: REJECT
+   Matched Triggers: ['IF transaction_hour < 0 OR transaction_hour > 23 THEN REJECT']
+
+❌ [277] Mismatch!
+   NL Rule: If the vip_customer is true and the transaction_amount is less than 5000 then APPROVE.
+   Expected: APPROVE | Actual Computed: REJECT
+   Matched Triggers: ['IF transaction_amount == null THEN REJECT']
+   ...evaluated 280 cases.
+
+❌ [281] Mismatch!
+   NL Rule: If the new_device is true and the shipping_address_new is true and the transaction_amount is greater than 500 then ASK_FOR_APPROVAL.
+   Expected: ASK_FOR_APPROVAL | Actual Computed: APPROVE
+   Missing Variables (Fail-Closed Hit) - Context supplied vs Schema expected differed.
+
+❌ [283] Mismatch!
+   NL Rule: If the subscription_active is false and the transaction_amount is equal to 0 then APPROVE.
+   Expected: APPROVE | Actual Computed: ASK_FOR_APPROVAL
+   Matched Triggers: ['IF subscription_active == false AND transaction_amount == 0 THEN APPROVE']
+
+❌ [285] Mismatch!
+   NL Rule: If the merchant_risk_category is "high" and the transaction_amount is greater than 250 then REJECT.
+   Expected: REJECT | Actual Computed: APPROVE
+   Missing Variables (Fail-Closed Hit) - Context supplied vs Schema expected differed.
+
+❌ [286] Mismatch!
+   NL Rule: If the total_items_price is not equal to the transaction_amount then ASK_FOR_APPROVAL.
+   Expected: ASK_FOR_APPROVAL | Actual Computed: APPROVE
+   Missing Variables (Fail-Closed Hit) - Context supplied vs Schema expected differed.
+   ...evaluated 290 cases.
+
+❌ [293] Mismatch!
+   NL Rule: If the shipping_speed is "overnight" and the transaction_amount is greater than 1000 then ASK_FOR_APPROVAL.
+   Expected: ASK_FOR_APPROVAL | Actual Computed: APPROVE
+   Missing Variables (Fail-Closed Hit) - Context supplied vs Schema expected differed.
+
+❌ [295] Mismatch!
+   NL Rule: If the order_origin is "API" and the api_key_trust_score is less than 30 then REJECT.
+   Expected: REJECT | Actual Computed: APPROVE
+   Missing Variables (Fail-Closed Hit) - Context supplied vs Schema expected differed.
+
+❌ [299] Mismatch!
+   NL Rule: If the recurring_payment is true and the subscription_trial is true then APPROVE.
+   Expected: APPROVE | Actual Computed: ASK_FOR_APPROVAL
+   Matched Triggers: ['IF recurring_payment == true AND subscription_trial == true THEN APPROVE']
+
+❌ [300] Mismatch!
+   NL Rule: If the middle_name is equal to an empty string "" and the transaction_amount is greater than 5000 then ASK_FOR_APPROVAL.
+   Expected: ASK_FOR_APPROVAL | Actual Computed: APPROVE
+   Missing Variables (Fail-Closed Hit) - Context supplied vs Schema expected differed.
+   ...evaluated 300 cases.
+
+❌ [303] Mismatch!
+   NL Rule: If the gift_card_used is true and the gift_card_balance is less than the transaction_amount then ASK_FOR_APPROVAL.
+   Expected: ASK_FOR_APPROVAL | Actual Computed: REJECT
+   Matched Triggers: ['IF gift_card_used == true AND (gift_card_balance == null OR transaction_amount == null) THEN REJECT']
+
+❌ [305] Mismatch!
+   NL Rule: If the merchant_country is "CN" and the is_sanctioned is false and the transaction_amount is greater than 5000 then ASK_FOR_APPROVAL.
+   Expected: ASK_FOR_APPROVAL | Actual Computed: APPROVE
+   Missing Variables (Fail-Closed Hit) - Context supplied vs Schema expected differed.
+
+❌ [307] Mismatch!
+   NL Rule: If the phone_verified is false and the contact_email_verified is false and the transaction_amount is greater than 200 then ASK_FOR_APPROVAL.
+   Expected: ASK_FOR_APPROVAL | Actual Computed: APPROVE
+   Missing Variables (Fail-Closed Hit) - Context supplied vs Schema expected differed.
+
+❌ [308] Mismatch!
+   NL Rule: If the manual_override is true then APPROVE.
+   Expected: APPROVE | Actual Computed: ASK_FOR_APPROVAL
+   Matched Triggers: ['IF manual_override == true THEN APPROVE']
+   ...evaluated 310 cases.
+
+❌ [311] Mismatch!
+   NL Rule: If the category equals 'electronics' AND the user_risk_score is greater than 50 then REJECT.
+   Expected: REJECT | Actual Computed: APPROVE
+   Missing Variables (Fail-Closed Hit) - Context supplied vs Schema expected differed.
+
+❌ [313] Mismatch!
+   NL Rule: If is_vip is true AND the transaction_amount is less than or equal to 5000 then APPROVE.
+   Expected: APPROVE | Actual Computed: ASK_FOR_APPROVAL
+   Matched Triggers: ['IF is_vip == true AND transaction_amount <= 5000 THEN APPROVE']
+
+❌ [314] Mismatch!
+   NL Rule: If the billing_country equals 'NG' OR the shipping_country equals 'NG' then REJECT.
+   Expected: REJECT | Actual Computed: APPROVE
+   Missing Variables (Fail-Closed Hit) - Context supplied vs Schema expected differed.
+
+❌ [316] Mismatch!
+   NL Rule: If the payment_method equals 'prepaid_card' AND the ip_reputation_score is less than 20 then REJECT.
+   Expected: REJECT | Actual Computed: APPROVE
+   Missing Variables (Fail-Closed Hit) - Context supplied vs Schema expected differed.
+
+❌ [319] Mismatch!
+   NL Rule: If the category equals 'gift_card' OR the product_id equals 'GFT-999' then ASK_FOR_APPROVAL.
+   Expected: ASK_FOR_APPROVAL | Actual Computed: APPROVE
+   Missing Variables (Fail-Closed Hit) - Context supplied vs Schema expected differed.
+   ...evaluated 320 cases.
+
+❌ [321] Mismatch!
+   NL Rule: If the device_trust_score is null then ASK_FOR_APPROVAL.
+   Expected: ASK_FOR_APPROVAL | Actual Computed: APPROVE
+   Missing Variables (Fail-Closed Hit) - Context supplied vs Schema expected differed.
+
+❌ [325] Mismatch!
+   NL Rule: If the user_risk_score is less than 20 AND the transaction_amount is less than 1000 then APPROVE.
+   Expected: APPROVE | Actual Computed: ASK_FOR_APPROVAL
+   Matched Triggers: ['IF user_risk_score < 20 AND transaction_amount < 1000 THEN APPROVE']
+
+❌ [326] Mismatch!
+   NL Rule: If the currency equals 'JPY' AND the transaction_amount is greater than 100000 then ASK_FOR_APPROVAL.
+   Expected: ASK_FOR_APPROVAL | Actual Computed: APPROVE
+   Missing Variables (Fail-Closed Hit) - Context supplied vs Schema expected differed.
+
+❌ [329] Mismatch!
+   NL Rule: If the referral_source equals 'affiliate' AND the referral_code equals 'AFF-2025' then ASK_FOR_APPROVAL.
+   Expected: ASK_FOR_APPROVAL | Actual Computed: APPROVE
+   Missing Variables (Fail-Closed Hit) - Context supplied vs Schema expected differed.
+   ...evaluated 330 cases.
+
+❌ [333] Mismatch!
+   NL Rule: If the blacklisted_ips contains the ip_address then REJECT.
+   Expected: REJECT | Actual Computed: APPROVE
+   Missing Variables (Fail-Closed Hit) - Context supplied vs Schema expected differed.
+
+❌ [335] Mismatch!
+   NL Rule: If the billing_currency is not equal to the currency AND the transaction_amount is greater than 1000 then ASK_FOR_APPROVAL.
+   Expected: ASK_FOR_APPROVAL | Actual Computed: REJECT
+   Matched Triggers: ['IF transaction_amount == null THEN REJECT']
+   ...evaluated 340 cases.
+
+❌ [342] Mismatch!
+   NL Rule: If the payment_method equals 'bank_transfer' AND the country equals 'RU' AND the user_risk_score is greater than 60 then REJECT.
+   Expected: REJECT | Actual Computed: APPROVE
+   Missing Variables (Fail-Closed Hit) - Context supplied vs Schema expected differed.
+
+❌ [346] Mismatch!
+   NL Rule: If the product_tags contains 'luxury' AND the transaction_amount is greater than 500 then ASK_FOR_APPROVAL.
+   Expected: ASK_FOR_APPROVAL | Actual Computed: APPROVE
+   Missing Variables (Fail-Closed Hit) - Context supplied vs Schema expected differed.
+
+❌ [348] Mismatch!
+   NL Rule: If the transactions_last_hour is greater than 10 AND the transaction_amount is greater than 10 then REJECT.
+   Expected: REJECT | Actual Computed: ASK_FOR_APPROVAL
+   Matched Triggers: ['IF transactions_last_hour == null OR transaction_amount == null THEN ASK_FOR_APPROVAL']
+
+❌ [349] Mismatch!
+   NL Rule: If coupon_applied is true AND the coupon_code equals 'BLACKFRIDAY-EXPIRE' then ASK_FOR_APPROVAL.
+   Expected: ASK_FOR_APPROVAL | Actual Computed: APPROVE
+   Missing Variables (Fail-Closed Hit) - Context supplied vs Schema expected differed.
+   ...evaluated 350 cases.
+
+❌ [351] Mismatch!
+   NL Rule: If shipping_country is null AND the transaction_amount is greater than 0 then ASK_FOR_APPROVAL.
+   Expected: ASK_FOR_APPROVAL | Actual Computed: APPROVE
+   Missing Variables (Fail-Closed Hit) - Context supplied vs Schema expected differed.
+
+❌ [352] Mismatch!
+   NL Rule: If the loyalty_points is greater than or equal to 50000 AND the transaction_amount is less than 10000 then APPROVE.
+   Expected: APPROVE | Actual Computed: ASK_FOR_APPROVAL
+   Matched Triggers: ['IF loyalty_points >= 50000 AND transaction_amount < 10000 THEN APPROVE']
+
+❌ [353] Mismatch!
+   NL Rule: If the currency equals 'USD' AND the order_total equals the transaction_amount AND the transaction_amount is greater than 10000 then ASK_FOR_APPROVAL.
+   Expected: ASK_FOR_APPROVAL | Actual Computed: APPROVE
+   Missing Variables (Fail-Closed Hit) - Context supplied vs Schema expected differed.
+
+❌ [356] Mismatch!
+   NL Rule: If customer_notes equals '' (empty string) AND the transaction_amount is greater than 1000 then ASK_FOR_APPROVAL.
+   Expected: ASK_FOR_APPROVAL | Actual Computed: APPROVE
+   Missing Variables (Fail-Closed Hit) - Context supplied vs Schema expected differed.
+
+❌ [357] Mismatch!
+   NL Rule: If account_balance is greater than or equal to the transaction_amount then APPROVE.
+   Expected: APPROVE | Actual Computed: ASK_FOR_APPROVAL
+   Matched Triggers: ['IF account_balance >= transaction_amount THEN APPROVE ELSE REJECT']
+   ...evaluated 360 cases.
+
+❌ [361] Mismatch!
+   NL Rule: If the account_age_days is less than 7 and the transaction_amount is greater than 200 then ASK_FOR_APPROVAL.
+   Expected: ASK_FOR_APPROVAL | Actual Computed: REJECT
+   Matched Triggers: ['IF account_age_days == null THEN REJECT']
+
+❌ [362] Mismatch!
+   NL Rule: Approve when the transaction_amount is less than or equal to 50 and the user_risk_score is less than 30.
+   Expected: APPROVE | Actual Computed: ASK_FOR_APPROVAL
+   Matched Triggers: ['IF transaction_amount <= 50 AND user_risk_score < 30 THEN APPROVE']
+
+❌ [365] Mismatch!
+   NL Rule: If the merchant_category equals "electronics" and the user_risk_score is greater than 50 then REJECT.
+   Expected: REJECT | Actual Computed: APPROVE
+   Missing Variables (Fail-Closed Hit) - Context supplied vs Schema expected differed.
+
+❌ [368] Mismatch!
+   NL Rule: If ip_address_risk_score is less than 20 and device_trust_score is greater than 80 then APPROVE.
+   Expected: APPROVE | Actual Computed: ASK_FOR_APPROVAL
+   Matched Triggers: ['IF ip_address_risk_score < 20 AND device_trust_score > 80 THEN APPROVE']
+
+❌ [369] Mismatch!
+   NL Rule: If product_category equals "pharmaceuticals" AND order_value is greater than 300 then ASK_FOR_APPROVAL.
+   Expected: ASK_FOR_APPROVAL | Actual Computed: APPROVE
+   Missing Variables (Fail-Closed Hit) - Context supplied vs Schema expected differed.
+   ...evaluated 370 cases.
+
+❌ [372] Mismatch!
+   NL Rule: If velocity_count for the last_hour is greater than 5 and last_login_days is greater than 30 then ASK_FOR_APPROVAL.
+   Expected: ASK_FOR_APPROVAL | Actual Computed: REJECT
+   Matched Triggers: ['IF velocity_count < 0 OR last_login_days < 0 THEN REJECT (invalid negative values)']
+
+❌ [373] Mismatch!
+   NL Rule: If kyc_verified is false and transaction_amount is greater than 1000 then REJECT.
+   Expected: REJECT | Actual Computed: APPROVE
+   Missing Variables (Fail-Closed Hit) - Context supplied vs Schema expected differed.
+
+❌ [374] Mismatch!
+   NL Rule: If employment_status equals "unemployed" and loan_amount is greater than salary_amount then ASK_FOR_APPROVAL.
+   Expected: ASK_FOR_APPROVAL | Actual Computed: APPROVE
+   Missing Variables (Fail-Closed Hit) - Context supplied vs Schema expected differed.
+
+❌ [376] Mismatch!
+   NL Rule: Approve when warranty_period_days is greater than 365 and vendor_reputation_score is greater than 80.
+   Expected: APPROVE | Actual Computed: REJECT
+   Matched Triggers: ['IF vendor_reputation_score < 0 OR vendor_reputation_score > 100 THEN REJECT']
+
+❌ [377] Mismatch!
+   NL Rule: If subscription_status equals "cancelled" and recurring_payment is true then ASK_FOR_APPROVAL.
+   Expected: ASK_FOR_APPROVAL | Actual Computed: APPROVE
+   Missing Variables (Fail-Closed Hit) - Context supplied vs Schema expected differed.
+
+❌ [379] Mismatch!
+   NL Rule: If batch_total is greater than 50000 and partner_id equals "partner_42" then ASK_FOR_APPROVAL.
+   Expected: ASK_FOR_APPROVAL | Actual Computed: APPROVE
+   Missing Variables (Fail-Closed Hit) - Context supplied vs Schema expected differed.
+   ...evaluated 380 cases.
+
+❌ [383] Mismatch!
+   NL Rule: If beneficiary_country equals "SanctionedLand" OR beneficiary_country equals "BlockedState" then REJECT.
+   Expected: REJECT | Actual Computed: APPROVE
+   Missing Variables (Fail-Closed Hit) - Context supplied vs Schema expected differed.
+
+❌ [384] Mismatch!
+   NL Rule: If is_test_account is true then APPROVE (test accounts bypass rules).
+   Expected: APPROVE | Actual Computed: ASK_FOR_APPROVAL
+   Matched Triggers: ['IF is_test_account == true THEN APPROVE (test accounts bypass rules)']
+
+❌ [386] Mismatch!
+   NL Rule: If promotion_code equals "GOLD20" and coupon_stack_count is greater than 1 then ASK_FOR_APPROVAL.
+   Expected: ASK_FOR_APPROVAL | Actual Computed: APPROVE
+   Missing Variables (Fail-Closed Hit) - Context supplied vs Schema expected differed.
+
+❌ [387] Mismatch!
+   NL Rule: If shipping_address_matches_billing is true and phone_number_verified is true and transaction_amount is less than 100 then APPROVE.
+   Expected: APPROVE | Actual Computed: ASK_FOR_APPROVAL
+   Matched Triggers: ['IF shipping_address_matches_billing == true AND phone_number_verified == true AND transaction_amount < 100 THEN APPROVE']
+
+❌ [388] Mismatch!
+   NL Rule: If delivery_type equals "overnight" and order_value is greater than 1000 then ASK_FOR_APPROVAL.
+   Expected: ASK_FOR_APPROVAL | Actual Computed: APPROVE
+   Missing Variables (Fail-Closed Hit) - Context supplied vs Schema expected differed.
+
+❌ [389] Mismatch!
+   NL Rule: If credit_utilization_pct is greater than or equal to 95 then REJECT (credit maxed out).
+   Expected: REJECT | Actual Computed: ASK_FOR_APPROVAL
+   Matched Triggers: ['If credit_utilization_pct < 0 or credit_utilization_pct > 100 then ASK_FOR_APPROVAL (invalid percentage)']
+   ...evaluated 390 cases.
+
+❌ [393] Mismatch!
+   NL Rule: If phone_number_verified is false and ip_address_risk_score is greater than 70 then REJECT.
+   Expected: REJECT | Actual Computed: ASK_FOR_APPROVAL
+   Matched Triggers: ['IF phone_number_verified == null OR ip_address_risk_score == null OR ip_address_risk_score < 0 OR ip_address_risk_score > 100 THEN ASK_FOR_APPROVAL']
+
+❌ [394] Mismatch!
+   NL Rule: If vendor_reputation_score is greater than 90 and refund_rate is less than 0.01 then APPROVE.
+   Expected: APPROVE | Actual Computed: REJECT
+   Matched Triggers: ['IF vendor_reputation_score < 0 OR vendor_reputation_score > 100 THEN REJECT']
+
+❌ [395] Mismatch!
+   NL Rule: If partner_id equals "legacy_partner" and batch_total is less than 100 then REJECT (edge-case: too small legacy batch).
+   Expected: REJECT | Actual Computed: APPROVE
+   Missing Variables (Fail-Closed Hit) - Context supplied vs Schema expected differed.
+
+❌ [396] Mismatch!
+   NL Rule: If invoice_age_days equals 0 and invoice_amount is greater than 50000 then ASK_FOR_APPROVAL (new huge invoice).
+   Expected: ASK_FOR_APPROVAL | Actual Computed: APPROVE
+   Missing Variables (Fail-Closed Hit) - Context supplied vs Schema expected differed.
+
+❌ [397] Mismatch!
+   NL Rule: If recurring_payment is true and transaction_amount is less than 1 then REJECT (zero-value recurring payment).
+   Expected: REJECT | Actual Computed: APPROVE
+   Missing Variables (Fail-Closed Hit) - Context supplied vs Schema expected differed.
+
+❌ [399] Mismatch!
+   NL Rule: If currency equals "EUR" AND order_value is greater than 2000 AND user_risk_score is greater than 40 then ASK_FOR_APPROVAL.
+   Expected: ASK_FOR_APPROVAL | Actual Computed: APPROVE
+   Missing Variables (Fail-Closed Hit) - Context supplied vs Schema expected differed.
+
+❌ [400] Mismatch!
+   NL Rule: If exchange_rate is equal to 1 and currency equals "USD" then APPROVE (explicit parity special-case).
+   Expected: APPROVE | Actual Computed: ASK_FOR_APPROVAL
+   Matched Triggers: ['IF exchange_rate == 1 AND currency == "USD" THEN APPROVE (explicit parity special-case).']
+   ...evaluated 400 cases.
+
+❌ [402] Mismatch!
+   NL Rule: If is_international is false and card_present is true and transaction_amount is less than 300 then APPROVE.
+   Expected: APPROVE | Actual Computed: ASK_FOR_APPROVAL
+   Matched Triggers: ['IF is_international == false AND card_present == true AND transaction_amount < 300 THEN APPROVE']
+
+❌ [404] Mismatch!
+   NL Rule: If promotion_code equals "BLACKFRIDAY" and transaction_amount is greater than 1000 then ASK_FOR_APPROVAL (high-value promo flagged).
+   Expected: ASK_FOR_APPROVAL | Actual Computed: APPROVE
+   Missing Variables (Fail-Closed Hit) - Context supplied vs Schema expected differed.
+
+❌ [407] Mismatch!
+   NL Rule: If credit_utilization_pct is less than 20 and overdue_days is equal to 0 then APPROVE.
+   Expected: APPROVE | Actual Computed: ASK_FOR_APPROVAL
+   Matched Triggers: ['IF credit_utilization_pct < 20 AND overdue_days == 0 THEN APPROVE']
+
+❌ [409] Mismatch!
+   NL Rule: If shipping_address_matches_billing is false AND phone_number_verified is false AND transaction_amount is greater than 1000 then REJECT.
+   Expected: REJECT | Actual Computed: APPROVE
+   Missing Variables (Fail-Closed Hit) - Context supplied vs Schema expected differed.
+   ...evaluated 410 cases.
+
+❌ [411] Mismatch!
+   NL Rule: If payment_method_type equals "credit_card" and transaction_amount is greater than 10000 and phone_number_verified is true then ASK_FOR_APPROVAL.
+   Expected: ASK_FOR_APPROVAL | Actual Computed: APPROVE
+   Missing Variables (Fail-Closed Hit) - Context supplied vs Schema expected differed.
+
+❌ [415] Mismatch!
+   NL Rule: If user_risk_score is equal to 100 then REJECT (max risk).
+   Expected: REJECT | Actual Computed: APPROVE
+   Missing Variables (Fail-Closed Hit) - Context supplied vs Schema expected differed.
+
+❌ [417] Mismatch!
+   NL Rule: If the category is 'electronics' AND the user_risk_score is greater than 50 then REJECT.
+   Expected: REJECT | Actual Computed: APPROVE
+   Missing Variables (Fail-Closed Hit) - Context supplied vs Schema expected differed.
+
+❌ [419] Mismatch!
+   NL Rule: If the shipping_country is not equal to the billing_country AND the transaction_amount is greater than 500 then ASK_FOR_APPROVAL.
+   Expected: ASK_FOR_APPROVAL | Actual Computed: REJECT
+   Matched Triggers: ['IF transaction_amount == null THEN REJECT (missing transaction amount)']
+
+❌ [420] Mismatch!
+   NL Rule: If the payment_method is 'gift_card' AND the transaction_amount is greater than 100 then REJECT.
+   Expected: REJECT | Actual Computed: APPROVE
+   Missing Variables (Fail-Closed Hit) - Context supplied vs Schema expected differed.
+   ...evaluated 420 cases.
+
+❌ [421] Mismatch!
+   NL Rule: If the user_age is less than 18 then REJECT.
+   Expected: REJECT | Actual Computed: ASK_FOR_APPROVAL
+   Matched Triggers: ['IF user_age == null THEN ASK_FOR_APPROVAL']
+
+❌ [422] Mismatch!
+   NL Rule: If the user_age is greater than or equal to 18 then APPROVE.
+   Expected: APPROVE | Actual Computed: REJECT
+   Matched Triggers: ['IF user_age == null THEN REJECT']
+
+❌ [428] Mismatch!
+   NL Rule: If the loyalty_points_balance is greater than 10000 AND the transaction_amount is less than 100 then APPROVE.
+   Expected: APPROVE | Actual Computed: ASK_FOR_APPROVAL
+   Matched Triggers: ['IF loyalty_points_balance > 10000 AND transaction_amount < 100 THEN APPROVE']
+
+❌ [429] Mismatch!
+   NL Rule: If the weekend_purchase is true AND the transaction_time_hour is greater than or equal to 0 AND the transaction_time_hour is less than or equal to 6 AND the transaction_amount is greater than 300 then ASK_FOR_APPROVAL.
+   Expected: ASK_FOR_APPROVAL | Actual Computed: REJECT
+   Matched Triggers: ['IF transaction_time_hour == null OR transaction_time_hour < 0 OR transaction_time_hour > 23 THEN REJECT']
+   ...evaluated 430 cases.
+
+❌ [431] Mismatch!
+   NL Rule: If the shipping_address_matches_billing is false AND the phone_verified is false then ASK_FOR_APPROVAL.
+   Expected: ASK_FOR_APPROVAL | Actual Computed: APPROVE
+   Missing Variables (Fail-Closed Hit) - Context supplied vs Schema expected differed.
+
+❌ [436] Mismatch!
+   NL Rule: If the order_contains_age_restricted_item is true AND age_verified is false then REJECT.
+   Expected: REJECT | Actual Computed: APPROVE
+   Missing Variables (Fail-Closed Hit) - Context supplied vs Schema expected differed.
+
+❌ [438] Mismatch!
+   NL Rule: If the gift_recipient_country is one of ['US', 'CA'] AND the transaction_amount is greater than 2000 then ASK_FOR_APPROVAL.
+   Expected: ASK_FOR_APPROVAL | Actual Computed: APPROVE
+   Missing Variables (Fail-Closed Hit) - Context supplied vs Schema expected differed.
+   ...evaluated 440 cases.
+
+❌ [447] Mismatch!
+   NL Rule: If the billing_address_country is 'US' AND the shipping_address_country is 'US' AND the transaction_amount is greater than 5000 AND the user_risk_score is less than 30 then ASK_FOR_APPROVAL.
+   Expected: ASK_FOR_APPROVAL | Actual Computed: APPROVE
+   Missing Variables (Fail-Closed Hit) - Context supplied vs Schema expected differed.
+
+❌ [449] Mismatch!
+   NL Rule: If the account_creation_date_days is less than or equal to 7 AND the transaction_amount is greater than 1000 then ASK_FOR_APPROVAL.
+   Expected: ASK_FOR_APPROVAL | Actual Computed: REJECT
+   Matched Triggers: ['IF account_creation_date_days == null THEN REJECT']
+
+❌ [450] Mismatch!
+   NL Rule: If the merchant_category is 'digital_goods' AND the ip_country is not equal to the billing_country then REJECT.
+   Expected: REJECT | Actual Computed: APPROVE
+   Missing Variables (Fail-Closed Hit) - Context supplied vs Schema expected differed.
+   ...evaluated 450 cases.
+
+❌ [452] Mismatch!
+   NL Rule: If the delivery_speed is 'overnight' AND the transaction_amount is greater than 2000 then ASK_FOR_APPROVAL.
+   Expected: ASK_FOR_APPROVAL | Actual Computed: APPROVE
+   Missing Variables (Fail-Closed Hit) - Context supplied vs Schema expected differed.
+
+❌ [456] Mismatch!
+   NL Rule: If the valid_id_uploaded is true AND the id_expiry_date is less than '2025-01-01' then REJECT.
+   Expected: REJECT | Actual Computed: APPROVE
+   Missing Variables (Fail-Closed Hit) - Context supplied vs Schema expected differed.
+   ...evaluated 460 cases.
+
+❌ [463] Mismatch!
+   NL Rule: If the bank_transfer_expected_by_merchant is true AND the payment_method is 'bank_transfer' then APPROVE.
+   Expected: APPROVE | Actual Computed: ASK_FOR_APPROVAL
+   Matched Triggers: ["IF bank_transfer_expected_by_merchant == true AND payment_method == 'bank_transfer' THEN APPROVE"]
+
+❌ [468] Mismatch!
+   NL Rule: If the category is 'electronics' and the user_risk_score is greater than 50 then REJECT.
+   Expected: REJECT | Actual Computed: APPROVE
+   Missing Variables (Fail-Closed Hit) - Context supplied vs Schema expected differed.
+   ...evaluated 470 cases.
+
+❌ [471] Mismatch!
+   NL Rule: If the country_code is 'HIGH_RISK' OR (ip_region is not equal to billing_region AND transaction_amount is greater than 500) then REJECT.
+   Expected: REJECT | Actual Computed: APPROVE
+   Missing Variables (Fail-Closed Hit) - Context supplied vs Schema expected differed.
+
+❌ [472] Mismatch!
+   NL Rule: If the transactions_last_24h is greater than 10 AND the transaction_amount is greater than 200 then ASK_FOR_APPROVAL.
+   Expected: ASK_FOR_APPROVAL | Actual Computed: REJECT
+   Matched Triggers: ['IF transactions_last_24h < 0 OR transaction_amount < 0 THEN REJECT']
+
+❌ [480] Mismatch!
+   NL Rule: If the is_cross_border is true AND the transaction_amount is greater than cross_border_limit then ASK_FOR_APPROVAL.
+   Expected: ASK_FOR_APPROVAL | Actual Computed: APPROVE
+   Missing Variables (Fail-Closed Hit) - Context supplied vs Schema expected differed.
+   ...evaluated 480 cases.
+
+❌ [486] Mismatch!
+   NL Rule: If daily_spend plus transaction_amount is greater than daily_limit then REJECT.
+   Expected: REJECT | Actual Computed: APPROVE
+   Missing Variables (Fail-Closed Hit) - Context supplied vs Schema expected differed.
+   ...evaluated 490 cases.
+
+❌ [493] Mismatch!
+   NL Rule: If the purchases_last_year is greater than or equal to 20 AND total_spent_last_year is greater than or equal to 5000 then APPROVE.
+   Expected: APPROVE | Actual Computed: REJECT
+   Matched Triggers: ['IF purchases_last_year < 0 OR total_spent_last_year < 0 THEN REJECT']
+
+❌ [498] Mismatch!
+   NL Rule: If the transaction_amount is equal to 100 AND the user_risk_score is less than 20 then APPROVE.
+   Expected: APPROVE | Actual Computed: ASK_FOR_APPROVAL
+   Matched Triggers: ['IF transaction_amount == 100 AND user_risk_score < 20 THEN APPROVE']
+
+❌ [499] Mismatch!
+   NL Rule: If the transaction_day_of_week is 'Sunday' AND the transaction_amount is greater than 200 then ASK_FOR_APPROVAL.
+   Expected: ASK_FOR_APPROVAL | Actual Computed: APPROVE
+   Missing Variables (Fail-Closed Hit) - Context supplied vs Schema expected differed.
+   ...evaluated 500 cases.
+
+❌ [501] Mismatch!
+   NL Rule: If the beneficiary_name is 'TEST' OR beneficiary_name is 'UNKNOWN' then REJECT.
+   Expected: REJECT | Actual Computed: APPROVE
+   Missing Variables (Fail-Closed Hit) - Context supplied vs Schema expected differed.
+
+❌ [502] Mismatch!
+   NL Rule: If account_balance minus transaction_amount is less than overdraft_limit then REJECT.
+   Expected: REJECT | Actual Computed: APPROVE
+   Missing Variables (Fail-Closed Hit) - Context supplied vs Schema expected differed.
+
+❌ [503] Mismatch!
+   NL Rule: If the currency is 'JPY' AND the transaction_amount is less than 1 then REJECT.
+   Expected: REJECT | Actual Computed: APPROVE
+   Missing Variables (Fail-Closed Hit) - Context supplied vs Schema expected differed.
+   ...evaluated 510 cases.
+
+❌ [513] Mismatch!
+   NL Rule: If card_bin is in blacklisted_bins then REJECT.
+   Expected: REJECT | Actual Computed: APPROVE
+   Missing Variables (Fail-Closed Hit) - Context supplied vs Schema expected differed.
+
+❌ [514] Mismatch!
+   NL Rule: If transaction_hour is less than 6 AND transaction_amount is greater than 1000 then ASK_FOR_APPROVAL.
+   Expected: ASK_FOR_APPROVAL | Actual Computed: REJECT
+   Matched Triggers: ['IF transaction_hour == null THEN REJECT (missing transaction_hour)']
+
+🧹 Cleaning up test group...
+
+--- Final E2E Accuracy Report ---
+Total Cases     : 515
+Passed          : 309 (60.0%)
+Fail-Closed Mismatches (Safe) : 204 (39.6%)
+Parse Errors    : 2 (0.4%)

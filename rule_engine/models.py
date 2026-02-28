@@ -5,6 +5,11 @@ import uuid
 def generate_id():
     return str(uuid.uuid4())
 
+class DatapointDefinition(BaseModel):
+    name: str
+    type: str  # "text" | "number" | "boolean" | "enum"
+    values: list[str] = []
+
 class BusinessRule(BaseModel):
     id: str = Field(default_factory=generate_id)
     name: str
@@ -21,6 +26,7 @@ class BusinessRuleGroup(BaseModel):
     name: str
     description: str = ""
     rules: list[BusinessRule] = Field(default_factory=list)
+    datapoint_definitions: list[DatapointDefinition] = Field(default_factory=list)
 
 class CreateRule(BaseModel):
     name: str

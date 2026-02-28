@@ -3,6 +3,52 @@ import httpx
 from typing import List, Dict, Any
 from .models import DecisionOutcome
 from json_logic import jsonLogic, add_operation
+import difflib
+
+def extract_vars_from_jsonlogic(logic: Any, vars_set: set):
+    """Recursively finds all requested variables in a JSON Logic dict."""
+    if isinstance(logic, dict):
+        if "var" in logic:
+            var_val = logic["var"]
+            if isinstance(var_val, str):
+                vars_set.add(var_val)
+            elif isinstance(var_val, list) and len(var_val) > 0 and isinstance(var_val[0], str):
+                vars_set.add(var_val[0])
+        else:
+            for v in logic.values():
+                extract_vars_from_jsonlogic(v, vars_set)
+    elif isinstance(logic, list):
+        for item in logic:
+            extract_vars_from_jsonlogic(item, vars_set)
+
+def map_missing_variables(rule_json: dict, context: Dict[str, Any]):
+    """
+    Finds required variables in rule_json. If missing from context, 
+    fuzzily matches them against available keys and aliases them.
+    """
+    if not rule_json:
+        return
+        
+    required_vars = set()
+    extract_vars_from_jsonlogic(rule_json, required_vars)
+    
+    available_keys = list(context.keys())
+    
+    for req_var in required_vars:
+        if req_var not in context:
+            # 1. Substring Match (e.g., "amount" in "transaction_amount" or vice versa)
+            substring_matches = [k for k in available_keys if req_var in k or k in req_var]
+            if substring_matches:
+                # Pick the shortest match to avoid overly broad grabs
+                best_match = min(substring_matches, key=len)
+                context[req_var] = context[best_match]
+                continue
+                
+            # 2. Fuzzy Match Backup
+            matches = difflib.get_close_matches(req_var, available_keys, n=1, cutoff=0.4)
+            if matches:
+                alias = matches[0]
+                context[req_var] = context[alias]
 
 # Enforce fail-closed type checking within JSON Logic
 def strict_eq(a, b):
@@ -96,6 +142,9 @@ def evaluate_rule(rule_json: dict | None, rule_logic: str, context: Dict[str, An
         fail_closed_outcome = match.group(1).upper()
 
     try:
+        # Map missing variables via fuzzy matching before evaluating
+        map_missing_variables(rule_json, context)
+        
         # Evaluate safely
         result = jsonLogic(rule_json, context)
         if result in ["APPROVE", "REJECT", "ASK_FOR_APPROVAL"]:

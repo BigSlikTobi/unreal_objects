@@ -1,0 +1,1051 @@
+🧪 Starting End-to-End LLM Generative Evaluation from Batch Results...
+
+Beginning evaluation of 358 processed cases out of 532 total...
+
+❌ [1] Mismatch!
+   NL Rule: If the transaction_amount is greater than 100 then ASK_FOR_APPROVAL.
+   Expected: ASK_FOR_APPROVAL | Actual Computed: REJECT
+   Matched Triggers: ['IF item_count > 0 AND (transaction_amount / item_count) < 1 THEN REJECT']
+
+❌ [2] Mismatch!
+   NL Rule: Reject the transaction if the transaction_amount is greater than 1000 and the user_risk_score is greater than 80.
+   Expected: REJECT | Actual Computed: ASK_FOR_APPROVAL
+   Matched Triggers: ["IF shipping_speed == 'standard' AND transaction_amount == 50 AND coupon_applied == true THEN APPROVE"]
+
+❌ [5] Mismatch!
+   NL Rule: If the item_count is greater than 10 and the coupon_applied is true then ASK_FOR_APPROVAL.
+   Expected: ASK_FOR_APPROVAL | Actual Computed: REJECT
+   Matched Triggers: ['IF user_risk_score < 0 OR user_risk_score > 100 THEN REJECT']
+
+❌ [6] Mismatch!
+   NL Rule: If the payment_method is 'crypto' and the transaction_amount is greater than 200 then ASK_FOR_APPROVAL.
+   Expected: ASK_FOR_APPROVAL | Actual Computed: REJECT
+   Matched Triggers: ['IF user_risk_score < 0 OR user_risk_score > 100 THEN REJECT']
+
+❌ [8] Mismatch!
+   NL Rule: If the user_country is 'CN' and the transaction_amount is greater than 300 then REJECT.
+   Expected: REJECT | Actual Computed: APPROVE
+   Missing Variables (Fail-Closed Hit) - Context supplied vs Schema expected differed.
+⚠️ [9] Missing batch translation for 'request-8'. Skipping.
+   ...evaluated 10 cases.
+
+❌ [11] Mismatch!
+   NL Rule: If the payment_method is 'paypal' and the shipping_address_matches_billing is false then ASK_FOR_APPROVAL.
+   Expected: ASK_FOR_APPROVAL | Actual Computed: APPROVE
+   Missing Variables (Fail-Closed Hit) - Context supplied vs Schema expected differed.
+
+❌ [12] Mismatch!
+   NL Rule: If the user_risk_score is less than 20 and the transaction_amount is less than 50 then APPROVE.
+   Expected: APPROVE | Actual Computed: ASK_FOR_APPROVAL
+   Matched Triggers: ['IF user_risk_score < 20 AND transaction_amount < 50 THEN APPROVE']
+
+❌ [13] Mismatch!
+   NL Rule: If the merchant_category is 'gift_card' and the transaction_amount is greater than 200 then REJECT.
+   Expected: REJECT | Actual Computed: APPROVE
+   Missing Variables (Fail-Closed Hit) - Context supplied vs Schema expected differed.
+⚠️ [16] Missing batch translation for 'request-15'. Skipping.
+
+❌ [18] Mismatch!
+   NL Rule: If the account_age_days is greater than 365 and the user_risk_score is less than 30 and the transaction_amount is less than 500 then APPROVE.
+   Expected: APPROVE | Actual Computed: ASK_FOR_APPROVAL
+   Matched Triggers: ['IF account_age_days > 365 AND user_risk_score < 30 AND transaction_amount < 500 THEN APPROVE']
+⚠️ [19] Missing batch translation for 'request-18'. Skipping.
+⚠️ [20] Missing batch translation for 'request-19'. Skipping.
+⚠️ [21] Missing batch translation for 'request-20'. Skipping.
+
+❌ [26] Mismatch!
+   NL Rule: If the merchant_category is 'electronics' and the payment_method is 'paypal' and the shipping_address_matches_billing is false then ASK_FOR_APPROVAL.
+   Expected: ASK_FOR_APPROVAL | Actual Computed: APPROVE
+   Missing Variables (Fail-Closed Hit) - Context supplied vs Schema expected differed.
+
+❌ [27] Mismatch!
+   NL Rule: If the is_first_time_buyer is true and the user_country is 'US' and the transaction_amount is less than 20 then APPROVE.
+   Expected: APPROVE | Actual Computed: ASK_FOR_APPROVAL
+   Matched Triggers: ['IF is_first_time_buyer == true AND user_country == "US" AND transaction_amount < 20 THEN APPROVE']
+
+❌ [28] Mismatch!
+   NL Rule: If the account_age_days is greater than 30 and the is_first_time_buyer is false and the transaction_amount is less than 100 then APPROVE.
+   Expected: APPROVE | Actual Computed: ASK_FOR_APPROVAL
+   Matched Triggers: ['IF account_age_days > 30 AND is_first_time_buyer == false AND transaction_amount < 100 THEN APPROVE']
+
+❌ [29] Mismatch!
+   NL Rule: If the user_country is 'GB' and the merchant_category is 'gift_card' then REJECT.
+   Expected: REJECT | Actual Computed: APPROVE
+   Missing Variables (Fail-Closed Hit) - Context supplied vs Schema expected differed.
+⚠️ [30] Missing batch translation for 'request-29'. Skipping.
+
+❌ [32] Mismatch!
+   NL Rule: If the payment_method is 'crypto' and the user_country is 'US' then ASK_FOR_APPROVAL.
+   Expected: ASK_FOR_APPROVAL | Actual Computed: APPROVE
+   Missing Variables (Fail-Closed Hit) - Context supplied vs Schema expected differed.
+
+❌ [34] Mismatch!
+   NL Rule: If the account_age_days is exactly 365 and the user_risk_score is exactly 30 and the transaction_amount is exactly 365 then APPROVE.
+   Expected: APPROVE | Actual Computed: ASK_FOR_APPROVAL
+   Matched Triggers: ['IF account_age_days == 365 AND user_risk_score == 30 AND transaction_amount == 365 THEN APPROVE']
+⚠️ [37] Missing batch translation for 'request-36'. Skipping.
+
+❌ [39] Mismatch!
+   NL Rule: If the merchant_category is 'apparel' and the coupon_applied is true and the transaction_amount is greater than 500 then ASK_FOR_APPROVAL.
+   Expected: ASK_FOR_APPROVAL | Actual Computed: APPROVE
+   Missing Variables (Fail-Closed Hit) - Context supplied vs Schema expected differed.
+
+❌ [40] Mismatch!
+   NL Rule: If the is_first_time_buyer is true and the payment_method is 'credit_card' and the user_risk_score is less than 25 then APPROVE.
+   Expected: APPROVE | Actual Computed: ASK_FOR_APPROVAL
+   Matched Triggers: ["IF is_first_time_buyer == true AND payment_method == 'credit_card' AND user_risk_score < 25 THEN APPROVE"]
+   ...evaluated 40 cases.
+
+❌ [41] Mismatch!
+   NL Rule: If the user_country is 'US' and the shipping_address_matches_billing is false and the transaction_amount is greater than 2000 then REJECT.
+   Expected: REJECT | Actual Computed: APPROVE
+   Missing Variables (Fail-Closed Hit) - Context supplied vs Schema expected differed.
+
+❌ [42] Mismatch!
+   NL Rule: If the shipping_speed is 'overnight' and the user_risk_score is greater than 75 then REJECT.
+   Expected: REJECT | Actual Computed: APPROVE
+   Missing Variables (Fail-Closed Hit) - Context supplied vs Schema expected differed.
+⚠️ [43] Missing batch translation for 'request-42'. Skipping.
+
+❌ [44] Mismatch!
+   NL Rule: If the merchant_category is 'electronics' and the item_count is equal to 0 then REJECT.
+   Expected: REJECT | Actual Computed: APPROVE
+   Missing Variables (Fail-Closed Hit) - Context supplied vs Schema expected differed.
+⚠️ [46] Missing batch translation for 'request-45'. Skipping.
+
+❌ [50] Mismatch!
+   NL Rule: If the user_risk_score is less than 40 and the account_age_days is greater than 180 and the transaction_amount is less than 1000 and the shipping_address_matches_billing is true then APPROVE.
+   Expected: APPROVE | Actual Computed: ASK_FOR_APPROVAL
+   Matched Triggers: ['IF user_risk_score < 40 AND account_age_days > 180 AND transaction_amount < 1000 AND shipping_address_matches_billing == true THEN APPROVE']
+   ...evaluated 50 cases.
+⚠️ [51] Missing batch translation for 'request-50'. Skipping.
+
+❌ [53] Mismatch!
+   NL Rule: Approve if the transaction_amount is less than or equal to 50 and the user_risk_score is less than 20.
+   Expected: APPROVE | Actual Computed: ASK_FOR_APPROVAL
+   Matched Triggers: ['IF transaction_amount <= 50 AND user_risk_score < 20 THEN APPROVE']
+⚠️ [54] Missing batch translation for 'request-53'. Skipping.
+⚠️ [55] Missing batch translation for 'request-54'. Skipping.
+
+❌ [59] Mismatch!
+   NL Rule: If the merchant_category is electronics and the item_count is greater than 5 -> ASK_FOR_APPROVAL.
+   Expected: ASK_FOR_APPROVAL | Actual Computed: APPROVE
+   Missing Variables (Fail-Closed Hit) - Context supplied vs Schema expected differed.
+
+❌ [60] Mismatch!
+   NL Rule: Approve if the transaction_amount is less than 10 and the item_count is 1 and the user_risk_score is less than 10.
+   Expected: APPROVE | Actual Computed: ASK_FOR_APPROVAL
+   Matched Triggers: ['IF transaction_amount < 10 AND item_count == 1 AND user_risk_score < 10 THEN APPROVE']
+   ...evaluated 60 cases.
+⚠️ [61] Missing batch translation for 'request-60'. Skipping.
+⚠️ [62] Missing batch translation for 'request-61'. Skipping.
+
+❌ [66] Mismatch!
+   NL Rule: Reject if the merchant_category is electronics and the payment_method is crypto.
+   Expected: REJECT | Actual Computed: APPROVE
+   Missing Variables (Fail-Closed Hit) - Context supplied vs Schema expected differed.
+⚠️ [68] Missing batch translation for 'request-67'. Skipping.
+
+❌ [70] Mismatch!
+   NL Rule: If the shipping_speed is overnight and the transaction_amount is less than 20 -> ASK_FOR_APPROVAL (edge suspicious expedited cheap order).
+   Expected: ASK_FOR_APPROVAL | Actual Computed: APPROVE
+   Missing Variables (Fail-Closed Hit) - Context supplied vs Schema expected differed.
+   ...evaluated 70 cases.
+
+❌ [71] Mismatch!
+   NL Rule: Approve if the coupon_applied is true and the transaction_amount is less than 100 and the user_risk_score is less than 40.
+   Expected: APPROVE | Actual Computed: ASK_FOR_APPROVAL
+   Matched Triggers: ['IF coupon_applied == true AND transaction_amount < 100 AND user_risk_score < 40 THEN APPROVE']
+
+❌ [73] Mismatch!
+   NL Rule: If the user_country is CN and the transaction_amount is greater than 300 -> ASK_FOR_APPROVAL.
+   Expected: ASK_FOR_APPROVAL | Actual Computed: APPROVE
+   Missing Variables (Fail-Closed Hit) - Context supplied vs Schema expected differed.
+⚠️ [74] Missing batch translation for 'request-73'. Skipping.
+⚠️ [75] Missing batch translation for 'request-74'. Skipping.
+⚠️ [76] Missing batch translation for 'request-75'. Skipping.
+⚠️ [77] Missing batch translation for 'request-76'. Skipping.
+⚠️ [78] Missing batch translation for 'request-77'. Skipping.
+⚠️ [79] Missing batch translation for 'request-78'. Skipping.
+   ...evaluated 80 cases.
+⚠️ [81] Missing batch translation for 'request-80'. Skipping.
+⚠️ [83] Missing batch translation for 'request-82'. Skipping.
+⚠️ [84] Missing batch translation for 'request-83'. Skipping.
+
+❌ [85] Mismatch!
+   NL Rule: Ask for approval if the payment_method is credit_card and the user_risk_score is between 50 and 70 and the transaction_amount is greater than 300.
+   Expected: ASK_FOR_APPROVAL | Actual Computed: APPROVE
+   Missing Variables (Fail-Closed Hit) - Context supplied vs Schema expected differed.
+⚠️ [86] Missing batch translation for 'request-85'. Skipping.
+
+❌ [87] Mismatch!
+   NL Rule: Approve if the transaction_amount is 0 and the coupon_applied is true (edge free order with coupon).
+   Expected: APPROVE | Actual Computed: ASK_FOR_APPROVAL
+   Matched Triggers: ['IF transaction_amount == 0 AND coupon_applied == true THEN APPROVE']
+⚠️ [88] Missing batch translation for 'request-87'. Skipping.
+   ...evaluated 90 cases.
+⚠️ [91] Missing batch translation for 'request-90'. Skipping.
+
+❌ [95] Mismatch!
+   NL Rule: Reject if the payment_method is crypto and the transaction_amount is greater than or equal to 1000.
+   Expected: REJECT | Actual Computed: APPROVE
+   Missing Variables (Fail-Closed Hit) - Context supplied vs Schema expected differed.
+⚠️ [96] Missing batch translation for 'request-95'. Skipping.
+⚠️ [97] Missing batch translation for 'request-96'. Skipping.
+
+❌ [98] Mismatch!
+   NL Rule: If the currency is EUR and the transaction_amount is greater than 800 -> ASK_FOR_APPROVAL.
+   Expected: ASK_FOR_APPROVAL | Actual Computed: APPROVE
+   Missing Variables (Fail-Closed Hit) - Context supplied vs Schema expected differed.
+⚠️ [100] Missing batch translation for 'request-99'. Skipping.
+⚠️ [102] Missing batch translation for 'request-101'. Skipping.
+⚠️ [109] Missing batch translation for 'request-108'. Skipping.
+   ...evaluated 110 cases.
+⚠️ [111] Missing batch translation for 'request-110'. Skipping.
+
+❌ [112] Mismatch!
+   NL Rule: If the merchant_category is electronics and the payment_method is paypal and the transaction_amount is less than 20 -> ASK_FOR_APPROVAL (micro electronics via paypal).
+   Expected: ASK_FOR_APPROVAL | Actual Computed: APPROVE
+   Missing Variables (Fail-Closed Hit) - Context supplied vs Schema expected differed.
+⚠️ [113] Missing batch translation for 'request-112'. Skipping.
+
+❌ [115] Mismatch!
+   NL Rule: Approve if the user_risk_score is less than or equal to 20 and the transaction_amount is less than 200.
+   Expected: APPROVE | Actual Computed: ASK_FOR_APPROVAL
+   Matched Triggers: ['IF user_risk_score <= 20 AND transaction_amount < 200 THEN APPROVE']
+⚠️ [116] Missing batch translation for 'request-115'. Skipping.
+⚠️ [117] Missing batch translation for 'request-116'. Skipping.
+
+❌ [120] Mismatch!
+   NL Rule: If payment_method is 'crypto' and transaction_amount is greater than 1000 then REJECT.
+   Expected: REJECT | Actual Computed: APPROVE
+   Missing Variables (Fail-Closed Hit) - Context supplied vs Schema expected differed.
+   ...evaluated 120 cases.
+⚠️ [121] Missing batch translation for 'request-120'. Skipping.
+
+❌ [125] Mismatch!
+   NL Rule: Reject when merchant_category is 'electronics' and user_risk_score is greater than or equal to 90.
+   Expected: REJECT | Actual Computed: APPROVE
+   Missing Variables (Fail-Closed Hit) - Context supplied vs Schema expected differed.
+⚠️ [126] Missing batch translation for 'request-125'. Skipping.
+⚠️ [129] Missing batch translation for 'request-128'. Skipping.
+   ...evaluated 130 cases.
+⚠️ [131] Missing batch translation for 'request-130'. Skipping.
+⚠️ [132] Missing batch translation for 'request-131'. Skipping.
+
+❌ [133] Mismatch!
+   NL Rule: Reject when merchant_category is 'gift_card' and user_country is not 'US' and transaction_amount is above 100.
+   Expected: REJECT | Actual Computed: APPROVE
+   Missing Variables (Fail-Closed Hit) - Context supplied vs Schema expected differed.
+⚠️ [135] Missing batch translation for 'request-134'. Skipping.
+⚠️ [136] Missing batch translation for 'request-135'. Skipping.
+   ...evaluated 140 cases.
+
+❌ [141] Mismatch!
+   NL Rule: If merchant_category is 'electronics' and item_count is equal to 1 and transaction_amount is greater than 2000 then ASK_FOR_APPROVAL.
+   Expected: ASK_FOR_APPROVAL | Actual Computed: APPROVE
+   Missing Variables (Fail-Closed Hit) - Context supplied vs Schema expected differed.
+⚠️ [142] Missing batch translation for 'request-141'. Skipping.
+
+❌ [143] Mismatch!
+   NL Rule: If is_first_time_buyer is true and user_risk_score is greater than 60 then REJECT.
+   Expected: REJECT | Actual Computed: APPROVE
+   Missing Variables (Fail-Closed Hit) - Context supplied vs Schema expected differed.
+⚠️ [144] Missing batch translation for 'request-143'. Skipping.
+
+❌ [145] Mismatch!
+   NL Rule: Reject when merchant_category is 'electronics' and payment_method is 'crypto' regardless of user_risk_score.
+   Expected: REJECT | Actual Computed: APPROVE
+   Missing Variables (Fail-Closed Hit) - Context supplied vs Schema expected differed.
+
+❌ [146] Mismatch!
+   NL Rule: Approve if coupon_applied is false and transaction_amount is under 50 and item_count is less than 5.
+   Expected: APPROVE | Actual Computed: ASK_FOR_APPROVAL
+   Matched Triggers: ['IF coupon_applied == false AND transaction_amount < 50 AND item_count < 5 THEN APPROVE']
+⚠️ [148] Missing batch translation for 'request-147'. Skipping.
+⚠️ [150] Missing batch translation for 'request-149'. Skipping.
+
+❌ [151] Mismatch!
+   NL Rule: Reject if user_country is 'RU' or user_country is 'IR' and transaction_amount is greater than 0 (high-risk countries block).
+   Expected: REJECT | Actual Computed: APPROVE
+   Missing Variables (Fail-Closed Hit) - Context supplied vs Schema expected differed.
+⚠️ [152] Missing batch translation for 'request-151'. Skipping.
+⚠️ [153] Missing batch translation for 'request-152'. Skipping.
+⚠️ [154] Missing batch translation for 'request-153'. Skipping.
+
+❌ [155] Mismatch!
+   NL Rule: Ask for approval if currency is 'USD' and transaction_amount is greater than 9999 and user_risk_score is under 60.
+   Expected: ASK_FOR_APPROVAL | Actual Computed: APPROVE
+   Missing Variables (Fail-Closed Hit) - Context supplied vs Schema expected differed.
+⚠️ [157] Missing batch translation for 'request-156'. Skipping.
+⚠️ [158] Missing batch translation for 'request-157'. Skipping.
+⚠️ [159] Missing batch translation for 'request-158'. Skipping.
+⚠️ [160] Missing batch translation for 'request-159'. Skipping.
+
+❌ [161] Mismatch!
+   NL Rule: Reject if payment_method is 'crypto' and user_country is not 'US' and transaction_amount is greater than 50.
+   Expected: REJECT | Actual Computed: APPROVE
+   Missing Variables (Fail-Closed Hit) - Context supplied vs Schema expected differed.
+
+❌ [162] Mismatch!
+   NL Rule: Approve when account_age_days is greater than or equal to 30 and is_first_time_buyer is false and user_risk_score is below 40.
+   Expected: APPROVE | Actual Computed: ASK_FOR_APPROVAL
+   Matched Triggers: ['IF account_age_days >= 30 AND is_first_time_buyer == false AND user_risk_score < 40 THEN APPROVE']
+⚠️ [165] Missing batch translation for 'request-164'. Skipping.
+
+❌ [169] Mismatch!
+   NL Rule: Reject when merchant_category is 'gift_card' and item_count is greater than 5 (bulk gift card purchases blocked).
+   Expected: REJECT | Actual Computed: APPROVE
+   Missing Variables (Fail-Closed Hit) - Context supplied vs Schema expected differed.
+
+❌ [170] Mismatch!
+   NL Rule: If payment_method is 'credit_card' and transaction_amount is less than 1 then REJECT (suspicious micro-charge).
+   Expected: REJECT | Actual Computed: APPROVE
+   Missing Variables (Fail-Closed Hit) - Context supplied vs Schema expected differed.
+   ...evaluated 170 cases.
+⚠️ [171] Missing batch translation for 'request-170'. Skipping.
+
+❌ [174] Mismatch!
+   NL Rule: If the merchant_category is 'electronics' and the user_risk_score is greater than 50 then REJECT.
+   Expected: REJECT | Actual Computed: APPROVE
+   Missing Variables (Fail-Closed Hit) - Context supplied vs Schema expected differed.
+⚠️ [177] Missing batch translation for 'request-176'. Skipping.
+   ...evaluated 180 cases.
+⚠️ [181] Missing batch translation for 'request-180'. Skipping.
+⚠️ [182] Missing batch translation for 'request-181'. Skipping.
+
+❌ [183] Mismatch!
+   NL Rule: If the user_country is 'NG' and the user_risk_score is greater than 60 then REJECT.
+   Expected: REJECT | Actual Computed: APPROVE
+   Missing Variables (Fail-Closed Hit) - Context supplied vs Schema expected differed.
+⚠️ [184] Missing batch translation for 'request-183'. Skipping.
+⚠️ [185] Missing batch translation for 'request-184'. Skipping.
+
+❌ [186] Mismatch!
+   NL Rule: If the account_age_days is greater than 3650 and the user_risk_score is less than 10 then APPROVE.
+   Expected: APPROVE | Actual Computed: ASK_FOR_APPROVAL
+   Matched Triggers: ['IF account_age_days > 3650 AND user_risk_score < 10 THEN APPROVE']
+⚠️ [189] Missing batch translation for 'request-188'. Skipping.
+   ...evaluated 190 cases.
+
+❌ [195] Mismatch!
+   NL Rule: If the shipping_speed is 'standard' and the item_count is greater than 100 then ASK_FOR_APPROVAL.
+   Expected: ASK_FOR_APPROVAL | Actual Computed: APPROVE
+   Missing Variables (Fail-Closed Hit) - Context supplied vs Schema expected differed.
+⚠️ [196] Missing batch translation for 'request-195'. Skipping.
+
+❌ [198] Mismatch!
+   NL Rule: If the payment_method is 'crypto' and the user_risk_score is greater than 30 then ASK_FOR_APPROVAL.
+   Expected: ASK_FOR_APPROVAL | Actual Computed: APPROVE
+   Missing Variables (Fail-Closed Hit) - Context supplied vs Schema expected differed.
+⚠️ [199] Missing batch translation for 'request-198'. Skipping.
+   ...evaluated 200 cases.
+
+❌ [202] Mismatch!
+   NL Rule: If the shipping_speed is 'overnight' and the user_country is not 'US' and the transaction_amount is greater than 1500 then REJECT.
+   Expected: REJECT | Actual Computed: APPROVE
+   Missing Variables (Fail-Closed Hit) - Context supplied vs Schema expected differed.
+
+❌ [203] Mismatch!
+   NL Rule: If the merchant_category is 'electronics' and the coupon_applied is true and the transaction_amount is less than 50 then REJECT.
+   Expected: REJECT | Actual Computed: APPROVE
+   Missing Variables (Fail-Closed Hit) - Context supplied vs Schema expected differed.
+⚠️ [205] Missing batch translation for 'request-204'. Skipping.
+
+❌ [208] Mismatch!
+   NL Rule: If the payment_method is 'credit_card' and the user_risk_score is greater than 75 then ASK_FOR_APPROVAL.
+   Expected: ASK_FOR_APPROVAL | Actual Computed: APPROVE
+   Missing Variables (Fail-Closed Hit) - Context supplied vs Schema expected differed.
+⚠️ [209] Missing batch translation for 'request-208'. Skipping.
+⚠️ [210] Missing batch translation for 'request-209'. Skipping.
+
+❌ [212] Mismatch!
+   NL Rule: If the is_first_time_buyer is false and the user_risk_score is less than 10 and the transaction_amount is less than 100 then APPROVE.
+   Expected: APPROVE | Actual Computed: ASK_FOR_APPROVAL
+   Matched Triggers: ['IF is_first_time_buyer == false AND user_risk_score < 10 AND transaction_amount < 100 THEN APPROVE']
+
+❌ [213] Mismatch!
+   NL Rule: If the shipping_address_matches_billing is true and the payment_method is 'credit_card' and the user_risk_score is less than 50 and the transaction_amount is less than 500 then APPROVE.
+   Expected: APPROVE | Actual Computed: ASK_FOR_APPROVAL
+   Matched Triggers: ["IF shipping_address_matches_billing == true AND payment_method == 'credit_card' AND user_risk_score < 50 AND transaction_amount < 500 THEN APPROVE"]
+⚠️ [214] Missing batch translation for 'request-213'. Skipping.
+⚠️ [215] Missing batch translation for 'request-214'. Skipping.
+
+❌ [217] Mismatch!
+   NL Rule: If the payment_method is 'paypal' and the user_country is 'FR' and the transaction_amount is greater than 1000 and the shipping_speed is 'overnight' then REJECT.
+   Expected: REJECT | Actual Computed: APPROVE
+   Missing Variables (Fail-Closed Hit) - Context supplied vs Schema expected differed.
+
+❌ [219] Mismatch!
+   NL Rule: If the payment_method is 'crypto' and the currency is 'BTC' and the transaction_amount is greater than 0 then ASK_FOR_APPROVAL.
+   Expected: ASK_FOR_APPROVAL | Actual Computed: APPROVE
+   Missing Variables (Fail-Closed Hit) - Context supplied vs Schema expected differed.
+   ...evaluated 220 cases.
+⚠️ [221] Missing batch translation for 'request-220'. Skipping.
+⚠️ [222] Missing batch translation for 'request-221'. Skipping.
+⚠️ [223] Missing batch translation for 'request-222'. Skipping.
+
+❌ [224] Mismatch!
+   NL Rule: If the merchant_category is 'electronics' and the user_risk_score is greater than 50 then REJECT.
+   Expected: REJECT | Actual Computed: APPROVE
+   Missing Variables (Fail-Closed Hit) - Context supplied vs Schema expected differed.
+⚠️ [225] Missing batch translation for 'request-224'. Skipping.
+⚠️ [226] Missing batch translation for 'request-225'. Skipping.
+
+❌ [227] Mismatch!
+   NL Rule: If the payment_method is 'crypto' and the transaction_amount is greater than 1000 then REJECT.
+   Expected: REJECT | Actual Computed: APPROVE
+   Missing Variables (Fail-Closed Hit) - Context supplied vs Schema expected differed.
+
+❌ [228] Mismatch!
+   NL Rule: If the item_count is equal to 0 then REJECT.
+   Expected: REJECT | Actual Computed: APPROVE
+   Missing Variables (Fail-Closed Hit) - Context supplied vs Schema expected differed.
+⚠️ [229] Missing batch translation for 'request-228'. Skipping.
+⚠️ [230] Missing batch translation for 'request-229'. Skipping.
+⚠️ [232] Missing batch translation for 'request-231'. Skipping.
+
+❌ [234] Mismatch!
+   NL Rule: If the merchant_category is 'apparel' and item_count is greater than 10 then ASK_FOR_APPROVAL.
+   Expected: ASK_FOR_APPROVAL | Actual Computed: APPROVE
+   Missing Variables (Fail-Closed Hit) - Context supplied vs Schema expected differed.
+⚠️ [235] Missing batch translation for 'request-234'. Skipping.
+⚠️ [236] Missing batch translation for 'request-235'. Skipping.
+⚠️ [237] Missing batch translation for 'request-236'. Skipping.
+⚠️ [238] Missing batch translation for 'request-237'. Skipping.
+⚠️ [239] Missing batch translation for 'request-238'. Skipping.
+   ...evaluated 240 cases.
+
+❌ [242] Mismatch!
+   NL Rule: If the merchant_category is 'gift_card' and item_count is greater than 5 then REJECT.
+   Expected: REJECT | Actual Computed: APPROVE
+   Missing Variables (Fail-Closed Hit) - Context supplied vs Schema expected differed.
+⚠️ [243] Missing batch translation for 'request-242'. Skipping.
+
+❌ [244] Mismatch!
+   NL Rule: If the payment_method is 'credit_card' and transaction_amount is greater than 2000 and user_risk_score is greater than 70 then REJECT.
+   Expected: REJECT | Actual Computed: APPROVE
+   Missing Variables (Fail-Closed Hit) - Context supplied vs Schema expected differed.
+
+❌ [246] Mismatch!
+   NL Rule: If shipping_address_matches_billing is true and account_age_days is greater than 30 and user_risk_score is less than 50 then APPROVE.
+   Expected: APPROVE | Actual Computed: ASK_FOR_APPROVAL
+   Matched Triggers: ['IF shipping_address_matches_billing == true AND account_age_days > 30 AND user_risk_score < 50 THEN APPROVE']
+
+❌ [248] Mismatch!
+   NL Rule: If the currency is 'EUR' and transaction_amount is greater than 1000 then ASK_FOR_APPROVAL.
+   Expected: ASK_FOR_APPROVAL | Actual Computed: APPROVE
+   Missing Variables (Fail-Closed Hit) - Context supplied vs Schema expected differed.
+   ...evaluated 250 cases.
+⚠️ [251] Missing batch translation for 'request-250'. Skipping.
+
+❌ [253] Mismatch!
+   NL Rule: If the user_country is 'CN' and payment_method is 'credit_card' then REJECT.
+   Expected: REJECT | Actual Computed: APPROVE
+   Missing Variables (Fail-Closed Hit) - Context supplied vs Schema expected differed.
+
+❌ [256] Mismatch!
+   NL Rule: If the merchant_category is 'electronics' and item_count is equal to 1 and transaction_amount is greater than 3000 then REJECT.
+   Expected: REJECT | Actual Computed: APPROVE
+   Missing Variables (Fail-Closed Hit) - Context supplied vs Schema expected differed.
+⚠️ [257] Missing batch translation for 'request-256'. Skipping.
+
+❌ [258] Mismatch!
+   NL Rule: If the payment_method is 'credit_card' and shipping_address_matches_billing is false and user_country is not 'US' then ASK_FOR_APPROVAL.
+   Expected: ASK_FOR_APPROVAL | Actual Computed: APPROVE
+   Missing Variables (Fail-Closed Hit) - Context supplied vs Schema expected differed.
+   ...evaluated 260 cases.
+
+❌ [261] Mismatch!
+   NL Rule: If the merchant_category is 'apparel' and user_country is 'US' and shipping_speed is 'overnight' then ASK_FOR_APPROVAL.
+   Expected: ASK_FOR_APPROVAL | Actual Computed: APPROVE
+   Missing Variables (Fail-Closed Hit) - Context supplied vs Schema expected differed.
+
+❌ [263] Mismatch!
+   NL Rule: If the payment_method is 'paypal' and transaction_amount is greater than 5000 then REJECT.
+   Expected: REJECT | Actual Computed: APPROVE
+   Missing Variables (Fail-Closed Hit) - Context supplied vs Schema expected differed.
+
+❌ [264] Mismatch!
+   NL Rule: If the user_risk_score is less than 5 and transaction_amount is less than 10 then APPROVE.
+   Expected: APPROVE | Actual Computed: ASK_FOR_APPROVAL
+   Matched Triggers: ['IF user_risk_score < 5 AND transaction_amount < 10 THEN APPROVE']
+⚠️ [265] Missing batch translation for 'request-264'. Skipping.
+
+❌ [266] Mismatch!
+   NL Rule: If the merchant_category is 'gift_card' and user_country is 'US' and transaction_amount is greater than 1000 then REJECT.
+   Expected: REJECT | Actual Computed: APPROVE
+   Missing Variables (Fail-Closed Hit) - Context supplied vs Schema expected differed.
+⚠️ [268] Missing batch translation for 'request-267'. Skipping.
+
+❌ [269] Mismatch!
+   NL Rule: If the transaction_amount is divisible by 7 and transaction_amount is greater than 7 then ASK_FOR_APPROVAL.
+   Expected: ASK_FOR_APPROVAL | Actual Computed: APPROVE
+   Missing Variables (Fail-Closed Hit) - Context supplied vs Schema expected differed.
+   ...evaluated 270 cases.
+⚠️ [271] Missing batch translation for 'request-270'. Skipping.
+
+❌ [273] Mismatch!
+   NL Rule: Reject the order if the merchant_category is 'electronics' and the user_risk_score is greater than 50.
+   Expected: REJECT | Actual Computed: APPROVE
+   Missing Variables (Fail-Closed Hit) - Context supplied vs Schema expected differed.
+⚠️ [274] Missing batch translation for 'request-273'. Skipping.
+⚠️ [275] Missing batch translation for 'request-274'. Skipping.
+
+❌ [277] Mismatch!
+   NL Rule: If the coupon_applied is true and the transaction_amount is less than 5 then REJECT as suspicious.
+   Expected: REJECT | Actual Computed: APPROVE
+   Missing Variables (Fail-Closed Hit) - Context supplied vs Schema expected differed.
+
+❌ [278] Mismatch!
+   NL Rule: If the payment_method is 'crypto' and the user_risk_score is greater than 30 then REJECT.
+   Expected: REJECT | Actual Computed: APPROVE
+   Missing Variables (Fail-Closed Hit) - Context supplied vs Schema expected differed.
+
+❌ [279] Mismatch!
+   NL Rule: If the payment_method is 'paypal' and the account_age_days is less than 30 and the transaction_amount is greater than 200 then ASK_FOR_APPROVAL.
+   Expected: ASK_FOR_APPROVAL | Actual Computed: APPROVE
+   Missing Variables (Fail-Closed Hit) - Context supplied vs Schema expected differed.
+⚠️ [280] Missing batch translation for 'request-279'. Skipping.
+
+❌ [281] Mismatch!
+   NL Rule: If the shipping_speed is 'overnight' and the transaction_amount is greater than 2000 then ASK_FOR_APPROVAL.
+   Expected: ASK_FOR_APPROVAL | Actual Computed: APPROVE
+   Missing Variables (Fail-Closed Hit) - Context supplied vs Schema expected differed.
+
+❌ [283] Mismatch!
+   NL Rule: If the user_country is 'GB' and the currency is 'USD' and the transaction_amount is greater than 1000 then ASK_FOR_APPROVAL for cross-currency high value.
+   Expected: ASK_FOR_APPROVAL | Actual Computed: APPROVE
+   Missing Variables (Fail-Closed Hit) - Context supplied vs Schema expected differed.
+⚠️ [284] Missing batch translation for 'request-283'. Skipping.
+⚠️ [286] Missing batch translation for 'request-285'. Skipping.
+
+❌ [287] Mismatch!
+   NL Rule: If the currency is 'EUR' and the merchant_category is 'apparel' and the transaction_amount is greater than 500 then ASK_FOR_APPROVAL.
+   Expected: ASK_FOR_APPROVAL | Actual Computed: APPROVE
+   Missing Variables (Fail-Closed Hit) - Context supplied vs Schema expected differed.
+
+❌ [290] Mismatch!
+   NL Rule: If the payment_method is 'credit_card' and the transaction_amount is greater than 10000 then ASK_FOR_APPROVAL.
+   Expected: ASK_FOR_APPROVAL | Actual Computed: APPROVE
+   Missing Variables (Fail-Closed Hit) - Context supplied vs Schema expected differed.
+   ...evaluated 290 cases.
+
+❌ [291] Mismatch!
+   NL Rule: If shipping_address_matches_billing is true and user_risk_score is less than 20 and account_age_days is greater than 30 then APPROVE.
+   Expected: APPROVE | Actual Computed: ASK_FOR_APPROVAL
+   Matched Triggers: ['IF shipping_address_matches_billing == true AND user_risk_score < 20 AND account_age_days > 30 THEN APPROVE']
+⚠️ [292] Missing batch translation for 'request-291'. Skipping.
+⚠️ [293] Missing batch translation for 'request-292'. Skipping.
+⚠️ [294] Missing batch translation for 'request-293'. Skipping.
+
+❌ [295] Mismatch!
+   NL Rule: If user_country is 'CN' and payment_method is 'crypto' then REJECT.
+   Expected: REJECT | Actual Computed: APPROVE
+   Missing Variables (Fail-Closed Hit) - Context supplied vs Schema expected differed.
+
+❌ [297] Mismatch!
+   NL Rule: If shipping_speed is 'overnight' and shipping_address_matches_billing is false then ASK_FOR_APPROVAL.
+   Expected: ASK_FOR_APPROVAL | Actual Computed: APPROVE
+   Missing Variables (Fail-Closed Hit) - Context supplied vs Schema expected differed.
+⚠️ [298] Missing batch translation for 'request-297'. Skipping.
+⚠️ [299] Missing batch translation for 'request-298'. Skipping.
+⚠️ [300] Missing batch translation for 'request-299'. Skipping.
+
+❌ [301] Mismatch!
+   NL Rule: If the user_country is 'US' and shipping_address_matches_billing is false and the transaction_amount is greater than 500 then ASK_FOR_APPROVAL.
+   Expected: ASK_FOR_APPROVAL | Actual Computed: APPROVE
+   Missing Variables (Fail-Closed Hit) - Context supplied vs Schema expected differed.
+⚠️ [302] Missing batch translation for 'request-301'. Skipping.
+
+❌ [305] Mismatch!
+   NL Rule: If the payment_method is 'paypal' and the merchant_category is 'electronics' and the user_risk_score is greater than 70 then REJECT.
+   Expected: REJECT | Actual Computed: APPROVE
+   Missing Variables (Fail-Closed Hit) - Context supplied vs Schema expected differed.
+⚠️ [306] Missing batch translation for 'request-305'. Skipping.
+⚠️ [307] Missing batch translation for 'request-306'. Skipping.
+
+❌ [308] Mismatch!
+   NL Rule: If the merchant_category is 'apparel' and the item_count is greater than 5 and coupon_applied is true then ASK_FOR_APPROVAL.
+   Expected: ASK_FOR_APPROVAL | Actual Computed: APPROVE
+   Missing Variables (Fail-Closed Hit) - Context supplied vs Schema expected differed.
+
+❌ [309] Mismatch!
+   NL Rule: If the user_country is 'FR' and the currency is 'EUR' and the transaction_amount is greater than 800 then ASK_FOR_APPROVAL.
+   Expected: ASK_FOR_APPROVAL | Actual Computed: APPROVE
+   Missing Variables (Fail-Closed Hit) - Context supplied vs Schema expected differed.
+⚠️ [310] Missing batch translation for 'request-309'. Skipping.
+⚠️ [311] Missing batch translation for 'request-310'. Skipping.
+⚠️ [313] Missing batch translation for 'request-312'. Skipping.
+
+❌ [314] Mismatch!
+   NL Rule: If the merchant_category is 'electronics' and the shipping_speed is 'overnight' and the transaction_amount is greater than 1500 then ASK_FOR_APPROVAL.
+   Expected: ASK_FOR_APPROVAL | Actual Computed: APPROVE
+   Missing Variables (Fail-Closed Hit) - Context supplied vs Schema expected differed.
+
+❌ [315] Mismatch!
+   NL Rule: If is_first_time_buyer is false and account_age_days is less than 30 and transaction_amount is greater than 1000 then ASK_FOR_APPROVAL.
+   Expected: ASK_FOR_APPROVAL | Actual Computed: APPROVE
+   Missing Variables (Fail-Closed Hit) - Context supplied vs Schema expected differed.
+⚠️ [316] Missing batch translation for 'request-315'. Skipping.
+⚠️ [318] Missing batch translation for 'request-317'. Skipping.
+   ...evaluated 320 cases.
+
+❌ [321] Mismatch!
+   NL Rule: If the currency is 'JPY' and the transaction_amount is greater than 100000 then ASK_FOR_APPROVAL for large JPY orders.
+   Expected: ASK_FOR_APPROVAL | Actual Computed: APPROVE
+   Missing Variables (Fail-Closed Hit) - Context supplied vs Schema expected differed.
+⚠️ [322] Missing batch translation for 'request-321'. Skipping.
+
+❌ [324] Mismatch!
+   NL Rule: Approve when the transaction_amount is less than or equal to 10 and the item_count equals 1.
+   Expected: APPROVE | Actual Computed: ASK_FOR_APPROVAL
+   Matched Triggers: ['IF transaction_amount <= 10 AND item_count == 1 THEN APPROVE']
+
+❌ [325] Mismatch!
+   NL Rule: If the merchant_category is 'electronics' and the user_risk_score is greater than 50 then REJECT.
+   Expected: REJECT | Actual Computed: APPROVE
+   Missing Variables (Fail-Closed Hit) - Context supplied vs Schema expected differed.
+
+❌ [326] Mismatch!
+   NL Rule: If the payment_method is 'crypto' and shipping_address_matches_billing is false then ASK_FOR_APPROVAL.
+   Expected: ASK_FOR_APPROVAL | Actual Computed: APPROVE
+   Missing Variables (Fail-Closed Hit) - Context supplied vs Schema expected differed.
+⚠️ [328] Missing batch translation for 'request-327'. Skipping.
+
+❌ [329] Mismatch!
+   NL Rule: If user_country equals 'US' and shipping_speed is 'overnight' and transaction_amount is greater than 2000 then ASK_FOR_APPROVAL.
+   Expected: ASK_FOR_APPROVAL | Actual Computed: APPROVE
+   Missing Variables (Fail-Closed Hit) - Context supplied vs Schema expected differed.
+   ...evaluated 330 cases.
+
+❌ [331] Mismatch!
+   NL Rule: Approve if shipping_address_matches_billing is true and user_risk_score is less than 20.
+   Expected: APPROVE | Actual Computed: ASK_FOR_APPROVAL
+   Matched Triggers: ['IF shipping_address_matches_billing == true AND user_risk_score < 20 THEN APPROVE']
+
+❌ [332] Mismatch!
+   NL Rule: If currency is 'JPY' and transaction_amount is greater than 100000 then ASK_FOR_APPROVAL.
+   Expected: ASK_FOR_APPROVAL | Actual Computed: APPROVE
+   Missing Variables (Fail-Closed Hit) - Context supplied vs Schema expected differed.
+⚠️ [333] Missing batch translation for 'request-332'. Skipping.
+⚠️ [334] Missing batch translation for 'request-333'. Skipping.
+
+❌ [335] Mismatch!
+   NL Rule: Approve if account_age_days is greater than or equal to 365 and user_risk_score is less than 10 and transaction_amount is less than 1000.
+   Expected: APPROVE | Actual Computed: ASK_FOR_APPROVAL
+   Matched Triggers: ['IF account_age_days >= 365 AND user_risk_score < 10 AND transaction_amount < 1000 THEN APPROVE']
+
+❌ [339] Mismatch!
+   NL Rule: If shipping_speed is 'standard' and item_count is greater than 10 then ASK_FOR_APPROVAL.
+   Expected: ASK_FOR_APPROVAL | Actual Computed: APPROVE
+   Missing Variables (Fail-Closed Hit) - Context supplied vs Schema expected differed.
+⚠️ [340] Missing batch translation for 'request-339'. Skipping.
+
+❌ [342] Mismatch!
+   NL Rule: Reject if merchant_category is 'electronics' and payment_method is 'crypto' and shipping_address_matches_billing is false.
+   Expected: REJECT | Actual Computed: APPROVE
+   Missing Variables (Fail-Closed Hit) - Context supplied vs Schema expected differed.
+
+❌ [343] Mismatch!
+   NL Rule: Approve if transaction_amount is 0 and item_count is 0.
+   Expected: APPROVE | Actual Computed: ASK_FOR_APPROVAL
+   Matched Triggers: ['IF transaction_amount == 0 AND item_count == 0 THEN APPROVE']
+
+❌ [344] Mismatch!
+   NL Rule: If currency equals 'USD' and account_age_days equals 0 then ASK_FOR_APPROVAL.
+   Expected: ASK_FOR_APPROVAL | Actual Computed: APPROVE
+   Missing Variables (Fail-Closed Hit) - Context supplied vs Schema expected differed.
+⚠️ [345] Missing batch translation for 'request-344'. Skipping.
+
+❌ [346] Mismatch!
+   NL Rule: If payment_method is 'paypal' and coupon_applied is true and transaction_amount is less than 5 then REJECT.
+   Expected: REJECT | Actual Computed: APPROVE
+   Missing Variables (Fail-Closed Hit) - Context supplied vs Schema expected differed.
+
+❌ [347] Mismatch!
+   NL Rule: Approve if shipping_address_matches_billing is true and merchant_category is 'apparel' and item_count is less than or equal to 5.
+   Expected: APPROVE | Actual Computed: ASK_FOR_APPROVAL
+   Matched Triggers: ["IF shipping_address_matches_billing == true AND merchant_category == 'apparel' AND item_count <= 5 THEN APPROVE"]
+   ...evaluated 350 cases.
+
+❌ [351] Mismatch!
+   NL Rule: If merchant_category is 'electronics' and item_count is greater than 3 then ASK_FOR_APPROVAL.
+   Expected: ASK_FOR_APPROVAL | Actual Computed: APPROVE
+   Missing Variables (Fail-Closed Hit) - Context supplied vs Schema expected differed.
+
+❌ [352] Mismatch!
+   NL Rule: Reject if currency is 'EUR' and transaction_amount is greater than or equal to 20000.
+   Expected: REJECT | Actual Computed: APPROVE
+   Missing Variables (Fail-Closed Hit) - Context supplied vs Schema expected differed.
+
+❌ [353] Mismatch!
+   NL Rule: If shipping_speed is 'overnight' and account_age_days is less than 1 then ASK_FOR_APPROVAL.
+   Expected: ASK_FOR_APPROVAL | Actual Computed: APPROVE
+   Missing Variables (Fail-Closed Hit) - Context supplied vs Schema expected differed.
+⚠️ [356] Missing batch translation for 'request-355'. Skipping.
+⚠️ [357] Missing batch translation for 'request-356'. Skipping.
+
+❌ [358] Mismatch!
+   NL Rule: Reject if payment_method is 'crypto' and user_country is 'RU'.
+   Expected: REJECT | Actual Computed: APPROVE
+   Missing Variables (Fail-Closed Hit) - Context supplied vs Schema expected differed.
+   ...evaluated 360 cases.
+⚠️ [361] Missing batch translation for 'request-360'. Skipping.
+⚠️ [362] Missing batch translation for 'request-361'. Skipping.
+⚠️ [367] Missing batch translation for 'request-366'. Skipping.
+⚠️ [368] Missing batch translation for 'request-367'. Skipping.
+
+❌ [369] Mismatch!
+   NL Rule: Approve if item_count equals 1 and merchant_category is 'apparel' and transaction_amount equals 49.99.
+   Expected: APPROVE | Actual Computed: ASK_FOR_APPROVAL
+   Matched Triggers: ["IF item_count == 1 AND merchant_category == 'apparel' AND transaction_amount == 49.99 THEN APPROVE"]
+   ...evaluated 370 cases.
+⚠️ [372] Missing batch translation for 'request-371'. Skipping.
+⚠️ [374] Missing batch translation for 'request-373'. Skipping.
+
+❌ [375] Mismatch!
+   NL Rule: If the merchant_category is 'electronics' and the user_risk_score is greater than 50 then REJECT.
+   Expected: REJECT | Actual Computed: APPROVE
+   Missing Variables (Fail-Closed Hit) - Context supplied vs Schema expected differed.
+
+❌ [376] Mismatch!
+   NL Rule: If the payment_method is 'crypto' OR the shipping_address_matches_billing is false then ASK_FOR_APPROVAL.
+   Expected: ASK_FOR_APPROVAL | Actual Computed: APPROVE
+   Missing Variables (Fail-Closed Hit) - Context supplied vs Schema expected differed.
+⚠️ [378] Missing batch translation for 'request-377'. Skipping.
+⚠️ [379] Missing batch translation for 'request-378'. Skipping.
+
+❌ [380] Mismatch!
+   NL Rule: If the user_country is 'US' and the payment_method is 'paypal' and the transaction_amount is greater than 1000 then ASK_FOR_APPROVAL.
+   Expected: ASK_FOR_APPROVAL | Actual Computed: APPROVE
+   Missing Variables (Fail-Closed Hit) - Context supplied vs Schema expected differed.
+   ...evaluated 380 cases.
+
+❌ [382] Mismatch!
+   NL Rule: Reject if the merchant_category is 'gift_card' and the transaction_amount is greater than 200.
+   Expected: REJECT | Actual Computed: APPROVE
+   Missing Variables (Fail-Closed Hit) - Context supplied vs Schema expected differed.
+
+❌ [383] Mismatch!
+   NL Rule: If the currency is 'EUR' and the transaction_amount is greater than 10000 then REJECT.
+   Expected: REJECT | Actual Computed: APPROVE
+   Missing Variables (Fail-Closed Hit) - Context supplied vs Schema expected differed.
+
+❌ [385] Mismatch!
+   NL Rule: Approve if the transaction_amount is less than 5 and item_count is 1 and coupon_applied is false.
+   Expected: APPROVE | Actual Computed: ASK_FOR_APPROVAL
+   Matched Triggers: ['IF transaction_amount < 5 AND item_count == 1 AND coupon_applied == false THEN APPROVE']
+
+❌ [386] Mismatch!
+   NL Rule: If the payment_method is 'credit_card' and user_risk_score is greater than or equal to 90 then REJECT.
+   Expected: REJECT | Actual Computed: APPROVE
+   Missing Variables (Fail-Closed Hit) - Context supplied vs Schema expected differed.
+⚠️ [387] Missing batch translation for 'request-386'. Skipping.
+
+❌ [388] Mismatch!
+   NL Rule: If the user_country is 'CN' AND payment_method is 'credit_card' AND shipping_address_matches_billing is false then REJECT.
+   Expected: REJECT | Actual Computed: APPROVE
+   Missing Variables (Fail-Closed Hit) - Context supplied vs Schema expected differed.
+
+❌ [389] Mismatch!
+   NL Rule: Approve if coupon_applied is true and transaction_amount is less than or equal to 50 and user_risk_score is less than 30.
+   Expected: APPROVE | Actual Computed: ASK_FOR_APPROVAL
+   Matched Triggers: ['IF coupon_applied == true AND transaction_amount <= 50 AND user_risk_score < 30 THEN APPROVE']
+⚠️ [390] Missing batch translation for 'request-389'. Skipping.
+
+❌ [392] Mismatch!
+   NL Rule: If the shipping_speed is 'standard' and transaction_amount is greater than 2000 and user_risk_score is above 70 then REJECT.
+   Expected: REJECT | Actual Computed: APPROVE
+   Missing Variables (Fail-Closed Hit) - Context supplied vs Schema expected differed.
+⚠️ [393] Missing batch translation for 'request-392'. Skipping.
+⚠️ [394] Missing batch translation for 'request-393'. Skipping.
+⚠️ [395] Missing batch translation for 'request-394'. Skipping.
+⚠️ [396] Missing batch translation for 'request-395'. Skipping.
+⚠️ [397] Missing batch translation for 'request-396'. Skipping.
+⚠️ [398] Missing batch translation for 'request-397'. Skipping.
+
+❌ [399] Mismatch!
+   NL Rule: Approve if shipping_address_matches_billing is true and user_risk_score is less than or equal to 25.
+   Expected: APPROVE | Actual Computed: ASK_FOR_APPROVAL
+   Matched Triggers: ['IF shipping_address_matches_billing == true AND user_risk_score <= 25 THEN APPROVE']
+
+❌ [400] Mismatch!
+   NL Rule: If the merchant_category is 'electronics' AND transaction_amount is greater than 1000 AND account_age_days is less than 30 then REJECT.
+   Expected: REJECT | Actual Computed: APPROVE
+   Missing Variables (Fail-Closed Hit) - Context supplied vs Schema expected differed.
+   ...evaluated 400 cases.
+⚠️ [403] Missing batch translation for 'request-402'. Skipping.
+
+❌ [404] Mismatch!
+   NL Rule: If merchant_category is 'gift_card' and item_count is greater than 5 then REJECT.
+   Expected: REJECT | Actual Computed: APPROVE
+   Missing Variables (Fail-Closed Hit) - Context supplied vs Schema expected differed.
+⚠️ [405] Missing batch translation for 'request-404'. Skipping.
+⚠️ [406] Missing batch translation for 'request-405'. Skipping.
+
+❌ [407] Mismatch!
+   NL Rule: If shipping_speed is 'overnight' and merchant_category is 'electronics' and transaction_amount is greater than 1500 then ASK_FOR_APPROVAL.
+   Expected: ASK_FOR_APPROVAL | Actual Computed: APPROVE
+   Missing Variables (Fail-Closed Hit) - Context supplied vs Schema expected differed.
+⚠️ [408] Missing batch translation for 'request-407'. Skipping.
+   ...evaluated 410 cases.
+⚠️ [411] Missing batch translation for 'request-410'. Skipping.
+⚠️ [413] Missing batch translation for 'request-412'. Skipping.
+
+❌ [416] Mismatch!
+   NL Rule: If merchant_category is 'electronics' and coupon_applied is true and transaction_amount is greater than 800 then ASK_FOR_APPROVAL.
+   Expected: ASK_FOR_APPROVAL | Actual Computed: APPROVE
+   Missing Variables (Fail-Closed Hit) - Context supplied vs Schema expected differed.
+⚠️ [417] Missing batch translation for 'request-416'. Skipping.
+
+❌ [420] Mismatch!
+   NL Rule: If user_country is 'JP' and currency is 'JPY' and transaction_amount is less than 1 then REJECT (suspicious micro-amount).
+   Expected: REJECT | Actual Computed: APPROVE
+   Missing Variables (Fail-Closed Hit) - Context supplied vs Schema expected differed.
+   ...evaluated 420 cases.
+⚠️ [421] Missing batch translation for 'request-420'. Skipping.
+⚠️ [422] Missing batch translation for 'request-421'. Skipping.
+
+❌ [423] Mismatch!
+   NL Rule: If merchant_category is 'electronics' and user_country is 'US' and transaction_amount is greater than 3000 then REJECT.
+   Expected: REJECT | Actual Computed: APPROVE
+   Missing Variables (Fail-Closed Hit) - Context supplied vs Schema expected differed.
+
+❌ [424] Mismatch!
+   NL Rule: If payment_method is 'credit_card' and account_age_days is less than 1 and is_first_time_buyer is true then ASK_FOR_APPROVAL (brand new signups using credit card).
+   Expected: ASK_FOR_APPROVAL | Actual Computed: APPROVE
+   Missing Variables (Fail-Closed Hit) - Context supplied vs Schema expected differed.
+⚠️ [427] Missing batch translation for 'request-426'. Skipping.
+
+❌ [429] Mismatch!
+   NL Rule: If the merchant_category is 'electronics' and the user_risk_score is greater than 50 then REJECT.
+   Expected: REJECT | Actual Computed: APPROVE
+   Missing Variables (Fail-Closed Hit) - Context supplied vs Schema expected differed.
+⚠️ [430] Missing batch translation for 'request-429'. Skipping.
+
+❌ [432] Mismatch!
+   NL Rule: If the payment_method is 'crypto' and the transaction_amount is greater than 50 then ASK_FOR_APPROVAL.
+   Expected: ASK_FOR_APPROVAL | Actual Computed: APPROVE
+   Missing Variables (Fail-Closed Hit) - Context supplied vs Schema expected differed.
+⚠️ [435] Missing batch translation for 'request-434'. Skipping.
+
+❌ [436] Mismatch!
+   NL Rule: If the shipping_speed is 'overnight' and the transaction_amount is greater than 2000 then ASK_FOR_APPROVAL.
+   Expected: ASK_FOR_APPROVAL | Actual Computed: APPROVE
+   Missing Variables (Fail-Closed Hit) - Context supplied vs Schema expected differed.
+⚠️ [437] Missing batch translation for 'request-436'. Skipping.
+⚠️ [439] Missing batch translation for 'request-438'. Skipping.
+
+❌ [440] Mismatch!
+   NL Rule: If currency is 'EUR' and transaction_amount is greater than 10000 then REJECT.
+   Expected: REJECT | Actual Computed: APPROVE
+   Missing Variables (Fail-Closed Hit) - Context supplied vs Schema expected differed.
+   ...evaluated 440 cases.
+
+❌ [441] Mismatch!
+   NL Rule: If the merchant_category is 'apparel' and item_count is greater than 20 then ASK_FOR_APPROVAL.
+   Expected: ASK_FOR_APPROVAL | Actual Computed: APPROVE
+   Missing Variables (Fail-Closed Hit) - Context supplied vs Schema expected differed.
+
+❌ [442] Mismatch!
+   NL Rule: If the payment_method is 'paypal' and user_risk_score is greater than 70 then ASK_FOR_APPROVAL.
+   Expected: ASK_FOR_APPROVAL | Actual Computed: APPROVE
+   Missing Variables (Fail-Closed Hit) - Context supplied vs Schema expected differed.
+⚠️ [443] Missing batch translation for 'request-442'. Skipping.
+⚠️ [445] Missing batch translation for 'request-444'. Skipping.
+
+❌ [446] Mismatch!
+   NL Rule: If shipping_address_matches_billing is false and is_first_time_buyer is true then ASK_FOR_APPROVAL.
+   Expected: ASK_FOR_APPROVAL | Actual Computed: APPROVE
+   Missing Variables (Fail-Closed Hit) - Context supplied vs Schema expected differed.
+
+❌ [447] Mismatch!
+   NL Rule: If the merchant_category is 'electronics' and payment_method is 'credit_card' and transaction_amount is greater than 3000 then ASK_FOR_APPROVAL.
+   Expected: ASK_FOR_APPROVAL | Actual Computed: APPROVE
+   Missing Variables (Fail-Closed Hit) - Context supplied vs Schema expected differed.
+⚠️ [449] Missing batch translation for 'request-448'. Skipping.
+⚠️ [450] Missing batch translation for 'request-449'. Skipping.
+
+❌ [451] Mismatch!
+   NL Rule: If the payment_method is 'credit_card' and coupon_applied is true and transaction_amount is greater than 2000 then ASK_FOR_APPROVAL.
+   Expected: ASK_FOR_APPROVAL | Actual Computed: APPROVE
+   Missing Variables (Fail-Closed Hit) - Context supplied vs Schema expected differed.
+
+❌ [452] Mismatch!
+   NL Rule: If the user_country is 'CN' and shipping_address_matches_billing is false then REJECT.
+   Expected: REJECT | Actual Computed: APPROVE
+   Missing Variables (Fail-Closed Hit) - Context supplied vs Schema expected differed.
+⚠️ [454] Missing batch translation for 'request-453'. Skipping.
+
+❌ [455] Mismatch!
+   NL Rule: If merchant_category is 'electronics' and item_count is greater than 5 and account_age_days is less than 14 then ASK_FOR_APPROVAL.
+   Expected: ASK_FOR_APPROVAL | Actual Computed: APPROVE
+   Missing Variables (Fail-Closed Hit) - Context supplied vs Schema expected differed.
+⚠️ [457] Missing batch translation for 'request-456'. Skipping.
+
+❌ [459] Mismatch!
+   NL Rule: If merchant_category is 'gift_card' and coupon_applied is true then REJECT (suspicious stacking).
+   Expected: REJECT | Actual Computed: APPROVE
+   Missing Variables (Fail-Closed Hit) - Context supplied vs Schema expected differed.
+   ...evaluated 460 cases.
+
+❌ [463] Mismatch!
+   NL Rule: If payment_method is 'crypto' and user_risk_score is greater than 30 then REJECT.
+   Expected: REJECT | Actual Computed: APPROVE
+   Missing Variables (Fail-Closed Hit) - Context supplied vs Schema expected differed.
+⚠️ [464] Missing batch translation for 'request-463'. Skipping.
+⚠️ [465] Missing batch translation for 'request-464'. Skipping.
+
+❌ [466] Mismatch!
+   NL Rule: If merchant_category is 'electronics' and user_country is 'BR' and transaction_amount is greater than 800 then ASK_FOR_APPROVAL.
+   Expected: ASK_FOR_APPROVAL | Actual Computed: APPROVE
+   Missing Variables (Fail-Closed Hit) - Context supplied vs Schema expected differed.
+⚠️ [467] Missing batch translation for 'request-466'. Skipping.
+
+❌ [468] Mismatch!
+   NL Rule: If coupon_applied is false and transaction_amount is greater than 10000 then ASK_FOR_APPROVAL (high ticket without coupon).
+   Expected: ASK_FOR_APPROVAL | Actual Computed: APPROVE
+   Missing Variables (Fail-Closed Hit) - Context supplied vs Schema expected differed.
+
+❌ [469] Mismatch!
+   NL Rule: If is_first_time_buyer is false and account_age_days is greater than 100 and user_risk_score is less than 40 then APPROVE.
+   Expected: APPROVE | Actual Computed: ASK_FOR_APPROVAL
+   Matched Triggers: ['IF is_first_time_buyer == false AND account_age_days > 100 AND user_risk_score < 40 THEN APPROVE']
+⚠️ [470] Missing batch translation for 'request-469'. Skipping.
+
+❌ [471] Mismatch!
+   NL Rule: If user_country is 'RU' and payment_method is 'paypal' and user_risk_score is greater than 30 then REJECT.
+   Expected: REJECT | Actual Computed: APPROVE
+   Missing Variables (Fail-Closed Hit) - Context supplied vs Schema expected differed.
+⚠️ [474] Missing batch translation for 'request-473'. Skipping.
+⚠️ [475] Missing batch translation for 'request-474'. Skipping.
+
+❌ [477] Mismatch!
+   NL Rule: If user_country is 'AU' and shipping_address_matches_billing is false and transaction_amount is greater than 500 then ASK_FOR_APPROVAL.
+   Expected: ASK_FOR_APPROVAL | Actual Computed: APPROVE
+   Missing Variables (Fail-Closed Hit) - Context supplied vs Schema expected differed.
+⚠️ [478] Missing batch translation for 'request-477'. Skipping.
+
+❌ [480] Mismatch!
+   NL Rule: If user_risk_score is 0 and transaction_amount is less than 1000 then APPROVE (lowest risk).
+   Expected: APPROVE | Actual Computed: ASK_FOR_APPROVAL
+   Matched Triggers: ['IF user_risk_score == 0 AND transaction_amount < 1000 THEN APPROVE']
+   ...evaluated 480 cases.
+
+❌ [481] Mismatch!
+   NL Rule: If merchant_category is 'apparel' and item_count is exactly 100 then ASK_FOR_APPROVAL (bulk extreme edge case).
+   Expected: ASK_FOR_APPROVAL | Actual Computed: APPROVE
+   Missing Variables (Fail-Closed Hit) - Context supplied vs Schema expected differed.
+⚠️ [482] Missing batch translation for 'request-481'. Skipping.
+⚠️ [485] Missing batch translation for 'request-484'. Skipping.
+
+❌ [488] Mismatch!
+   NL Rule: Reject if the payment_method is 'crypto' and the transaction_amount is greater than 200.
+   Expected: REJECT | Actual Computed: APPROVE
+   Missing Variables (Fail-Closed Hit) - Context supplied vs Schema expected differed.
+⚠️ [489] Missing batch translation for 'request-488'. Skipping.
+
+❌ [490] Mismatch!
+   NL Rule: If coupon_applied is true and the transaction_amount is equal to 0 and the user_risk_score is less than 20 then APPROVE.
+   Expected: APPROVE | Actual Computed: ASK_FOR_APPROVAL
+   Matched Triggers: ['IF coupon_applied == true AND transaction_amount == 0 AND user_risk_score < 20 THEN APPROVE']
+   ...evaluated 490 cases.
+
+❌ [491] Mismatch!
+   NL Rule: Reject the order if the merchant_category is 'electronics' and the user_risk_score is greater than 50.
+   Expected: REJECT | Actual Computed: APPROVE
+   Missing Variables (Fail-Closed Hit) - Context supplied vs Schema expected differed.
+⚠️ [492] Missing batch translation for 'request-491'. Skipping.
+⚠️ [495] Missing batch translation for 'request-494'. Skipping.
+⚠️ [498] Missing batch translation for 'request-497'. Skipping.
+⚠️ [499] Missing batch translation for 'request-498'. Skipping.
+   ...evaluated 500 cases.
+
+❌ [501] Mismatch!
+   NL Rule: If the shipping_speed is 'standard' and shipping_address_matches_billing is false and the transaction_amount is greater than 50 then ASK_FOR_APPROVAL.
+   Expected: ASK_FOR_APPROVAL | Actual Computed: APPROVE
+   Missing Variables (Fail-Closed Hit) - Context supplied vs Schema expected differed.
+
+❌ [502] Mismatch!
+   NL Rule: If the user_country is 'NG' and the payment_method is 'credit_card' and the user_risk_score is greater than 30 then REJECT.
+   Expected: REJECT | Actual Computed: APPROVE
+   Missing Variables (Fail-Closed Hit) - Context supplied vs Schema expected differed.
+⚠️ [503] Missing batch translation for 'request-502'. Skipping.
+
+❌ [504] Mismatch!
+   NL Rule: If coupon_applied is true and the item_count is equal to 0 then REJECT.
+   Expected: REJECT | Actual Computed: APPROVE
+   Missing Variables (Fail-Closed Hit) - Context supplied vs Schema expected differed.
+
+❌ [505] Mismatch!
+   NL Rule: If the merchant_category is 'electronics' and the payment_method is 'paypal' and shipping_address_matches_billing is false then ASK_FOR_APPROVAL.
+   Expected: ASK_FOR_APPROVAL | Actual Computed: APPROVE
+   Missing Variables (Fail-Closed Hit) - Context supplied vs Schema expected differed.
+
+❌ [508] Mismatch!
+   NL Rule: If the currency is 'EUR' and the user_country is 'DE' and the transaction_amount is greater than 5000 then ASK_FOR_APPROVAL.
+   Expected: ASK_FOR_APPROVAL | Actual Computed: APPROVE
+   Missing Variables (Fail-Closed Hit) - Context supplied vs Schema expected differed.
+
+❌ [509] Mismatch!
+   NL Rule: If the payment_method is 'credit_card' and the transaction_amount is equal to 0 then REJECT.
+   Expected: REJECT | Actual Computed: APPROVE
+   Missing Variables (Fail-Closed Hit) - Context supplied vs Schema expected differed.
+⚠️ [510] Missing batch translation for 'request-509'. Skipping.
+
+❌ [511] Mismatch!
+   NL Rule: Reject if the merchant_category is 'gift_card' and is_first_time_buyer is true and the transaction_amount is greater than 100.
+   Expected: REJECT | Actual Computed: APPROVE
+   Missing Variables (Fail-Closed Hit) - Context supplied vs Schema expected differed.
+
+❌ [512] Mismatch!
+   NL Rule: If the user_country is 'US' and the currency is not equal to 'USD' then ASK_FOR_APPROVAL.
+   Expected: ASK_FOR_APPROVAL | Actual Computed: APPROVE
+   Missing Variables (Fail-Closed Hit) - Context supplied vs Schema expected differed.
+
+❌ [514] Mismatch!
+   NL Rule: If the shipping_speed is 'overnight' and the transaction_amount is less than 10 then REJECT.
+   Expected: REJECT | Actual Computed: APPROVE
+   Missing Variables (Fail-Closed Hit) - Context supplied vs Schema expected differed.
+
+❌ [515] Mismatch!
+   NL Rule: If the payment_method is 'paypal' and coupon_applied is true and the user_risk_score is greater than 70 then REJECT.
+   Expected: REJECT | Actual Computed: APPROVE
+   Missing Variables (Fail-Closed Hit) - Context supplied vs Schema expected differed.
+
+❌ [516] Mismatch!
+   NL Rule: If the merchant_category is 'electronics' and the item_count is greater than 5 and the transaction_amount is greater than 2000 then ASK_FOR_APPROVAL.
+   Expected: ASK_FOR_APPROVAL | Actual Computed: APPROVE
+   Missing Variables (Fail-Closed Hit) - Context supplied vs Schema expected differed.
+⚠️ [517] Missing batch translation for 'request-516'. Skipping.
+
+❌ [518] Mismatch!
+   NL Rule: If the user_country is 'CN' and the payment_method is 'crypto' then REJECT.
+   Expected: REJECT | Actual Computed: APPROVE
+   Missing Variables (Fail-Closed Hit) - Context supplied vs Schema expected differed.
+⚠️ [519] Missing batch translation for 'request-518'. Skipping.
+   ...evaluated 520 cases.
+⚠️ [522] Missing batch translation for 'request-521'. Skipping.
+⚠️ [524] Missing batch translation for 'request-523'. Skipping.
+
+❌ [526] Mismatch!
+   NL Rule: If the merchant_category is 'apparel' and the item_count is equal to 0 then REJECT.
+   Expected: REJECT | Actual Computed: APPROVE
+   Missing Variables (Fail-Closed Hit) - Context supplied vs Schema expected differed.
+⚠️ [529] Missing batch translation for 'request-528'. Skipping.
+⚠️ [530] Missing batch translation for 'request-529'. Skipping.
+
+❌ [531] Mismatch!
+   NL Rule: If the user_country is 'JP' and the currency is 'JPY' and the transaction_amount is greater than 100000 then ASK_FOR_APPROVAL.
+   Expected: ASK_FOR_APPROVAL | Actual Computed: APPROVE
+   Missing Variables (Fail-Closed Hit) - Context supplied vs Schema expected differed.
+⚠️ [532] Missing batch translation for 'request-531'. Skipping.
+
+🧹 Cleaning up test group...
+
+--- Final E2E Accuracy Report ---
+Total Cases     : 532
+Passed          : 192 (36.1%)
+Fail-Closed Mismatches (Safe) : 166 (31.2%)
+Parse Errors    : 174 (32.7%)

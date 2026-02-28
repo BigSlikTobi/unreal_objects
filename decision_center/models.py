@@ -54,3 +54,17 @@ class DecisionChain(BaseModel):
     request_id: str
     events: List[ChainEvent] = Field(default_factory=list)
 
+class LLMConnectionRequest(BaseModel):
+    provider: str
+    model: str
+    api_key: str
+
+class RuleTranslationRequest(BaseModel):
+    natural_language: str
+    feature: str
+    name: str
+    provider: str
+    model: str
+    api_key: str
+    context_schema: Optional[Dict[str, Any]] = None
+    datapoint_definitions: List[Dict[str, Any]] = Field(default_factory=list)

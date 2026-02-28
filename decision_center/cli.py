@@ -111,17 +111,105 @@ def prompt_llm_setup() -> dict | None:
         print("❌ Connection failed. Check your API key. Falling back to manual rule creation.")
         return None
 
+OUTCOMES = ["APPROVE", "ASK_FOR_APPROVAL", "REJECT"]
+
+def _prompt_outcome(label: str, include_none: bool = False) -> str:
+    """Numbered outcome picker. Returns the selected outcome string, or '' if none chosen."""
+    print(f"\n  {label}")
+    for i, o in enumerate(OUTCOMES, 1):
+        print(f"    {i}. {o}")
+    if include_none:
+        print(f"    {len(OUTCOMES) + 1}. (none — skip ELSE branch)")
+    while True:
+        raw = input(f"  Select [1-{len(OUTCOMES) + (1 if include_none else 0)}]: ").strip()
+        try:
+            idx = int(raw) - 1
+            if 0 <= idx < len(OUTCOMES):
+                return OUTCOMES[idx]
+            if include_none and idx == len(OUTCOMES):
+                return ""
+        except ValueError:
+            pass
+        print("  Invalid choice, try again.")
+
+
+def _prompt_structured_builder(existing_rule: dict | None = None) -> tuple[str, str, str, list[dict]]:
+    """Fill-in-the-blank rule builder. Returns (condition, then_outcome, else_outcome, edge_cases).
+    If existing_rule is provided, shows the current values as context before prompting afresh.
+    """
+    print("\n--- Rule Builder ---")
+    if existing_rule:
+        print(f"  Current logic : {existing_rule.get('rule_logic', '')}")
+        if existing_rule.get("edge_cases"):
+            for ec in existing_rule["edge_cases"]:
+                print(f"  ↳ Edge case   : {ec}")
+        print("")
+
+    condition = input("  IF   : ").strip()
+    then_outcome = _prompt_outcome("THEN :")
+    else_outcome = _prompt_outcome("ELSE : (optional)", include_none=True)
+
+    edge_cases: list[dict] = []
+    while True:
+        add = input("\n  Add an edge case? [y/N]: ").strip().lower()
+        if add != "y":
+            break
+        ec_condition = input("    IF   : ").strip()
+        ec_outcome = _prompt_outcome("    THEN :")
+        edge_cases.append({"condition": ec_condition, "outcome": ec_outcome})
+
+    return condition, then_outcome, else_outcome, edge_cases
+
+
+def _build_structured_prompt(condition: str, then_outcome: str, else_outcome: str, edge_cases: list[dict]) -> str:
+    """Mirrors buildPrompt() in the React UI — produces a precise structured prompt for the LLM."""
+    main = f"IF {condition} THEN {then_outcome}"
+    if else_outcome:
+        main += f" ELSE {else_outcome}"
+    prompt = f"Translate this structured rule into JSON Logic format.\nMain rule: {main}"
+    if edge_cases:
+        prompt += "\nEdge cases (each a separate entry in edge_cases):"
+        for ec in edge_cases:
+            prompt += f"\n- IF {ec['condition']} THEN {ec['outcome']}"
+    return prompt
+
+
+def _prompt_datapoint_type(dp_name: str) -> dict:
+    """Interactively prompt the user for the type of a new datapoint."""
+    print(f"\n  New datapoint detected: '{dp_name}'")
+    print("  Types: 1. text  2. number  3. boolean  4. enum")
+    type_choice = input("  Select type [1-4, default=1]: ").strip()
+    type_map = {"1": "text", "2": "number", "3": "boolean", "4": "enum"}
+    dp_type = type_map.get(type_choice, "text")
+    values = []
+    if dp_type == "enum":
+        vals_str = input(f"  Allowed values for '{dp_name}' (comma-separated, e.g. EUR,USD,GBP): ").strip()
+        values = [v.strip() for v in vals_str.split(",") if v.strip()]
+    return {"name": dp_name, "type": dp_type, "values": values}
+
+
 def prompt_rule_creation(group_id: str, llm_config: dict | None = None) -> dict:
     print("\n--- Rule Management ---")
     
-    # Check for existing rules in the group
+    # Fetch existing rules AND datapoint definitions from the group
     with httpx.Client() as client:
         try:
             resp = client.get(f"http://127.0.0.1:8001/v1/groups/{group_id}")
             group_data = resp.json() if resp.status_code == 200 else {}
             existing_rules = group_data.get("rules", [])
+            datapoint_definitions = group_data.get("datapoint_definitions", [])
         except httpx.RequestError:
             existing_rules = []
+            datapoint_definitions = []
+
+    if datapoint_definitions:
+        dp_summary = []
+        for d in datapoint_definitions:
+            desc = f"{d['name']} ({d['type']})"
+            if d.get("values"):
+                desc += f" [{', '.join(d['values'])}]"
+            dp_summary.append(desc)
+        print(f"\nKnown datapoint types: {', '.join(dp_summary)}")
 
     rule_id = None
     name = ""
@@ -153,23 +241,42 @@ def prompt_rule_creation(group_id: str, llm_config: dict | None = None) -> dict:
         feature = input("Feature (e.g. Fraud Check): ").strip()
     
     if llm_config:
-        if existing_rule_obj:
-            print(f"Current Logic: {existing_rule_obj.get('rule_logic')}")
-            if existing_rule_obj.get('edge_cases'):
-                print(f"Current Edge Cases: {', '.join(existing_rule_obj.get('edge_cases', []))}")
-            
-            skip_logic = input("\nDo you want to skip rewriting the main logic and just add an edge case? [y/N] ").strip().lower() == 'y'
-            if skip_logic:
-                base_nl = f"Keep the main logic exactly as: '{existing_rule_obj.get('rule_logic')}'. "
-                if existing_rule_obj.get('edge_cases'):
-                    base_nl += f"Keep these existing edge cases exactly: '{'; '.join(existing_rule_obj['edge_cases'])}'. "
-                extra_ec = input("Describe the NEW edge case condition to add (e.g. Reject if originating in CA): ").strip()
-                natural_language = base_nl + f"Add this NEW edge case constraint: {extra_ec}"
-            else:
-                natural_language = input("\nDescribe the entirely new rule logic: ").strip()
+        context_schema = None
+        print("\n--- Optional Schema Enforcement ---")
+        print("  Schemas lock the AI to a pre-approved set of variable names so all your rules")
+        print("  speak the same language. Without one, the LLM invents its own names and the same")
+        print("  concept might become 'amount' in one rule and 'transaction_amount' in another —")
+        print("  causing evaluation mismatches. Pick the schema that matches your domain.")
+        print("")
+        print("  1. None (Freeform) — AI picks its own variable names")
+        print("  2. E-Commerce Blueprint — orders, payments, cart, shipping, user accounts")
+        print("  3. Finance Blueprint   — withdrawals, balances, loans, KYC, AML risk scores")
+        print("  4. Custom Schema Path  — point to your own JSON schema file")
+        schema_choice = input("Select an option [1-4, Default: 1]: ").strip()
+        
+        if schema_choice == "2":
+            schema_path = "schemas/ecommerce.json"
+        elif schema_choice == "3":
+            schema_path = "schemas/finance.json"
+        elif schema_choice == "4":
+            schema_path = input("Enter path to your JSON schema relative to project root: ").strip()
         else:
-            natural_language = input("Describe the rule logic (e.g. if they owe more than 100 then ask them): ").strip()
+            schema_path = None
             
+        if schema_path and os.path.exists(schema_path):
+            with open(schema_path, "r") as f:
+                try:
+                    schema_data = json.load(f)
+                    context_schema = schema_data.get("schema", schema_data)
+                    print(f"Loaded schema from {schema_path}")
+                except json.JSONDecodeError:
+                    print("Invalid JSON, skipping schema enforcement")
+        elif schema_path:
+             print(f"File {schema_path} not found, skipping schema enforcement")
+
+        condition, then_outcome, else_outcome, builder_edge_cases = _prompt_structured_builder(existing_rule_obj)
+        natural_language = _build_structured_prompt(condition, then_outcome, else_outcome, builder_edge_cases)
+
         while True:
             print("\nTranslating using LLM Rule Wizard...")
             try:
@@ -179,7 +286,9 @@ def prompt_rule_creation(group_id: str, llm_config: dict | None = None) -> dict:
                     name=name,
                     provider=llm_config["provider"],
                     model=llm_config["model"],
-                    api_key=llm_config["api_key"]
+                    api_key=llm_config["api_key"],
+                    context_schema=context_schema,
+                    datapoint_definitions=datapoint_definitions,
                 )
                 datapoints = translation["datapoints"]
                 edge_cases = translation.get("edge_cases", [])
@@ -188,31 +297,48 @@ def prompt_rule_creation(group_id: str, llm_config: dict | None = None) -> dict:
                 rule_logic_json = translation.get("rule_logic_json", {})
                 print(f"\n✨ Extracted Datapoints: {', '.join(datapoints)}")
                 if edge_cases:
-                    print(f"✨ Edge Cases: {', '.join(edge_cases)}")
+                    print(f"✨ Edge Cases:")
+                    for ec in edge_cases:
+                        print(f"   ↳ {ec}")
                 print(f"✨ Structured Logic: {rule_logic}")
                 if rule_logic_json:
                     print(f"✨ JSON Logic: {json.dumps(rule_logic_json)}")
 
                 print("\nOptions:")
                 print("  [A]ccept this rule")
-                print("  [E]dditional edge case constraint")
-                print("  [R]etry translation with a new description")
+                print("  [E]dit — update the builder and re-translate")
                 print("  [M]anual creation fallback")
-                choice = input("Select an option [A/e/r/m]: ").strip().upper() or 'A'
-                
+                choice = input("Select an option [A/e/m]: ").strip().upper() or 'A'
+
                 if choice == 'E':
-                    extra_ec = input("Describe the condition to catch (e.g. Reject if originating in CA): ").strip()
-                    if extra_ec:
-                        natural_language += f". Also, edge case constraint: {extra_ec}"
-                    continue
-                elif choice == 'R':
-                    natural_language = input("\nDescribe the rule logic again: ").strip()
+                    condition, then_outcome, else_outcome, builder_edge_cases = _prompt_structured_builder()
+                    natural_language = _build_structured_prompt(condition, then_outcome, else_outcome, builder_edge_cases)
                     continue
                 elif choice == 'M':
                     print("\nFalling back to manual creation.")
                     llm_config = None
                     break
                 else:
+                    # Prompt for types of any NEW datapoints not yet defined
+                    known_names = {d["name"] for d in datapoint_definitions}
+                    new_defs = []
+                    for dp in datapoints:
+                        if dp not in known_names:
+                            new_def = _prompt_datapoint_type(dp)
+                            new_defs.append(new_def)
+                            datapoint_definitions.append(new_def)
+                            known_names.add(dp)
+                    if new_defs:
+                        print(f"\nSaving {len(new_defs)} new datapoint definition(s)...")
+                        with httpx.Client() as client:
+                            patch_resp = client.patch(
+                                f"http://127.0.0.1:8001/v1/groups/{group_id}/datapoints",
+                                json=new_defs
+                            )
+                            if patch_resp.status_code == 200:
+                                print("✅ Datapoint definitions saved.")
+                            else:
+                                print(f"⚠️  Could not save datapoint definitions: {patch_resp.status_code}")
                     break
             except Exception as e:
                 print(f"❌ Translation failed: {e}")
@@ -264,15 +390,40 @@ def prompt_rule_creation(group_id: str, llm_config: dict | None = None) -> dict:
 def prompt_auto_test(group_id: str, rule: dict):
     print(f"\n--- Auto-Test for Rule: {rule.get('name', 'Unknown')} ---")
     print("Let's test this rule!")
+
+    # Fetch datapoint definitions for type-aware coercion
+    dp_defs: dict[str, dict] = {}
+    with httpx.Client() as client:
+        try:
+            resp = client.get(f"http://127.0.0.1:8001/v1/groups/{group_id}")
+            if resp.status_code == 200:
+                for d in resp.json().get("datapoint_definitions", []):
+                    dp_defs[d["name"]] = d
+        except httpx.RequestError:
+            pass
     
     context = {}
     for dp in rule.get("datapoints", []):
-        val = input(f"Provide a value for datapoint '{dp}': ").strip()
-        try:
-            val = float(val) if '.' in val else int(val)
-        except ValueError:
-            pass
-        context[dp] = val
+        defn = dp_defs.get(dp, {})
+        dp_type = defn.get("type", "text")
+        allowed_values = defn.get("values", [])
+
+        if dp_type == "enum" and allowed_values:
+            print(f"  '{dp}' allowed values: {', '.join(allowed_values)}")
+            val = input(f"Provide a value for datapoint '{dp}': ").strip()
+            context[dp] = val  # keep as string
+        elif dp_type == "boolean":
+            raw = input(f"Provide a value for datapoint '{dp}' [true/false]: ").strip().lower()
+            context[dp] = raw == "true"
+        elif dp_type == "number":
+            raw = input(f"Provide a value for datapoint '{dp}' (number): ").strip()
+            try:
+                context[dp] = float(raw) if '.' in raw else int(raw)
+            except ValueError:
+                context[dp] = raw
+        else:
+            # text or unknown — keep as string
+            context[dp] = input(f"Provide a value for datapoint '{dp}': ").strip()
         
     desc = input("Please provide a request description: ").strip()
     
