@@ -7,3 +7,6 @@ test_sse.py
 test_cors.py
 make_transparent.py
 .env
+ui/node_modules
+ui/.vite/deps/_metadata.json
+ui/.vite/deps/package.json
