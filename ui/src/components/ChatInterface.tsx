@@ -101,7 +101,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
   const [messages, setMessages] = useState<Message[]>([{
     id: 'init',
     role: 'assistant',
-    content: "Fill in the builder below — set your condition and outcome, add edge cases, then click Translate."
+    content: "Fill in the builder below — set your condition and outcome, add edge cases, then click Translate.\n\nThe Schema dropdown lets you lock the AI to a pre-approved set of variable names (e.g. transaction_amount, user_risk_score). Without a schema the LLM invents its own names, which can differ between rules and break evaluation. Pick E-Commerce or Finance if your rules belong to one of those domains — or leave it on No schema for freeform input."
   }]);
 
   const [ruleName, setRuleName] = useState('');
