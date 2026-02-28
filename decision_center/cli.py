@@ -180,10 +180,15 @@ def prompt_rule_creation(group_id: str, llm_config: dict | None = None) -> dict:
     if llm_config:
         context_schema = None
         print("\n--- Optional Schema Enforcement ---")
-        print("  1. None (Freeform)")
-        print("  2. E-Commerce Blueprint (schemas/ecommerce.json)")
-        print("  3. Finance Blueprint (schemas/finance.json)")
-        print("  4. Custom Schema Path")
+        print("  Schemas lock the AI to a pre-approved set of variable names so all your rules")
+        print("  speak the same language. Without one, the LLM invents its own names and the same")
+        print("  concept might become 'amount' in one rule and 'transaction_amount' in another —")
+        print("  causing evaluation mismatches. Pick the schema that matches your domain.")
+        print("")
+        print("  1. None (Freeform) — AI picks its own variable names")
+        print("  2. E-Commerce Blueprint — orders, payments, cart, shipping, user accounts")
+        print("  3. Finance Blueprint   — withdrawals, balances, loans, KYC, AML risk scores")
+        print("  4. Custom Schema Path  — point to your own JSON schema file")
         schema_choice = input("Select an option [1-4, Default: 1]: ").strip()
         
         if schema_choice == "2":

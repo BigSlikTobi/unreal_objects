@@ -98,6 +98,20 @@ pipeline safely governed by the Rule Engine's stored groups.
   into highly resilient, strictly auditable AST representations known as
   [JsonLogic](http://jsonlogic.com/).
 
+### 📐 Schema Blueprints — Why They Matter
+
+When the LLM translates a plain-English rule into JSON Logic it has to choose variable names. Without guidance it invents them freely — the same concept might become `amount` in one rule, `transaction_amount` in the next, and `purchase_amount` in a third. Your AI agent only sends one name in its payload, so the other two rules silently fail to match.
+
+**Schemas fix this by locking the LLM to a pre-approved vocabulary.** Every rule that uses the E-Commerce schema will always call the order total `transaction_amount`, no matter how it was phrased in plain English — so all rules stay consistent and your agent only needs to send one predictable payload.
+
+| Schema | Use when your rules are about… |
+|---|---|
+| **No schema** | Custom domains, or when your variable names are already decided |
+| **E-Commerce** | Orders, payments, cart contents, shipping, user accounts |
+| **Finance** | Withdrawals, balances, loans, KYC verification, AML risk scores |
+
+> **Note:** Schemas are a strong nudge, not a hard validator. They work best when your rules genuinely belong to the domain the blueprint covers. For concepts outside the schema the LLM may still invent a name — if that happens, switch to No schema and name the variable explicitly in your condition.
+
 ---
 
 ## 🖥️ React UI — Visual Rule Builder
