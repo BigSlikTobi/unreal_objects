@@ -111,6 +111,69 @@ def prompt_llm_setup() -> dict | None:
         print("❌ Connection failed. Check your API key. Falling back to manual rule creation.")
         return None
 
+OUTCOMES = ["APPROVE", "ASK_FOR_APPROVAL", "REJECT"]
+
+def _prompt_outcome(label: str, include_none: bool = False) -> str:
+    """Numbered outcome picker. Returns the selected outcome string, or '' if none chosen."""
+    print(f"\n  {label}")
+    for i, o in enumerate(OUTCOMES, 1):
+        print(f"    {i}. {o}")
+    if include_none:
+        print(f"    {len(OUTCOMES) + 1}. (none — skip ELSE branch)")
+    while True:
+        raw = input(f"  Select [1-{len(OUTCOMES) + (1 if include_none else 0)}]: ").strip()
+        try:
+            idx = int(raw) - 1
+            if 0 <= idx < len(OUTCOMES):
+                return OUTCOMES[idx]
+            if include_none and idx == len(OUTCOMES):
+                return ""
+        except ValueError:
+            pass
+        print("  Invalid choice, try again.")
+
+
+def _prompt_structured_builder(existing_rule: dict | None = None) -> tuple[str, str, str, list[dict]]:
+    """Fill-in-the-blank rule builder. Returns (condition, then_outcome, else_outcome, edge_cases).
+    If existing_rule is provided, shows the current values as context before prompting afresh.
+    """
+    print("\n--- Rule Builder ---")
+    if existing_rule:
+        print(f"  Current logic : {existing_rule.get('rule_logic', '')}")
+        if existing_rule.get("edge_cases"):
+            for ec in existing_rule["edge_cases"]:
+                print(f"  ↳ Edge case   : {ec}")
+        print("")
+
+    condition = input("  IF   : ").strip()
+    then_outcome = _prompt_outcome("THEN :")
+    else_outcome = _prompt_outcome("ELSE : (optional)", include_none=True)
+
+    edge_cases: list[dict] = []
+    while True:
+        add = input("\n  Add an edge case? [y/N]: ").strip().lower()
+        if add != "y":
+            break
+        ec_condition = input("    IF   : ").strip()
+        ec_outcome = _prompt_outcome("    THEN :")
+        edge_cases.append({"condition": ec_condition, "outcome": ec_outcome})
+
+    return condition, then_outcome, else_outcome, edge_cases
+
+
+def _build_structured_prompt(condition: str, then_outcome: str, else_outcome: str, edge_cases: list[dict]) -> str:
+    """Mirrors buildPrompt() in the React UI — produces a precise structured prompt for the LLM."""
+    main = f"IF {condition} THEN {then_outcome}"
+    if else_outcome:
+        main += f" ELSE {else_outcome}"
+    prompt = f"Translate this structured rule into JSON Logic format.\nMain rule: {main}"
+    if edge_cases:
+        prompt += "\nEdge cases (each a separate entry in edge_cases):"
+        for ec in edge_cases:
+            prompt += f"\n- IF {ec['condition']} THEN {ec['outcome']}"
+    return prompt
+
+
 def _prompt_datapoint_type(dp_name: str) -> dict:
     """Interactively prompt the user for the type of a new datapoint."""
     print(f"\n  New datapoint detected: '{dp_name}'")
@@ -211,23 +274,9 @@ def prompt_rule_creation(group_id: str, llm_config: dict | None = None) -> dict:
         elif schema_path:
              print(f"File {schema_path} not found, skipping schema enforcement")
 
-        if existing_rule_obj:
-            print(f"Current Logic: {existing_rule_obj.get('rule_logic')}")
-            if existing_rule_obj.get('edge_cases'):
-                print(f"Current Edge Cases: {', '.join(existing_rule_obj.get('edge_cases', []))}")
-            
-            skip_logic = input("\nDo you want to skip rewriting the main logic and just add an edge case? [y/N] ").strip().lower() == 'y'
-            if skip_logic:
-                base_nl = f"Keep the main logic exactly as: '{existing_rule_obj.get('rule_logic')}'. "
-                if existing_rule_obj.get('edge_cases'):
-                    base_nl += f"Keep these existing edge cases exactly: '{'; '.join(existing_rule_obj['edge_cases'])}'. "
-                extra_ec = input("Describe the NEW edge case condition to add (e.g. Reject if originating in CA): ").strip()
-                natural_language = base_nl + f"Add this NEW edge case constraint: {extra_ec}"
-            else:
-                natural_language = input("\nDescribe the entirely new rule logic: ").strip()
-        else:
-            natural_language = input("Describe the rule logic (e.g. if they owe more than 100 then ask them): ").strip()
-            
+        condition, then_outcome, else_outcome, builder_edge_cases = _prompt_structured_builder(existing_rule_obj)
+        natural_language = _build_structured_prompt(condition, then_outcome, else_outcome, builder_edge_cases)
+
         while True:
             print("\nTranslating using LLM Rule Wizard...")
             try:
@@ -248,25 +297,22 @@ def prompt_rule_creation(group_id: str, llm_config: dict | None = None) -> dict:
                 rule_logic_json = translation.get("rule_logic_json", {})
                 print(f"\n✨ Extracted Datapoints: {', '.join(datapoints)}")
                 if edge_cases:
-                    print(f"✨ Edge Cases: {', '.join(edge_cases)}")
+                    print(f"✨ Edge Cases:")
+                    for ec in edge_cases:
+                        print(f"   ↳ {ec}")
                 print(f"✨ Structured Logic: {rule_logic}")
                 if rule_logic_json:
                     print(f"✨ JSON Logic: {json.dumps(rule_logic_json)}")
 
                 print("\nOptions:")
                 print("  [A]ccept this rule")
-                print("  [E]dditional edge case constraint")
-                print("  [R]etry translation with a new description")
+                print("  [E]dit — update the builder and re-translate")
                 print("  [M]anual creation fallback")
-                choice = input("Select an option [A/e/r/m]: ").strip().upper() or 'A'
-                
+                choice = input("Select an option [A/e/m]: ").strip().upper() or 'A'
+
                 if choice == 'E':
-                    extra_ec = input("Describe the condition to catch (e.g. Reject if originating in CA): ").strip()
-                    if extra_ec:
-                        natural_language += f". Also, edge case constraint: {extra_ec}"
-                    continue
-                elif choice == 'R':
-                    natural_language = input("\nDescribe the rule logic again: ").strip()
+                    condition, then_outcome, else_outcome, builder_edge_cases = _prompt_structured_builder()
+                    natural_language = _build_structured_prompt(condition, then_outcome, else_outcome, builder_edge_cases)
                     continue
                 elif choice == 'M':
                     print("\nFalling back to manual creation.")
