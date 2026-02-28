@@ -20,32 +20,35 @@ Think of it as **Autonomy with Receipts.** 🧾
 
 ## 🏗️ Architecture
 
-Unreal Objects is cleanly decoupled into 3 modular microservices:
+Unreal Objects is cleanly decoupled into modular services:
 
-1. 📏 **Rule Engine (`:8001`)**: Where you create, manage, and store your
-   business rules and governance logic.
-2. 🧠 **Decision Center & Log (`:8002`)**: The engine that evaluates agent
-   actions against your rules, enforces outcomes (like `APPROVE`, `REJECT`, or
-   `ASK_FOR_APPROVAL`), and maintains an immutable audit trail of every
-   decision.
-3. 🔌 **MCP Server (`:8000`)**: A native
-   [Model Context Protocol](https://modelcontextprotocol.io) integration. This
-   allows any modern AI agent (OpenClaw, Claude Desktop, LangChain) to
-   seamlessly connect to your governance system.
+| Service | Port | Purpose |
+|---|---|---|
+| 📏 **Rule Engine** | `:8001` | CRUD for rule groups, rules, and datapoint definitions |
+| 🧠 **Decision Center** | `:8002` | Evaluates actions against rules; maintains immutable audit log |
+| 🔌 **MCP Server** | `:8000` | [Model Context Protocol](https://modelcontextprotocol.io) bridge for AI agents |
+| 🖥️ **React UI** | `:5173` | Visual rule builder with structured fill-in-the-blank editor and test console |
 
 ---
 
 ## 🛠️ Quick Start & Setup
 
-Requires Python 3.11+.
+Requires **Python 3.11+** and **Node.js 18+**.
 
 ```bash
-# Clone and setup the environment
+# 1. Python backend
 python3 -m venv .venv
 source .venv/bin/activate
 pip install -e ".[dev]"
 
-# Run the test suite
+# 2. Start the services
+uvicorn rule_engine.app:app --port 8001 &
+uvicorn decision_center.app:app --port 8002 &
+
+# 3. React UI (optional — open http://localhost:5173)
+cd ui && npm install && npm run dev
+
+# 4. Run the test suite
 pytest -v
 ```
 
@@ -94,6 +97,54 @@ pipeline safely governed by the Rule Engine's stored groups.
 - **JSON Logic Engine:** Under the hood, we compile your natural language rules
   into highly resilient, strictly auditable AST representations known as
   [JsonLogic](http://jsonlogic.com/).
+
+---
+
+## 🖥️ React UI — Visual Rule Builder
+
+The React UI gives you a point-and-click interface for building and testing governance rules — no terminal required.
+
+### Start the UI
+
+```bash
+# Boot the backend services first (see Quick Start above)
+cd ui
+npm install
+npm run dev   # → http://localhost:5173
+```
+
+### Structured Rule Builder
+
+Instead of typing free-form text, the UI uses a **fill-in-the-blank builder** that eliminates ambiguity and prevents edge-case overwrites:
+
+```
+IF [amount > 500 ──────────────────] THEN [ASK_FOR_APPROVAL ▼] ELSE [─── ▼]
+↳ IF [open_bills_count > 10 ───────] THEN [REJECT ▼]  [✕]
+↳ IF [user_region == "EU" ─────────] THEN [ASK_FOR_APPROVAL ▼]  [✕]
+
+[+ Add Edge Case]                              [✦ Translate with AI →]
+```
+
+- **Main rule row** — condition input + `THEN` outcome dropdown + optional `ELSE` branch
+- **Edge case rows** — amber-bordered rows, each with their own condition + outcome + remove button
+- **"Translate with AI"** — sends the complete structured state to the LLM in one shot; every translate is a fresh complete translation, so edge cases can never silently overwrite each other
+
+### LLM Wizard Flow
+
+1. Fill in the condition (`amount > 500`) and select an outcome (`ASK_FOR_APPROVAL`)
+2. Optionally add edge cases with **+ Add Edge Case**
+3. Click **Translate with AI** — the UI builds a precise structured prompt and sends it to your configured LLM (OpenAI / Anthropic / Gemini)
+4. Review the **Proposed Logic** card — inspect extracted datapoints, edge cases, and main rule logic
+5. Choose an action:
+   - **Accept & Save** — persist the rule to the Rule Engine
+   - **Save & Test** — save and open the Test Console immediately
+   - **Add Edge Case** — add another row to the builder and re-translate
+   - **Optimize** — update fields in the builder and re-translate
+   - **Refuse** — discard and clear the builder
+
+### Test Console
+
+After saving a rule, the built-in **Test Console** lets you simulate agent payloads and see the exact decision outcome in real time — no separate tool needed.
 
 ---
 

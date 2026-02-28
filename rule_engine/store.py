@@ -35,7 +35,7 @@ class RuleStore:
             edge_cases=rule_create.edge_cases,
             edge_cases_json=rule_create.edge_cases_json,
             rule_logic=rule_create.rule_logic,
-            rule_logic_json=rule_create.rule_logic_json
+            rule_logic_json=rule_create.rule_logic_json,
         )
         group.rules.append(rule)
         return rule

@@ -111,17 +111,42 @@ def prompt_llm_setup() -> dict | None:
         print("❌ Connection failed. Check your API key. Falling back to manual rule creation.")
         return None
 
+def _prompt_datapoint_type(dp_name: str) -> dict:
+    """Interactively prompt the user for the type of a new datapoint."""
+    print(f"\n  New datapoint detected: '{dp_name}'")
+    print("  Types: 1. text  2. number  3. boolean  4. enum")
+    type_choice = input("  Select type [1-4, default=1]: ").strip()
+    type_map = {"1": "text", "2": "number", "3": "boolean", "4": "enum"}
+    dp_type = type_map.get(type_choice, "text")
+    values = []
+    if dp_type == "enum":
+        vals_str = input(f"  Allowed values for '{dp_name}' (comma-separated, e.g. EUR,USD,GBP): ").strip()
+        values = [v.strip() for v in vals_str.split(",") if v.strip()]
+    return {"name": dp_name, "type": dp_type, "values": values}
+
+
 def prompt_rule_creation(group_id: str, llm_config: dict | None = None) -> dict:
     print("\n--- Rule Management ---")
     
-    # Check for existing rules in the group
+    # Fetch existing rules AND datapoint definitions from the group
     with httpx.Client() as client:
         try:
             resp = client.get(f"http://127.0.0.1:8001/v1/groups/{group_id}")
             group_data = resp.json() if resp.status_code == 200 else {}
             existing_rules = group_data.get("rules", [])
+            datapoint_definitions = group_data.get("datapoint_definitions", [])
         except httpx.RequestError:
             existing_rules = []
+            datapoint_definitions = []
+
+    if datapoint_definitions:
+        dp_summary = []
+        for d in datapoint_definitions:
+            desc = f"{d['name']} ({d['type']})"
+            if d.get("values"):
+                desc += f" [{', '.join(d['values'])}]"
+            dp_summary.append(desc)
+        print(f"\nKnown datapoint types: {', '.join(dp_summary)}")
 
     rule_id = None
     name = ""
@@ -208,7 +233,8 @@ def prompt_rule_creation(group_id: str, llm_config: dict | None = None) -> dict:
                     provider=llm_config["provider"],
                     model=llm_config["model"],
                     api_key=llm_config["api_key"],
-                    context_schema=context_schema
+                    context_schema=context_schema,
+                    datapoint_definitions=datapoint_definitions,
                 )
                 datapoints = translation["datapoints"]
                 edge_cases = translation.get("edge_cases", [])
@@ -242,6 +268,26 @@ def prompt_rule_creation(group_id: str, llm_config: dict | None = None) -> dict:
                     llm_config = None
                     break
                 else:
+                    # Prompt for types of any NEW datapoints not yet defined
+                    known_names = {d["name"] for d in datapoint_definitions}
+                    new_defs = []
+                    for dp in datapoints:
+                        if dp not in known_names:
+                            new_def = _prompt_datapoint_type(dp)
+                            new_defs.append(new_def)
+                            datapoint_definitions.append(new_def)
+                            known_names.add(dp)
+                    if new_defs:
+                        print(f"\nSaving {len(new_defs)} new datapoint definition(s)...")
+                        with httpx.Client() as client:
+                            patch_resp = client.patch(
+                                f"http://127.0.0.1:8001/v1/groups/{group_id}/datapoints",
+                                json=new_defs
+                            )
+                            if patch_resp.status_code == 200:
+                                print("✅ Datapoint definitions saved.")
+                            else:
+                                print(f"⚠️  Could not save datapoint definitions: {patch_resp.status_code}")
                     break
             except Exception as e:
                 print(f"❌ Translation failed: {e}")
@@ -293,15 +339,40 @@ def prompt_rule_creation(group_id: str, llm_config: dict | None = None) -> dict:
 def prompt_auto_test(group_id: str, rule: dict):
     print(f"\n--- Auto-Test for Rule: {rule.get('name', 'Unknown')} ---")
     print("Let's test this rule!")
+
+    # Fetch datapoint definitions for type-aware coercion
+    dp_defs: dict[str, dict] = {}
+    with httpx.Client() as client:
+        try:
+            resp = client.get(f"http://127.0.0.1:8001/v1/groups/{group_id}")
+            if resp.status_code == 200:
+                for d in resp.json().get("datapoint_definitions", []):
+                    dp_defs[d["name"]] = d
+        except httpx.RequestError:
+            pass
     
     context = {}
     for dp in rule.get("datapoints", []):
-        val = input(f"Provide a value for datapoint '{dp}': ").strip()
-        try:
-            val = float(val) if '.' in val else int(val)
-        except ValueError:
-            pass
-        context[dp] = val
+        defn = dp_defs.get(dp, {})
+        dp_type = defn.get("type", "text")
+        allowed_values = defn.get("values", [])
+
+        if dp_type == "enum" and allowed_values:
+            print(f"  '{dp}' allowed values: {', '.join(allowed_values)}")
+            val = input(f"Provide a value for datapoint '{dp}': ").strip()
+            context[dp] = val  # keep as string
+        elif dp_type == "boolean":
+            raw = input(f"Provide a value for datapoint '{dp}' [true/false]: ").strip().lower()
+            context[dp] = raw == "true"
+        elif dp_type == "number":
+            raw = input(f"Provide a value for datapoint '{dp}' (number): ").strip()
+            try:
+                context[dp] = float(raw) if '.' in raw else int(raw)
+            except ValueError:
+                context[dp] = raw
+        else:
+            # text or unknown — keep as string
+            context[dp] = input(f"Provide a value for datapoint '{dp}': ").strip()
         
     desc = input("Please provide a request description: ").strip()
     

@@ -1,10 +1,20 @@
 from fastapi import FastAPI, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
 from typing import List
 
-from .models import BusinessRule, BusinessRuleGroup, CreateRule, CreateRuleGroup
+from .models import BusinessRule, BusinessRuleGroup, CreateRule, CreateRuleGroup, DatapointDefinition
 from .store import RuleStore
 
 app = FastAPI(title="Unreal Objects Rule Engine API")
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
 store = RuleStore()
 
 @app.post("/v1/groups", response_model=BusinessRuleGroup, status_code=201)
@@ -52,4 +62,15 @@ async def update_rule(group_id: str, rule_id: str, rule: CreateRule):
     if not updated:
         raise HTTPException(status_code=404, detail="Rule or Group not found")
     return updated
+
+@app.patch("/v1/groups/{group_id}/datapoints", response_model=BusinessRuleGroup)
+async def update_datapoints(group_id: str, definitions: List[DatapointDefinition]):
+    group = store.get_group(group_id)
+    if not group:
+        raise HTTPException(status_code=404, detail="Group not found")
+    existing = {d.name: d for d in group.datapoint_definitions}
+    for defn in definitions:
+        existing[defn.name] = defn
+    group.datapoint_definitions = list(existing.values())
+    return group
 
