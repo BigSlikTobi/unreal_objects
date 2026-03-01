@@ -17,6 +17,10 @@ app.add_middleware(
 
 store = RuleStore()
 
+@app.get("/v1/health")
+async def health():
+    return {"status": "ok", "service": "rule_engine"}
+
 @app.post("/v1/groups", response_model=BusinessRuleGroup, status_code=201)
 async def create_group(group: CreateRuleGroup):
     return store.create_group(group)

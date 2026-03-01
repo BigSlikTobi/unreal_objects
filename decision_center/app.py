@@ -31,6 +31,10 @@ def _outcome_to_state(outcome: DecisionOutcome) -> DecisionState:
         return DecisionState.REJECTED
     return DecisionState.APPROVAL_REQUIRED
 
+@app.get("/v1/health")
+async def health():
+    return {"status": "ok", "service": "decision_center"}
+
 @app.get("/v1/decide", response_model=DecisionResult)
 async def evaluate(request_description: str, context: str, group_id: str = None):
     try:
