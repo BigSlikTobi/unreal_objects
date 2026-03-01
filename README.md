@@ -18,6 +18,86 @@ Human-in-the-Loop approval.
 
 Think of it as **Autonomy with Receipts.** 🧾
 
+---
+
+## ✅ What Unreal Objects is — and what it is not
+
+This is the most important thing to understand before you write your first rule.
+Get this wrong and your rules will fight the agent instead of guarding it.
+
+### The agent decides. Unreal Objects governs.
+
+An AI agent is autonomous by design. It reads context, reasons about a
+situation, and decides what action to take. That autonomy is the whole point —
+if you wanted a scripted system, you would not use an agent.
+
+**Unreal Objects does not take that autonomy away.** It does not tell the agent
+what to do. It governs *how* the agent's own decisions are processed — whether
+they execute immediately, require human sign-off, or are blocked entirely.
+
+```
+Agent reasons:   "Given this situation, I should send an email to the client."
+                                          │
+                                          ▼
+                    evaluate_action("Send email to client", context)
+                                          │
+                              Unreal Objects evaluates:
+                     "IF contact_person is premium THEN ASK_FOR_APPROVAL"
+                                          │
+                              ┌───────────┼───────────┐
+                           APPROVE   ASK_FOR_   REJECT
+                        (agent sends) APPROVAL (blocked)
+                                     (human decides;
+                                     agent sends if approved)
+```
+
+The agent made the decision to send the email. Unreal Objects decided the
+*conditions* under which that decision executes.
+
+---
+
+### ✅ This IS how business rules work here
+
+Rules describe **conditions on an action the agent has already chosen to take.**
+
+| Rule | What it means |
+|---|---|
+| `IF contact_person == 'premium' THEN ASK_FOR_APPROVAL` | When the agent sends anything to a premium contact, pause and get a human to sign off first |
+| `IF transfer_amount > 10000 THEN REJECT` | Block any transfer the agent tries above this threshold, unconditionally |
+| `IF recipient_country NOT IN approved_list THEN ASK_FOR_APPROVAL` | Flag cross-border actions for review, regardless of what the agent intended |
+| `IF file_path CONTAINS '/etc/' THEN REJECT` | The agent cannot write to system directories, ever |
+
+These rules fire at the moment the agent **acts**. They say nothing about what
+the agent should or should not decide to do — only about how that decision is
+processed when it arrives.
+
+---
+
+### ❌ This is NOT how business rules work here
+
+Rules that prescribe **what the agent should do** are process instructions, not
+governance rules. They do not belong here.
+
+| Rule | Why it's wrong |
+|---|---|
+| `IF contact_person == 'premium' THEN send_email` | This tells the agent to act — that is the agent's job, not a governance rule |
+| `IF order_value > 500 THEN notify_customer` | This is a business process step, not a guardrail |
+| `IF user is inactive THEN deactivate_account` | Automation logic — should live in the agent's reasoning, not in the rule engine |
+
+Writing rules like this would create a second decision layer on top of the
+agent's own reasoning, making behaviour unpredictable and the agent's autonomy
+meaningless. The agent would become a pass-through for your rule engine rather
+than an intelligent reasoner.
+
+---
+
+### The line in one sentence
+
+> **The agent decides what to do. Unreal Objects decides whether, and under what
+> conditions, that decision is allowed to execute.**
+
+---
+
 ## 📈 Stress-Test Snapshot
 
 The project now carries a schema-aware generative evaluation harness with
@@ -52,12 +132,12 @@ This is meant as a trust signal, not marketing gloss:
 
 Unreal Objects is cleanly decoupled into modular services:
 
-| Service                | Port    | Purpose                                                                        |
-| ---------------------- | ------- | ------------------------------------------------------------------------------ |
-| 📏 **Rule Engine**     | `:8001` | CRUD for rule groups, rules, and datapoint definitions                         |
-| 🧠 **Decision Center** | `:8002` | Evaluates actions against rules; maintains immutable audit log                 |
-| 🔌 **MCP Server**      | `:8000` | [Model Context Protocol](https://modelcontextprotocol.io) bridge for AI agents |
-| 🖥️ **React UI**        | `:5173` | Visual rule builder with structured fill-in-the-blank editor and test console  |
+| Service                       | Port    | Purpose                                                                        |
+| ----------------------------- | ------- | ------------------------------------------------------------------------------ |
+| 📏 **Rule Engine**            | `:8001` | CRUD for rule groups, rules, and datapoint definitions                         |
+| 🧠 **Decision Center**        | `:8002` | Evaluates actions against rules; maintains immutable audit log                 |
+| 🔌 **MCP Server**             | `:8000` | [Model Context Protocol](https://modelcontextprotocol.io) bridge for AI agents |
+| 🖥️ **React UI**               | `:5173` | Visual rule builder with structured fill-in-the-blank editor and test console  |
 
 ---
 
@@ -75,10 +155,13 @@ pip install -e ".[dev]"
 uvicorn rule_engine.app:app --port 8001 &
 uvicorn decision_center.app:app --port 8002 &
 
-# 3. React UI (optional — open http://localhost:5173)
+# 3. MCP Server (for AI agents)
+python mcp_server/server.py --transport streamable-http --host 0.0.0.0 --port 8000 --group-id <your-group-id> &
+
+# 4. React UI (optional — open http://localhost:5173)
 cd ui && npm install && npm run dev
 
-# 4. Run the test suite
+# 5. Run the test suite
 pytest -v
 ```
 
@@ -305,32 +388,176 @@ python decision_center/cli.py
 
 ## 🤖 Connecting Your AI Agents
 
-Instead of using the wizard's auto-tester, your actual autonomous AI agents can
-interact with Unreal Objects natively through the built-in **MCP Server**.
+Instead of using the wizard's auto-tester, your actual autonomous AI agents
+interact with Unreal Objects exclusively through the built-in **MCP Server**.
+The MCP Server is the single enforced gateway between your agent and the real
+world — it does not just advise the agent, it *is* the only path to real
+actions.
 
-### Running the MCP Server natively (for LAN/External Agents)
+### Starting the MCP Server
 
-If your AI agent (like OpenClaw) is running on a different machine or Docker
-container in your network, start the MCP Server via SSE (Server-Sent Events)
-bound to your local IP:
+**Local / stdio** (for Claude Desktop or local agents):
 
 ```bash
-source .venv/bin/activate
-python mcp_server/server.py --transport sse --host 0.0.0.0 --port 8000
+python mcp_server/server.py --transport stdio --group-id <your-group-id>
 ```
 
-### Exposing the Tools
+**LAN / remote agents** (Streamable HTTP — recommended):
 
-Once hooked up, your agent discovers these protected capabilities:
+```bash
+python mcp_server/server.py \
+  --transport streamable-http \
+  --host 0.0.0.0 \
+  --port 8000 \
+  --group-id <your-group-id>
+```
 
-- `list_rule_groups()`: Read available governance groups.
-- `evaluate_action(request_description, context_json, group_id)`: Try to execute
-  a governed action.
-- `submit_approval(request_id, approved, approver)`: Route a blocked action to a
-  human for sign-off.
-- `get_decision_log(log_type, request_id)`: Read the audit trail of decisions.
+**Legacy SSE** (still supported for backward compatibility):
 
-Your infrastructure is now fully governed and transparent! ✨
+```bash
+python mcp_server/server.py --transport sse --host 0.0.0.0 --port 8000 \
+  --group-id <your-group-id>
+```
+
+| Flag | Default | Purpose |
+|---|---|---|
+| `--transport` | `stdio` | `stdio`, `streamable-http`, or `sse` |
+| `--host` | `127.0.0.1` | Bind address for HTTP transports |
+| `--port` | `8000` | Port for HTTP transports |
+| `--group-id` | *(none)* | Rule group applied to all evaluations — agent cannot override this |
+| `--allowed-hosts` | auto | Comma-separated Host headers to accept; defaults to `*` when `--host 0.0.0.0` |
+
+> **`--group-id` is the key security flag.** When set, every `evaluate_action`
+> call is evaluated against that rule group. The agent never sees, chooses, or
+> influences which ruleset applies to it.
+
+### How the guardrail works
+
+On every `initialize` handshake the MCP Server sends a mandatory protocol
+statement directly to the agent via the MCP `instructions` field. This is
+injected by the MCP client into the agent's context *separately from and in
+addition to* any operator system prompt. The agent is told:
+
+- Call `guardrail_heartbeat` on startup. Stop if the system is unhealthy.
+- Call `evaluate_action` before every real-world action and obey the outcome absolutely.
+- `APPROVE` → proceed. `REJECT` → stop and explain. `ASK_FOR_APPROVAL` → pause, surface to the human, call `submit_approval` with the human's decision.
+
+```
+Agent wants to send an email
+        │
+        ▼
+  evaluate_action("Send invoice email to client", '{"recipient": "acme@example.com"}')
+        │
+        ├─ REJECT           → agent stops. Explains to user. Does not retry.
+        │
+        ├─ APPROVE          → agent calls its own email tool and sends.
+        │
+        └─ ASK_FOR_APPROVAL → agent tells user what it wanted to do.
+                              User decides. Agent calls submit_approval(...).
+                              If approved=True, agent proceeds to send.
+                              If approved=False, nothing is sent.
+```
+
+The agent always executes actions using its own tools — Unreal Objects does not
+proxy or intercept traffic. The guardrail is purely a decision layer.
+
+### ASK_FOR_APPROVAL — human-in-the-loop flow
+
+When `evaluate_action` returns `ASK_FOR_APPROVAL`, the agent surfaces the
+request to the human. Once the human decides, the agent calls `submit_approval`:
+
+- `approved=True` → agent proceeds with the action using its own tools.
+- `approved=False` → agent stops. Nothing is executed.
+
+The `request_id` from `evaluate_action` ties together the Decision Center audit
+log entry, the `submit_approval` record, and the agent's own execution — giving
+operators a complete, tamper-evident chain.
+
+### Available tools
+
+| Tool | Purpose |
+|---|---|
+| `guardrail_heartbeat` | Checks that Rule Engine and Decision Center are reachable. Call on startup. |
+| `evaluate_action` | Evaluates a planned action against business rules. Call before every real-world action. |
+| `submit_approval` | Records a human approval decision for an `ASK_FOR_APPROVAL` outcome. |
+| `list_rule_groups` | Lists all configured rule groups. |
+| `get_rule_group` | Gets a specific rule group and its rules. |
+| `get_decision_log` | Reads the audit log (`atomic`, `chains`, or `chain` by `request_id`). |
+| `get_pending` | Lists actions currently awaiting human approval. |
+
+`evaluate_action` is the critical integration point. The agent calls it before
+every real-world side effect, then executes using its own tools only when the
+outcome is `APPROVE` or a human has approved via `submit_approval`.
+
+### Governing your agent's actions
+
+The governance pattern is always the same, regardless of what the agent is doing:
+
+```
+Agent decides to act → calls evaluate_action → obeys the outcome → acts with its own tools
+```
+
+A correctly written rule for sending to premium customers looks like:
+
+```
+Feature:    Email Notification
+Rule logic: IF contact_person == 'premium' THEN ASK_FOR_APPROVAL
+Edge case:  IF contact_person == 'blocked' THEN REJECT
+```
+
+Your agent then does:
+
+```python
+# Before sending the email:
+decision = await evaluate_action(
+    "Send invoice email",
+    '{"contact_person": "premium", "recipient": "acme@example.com"}'
+)
+if decision["outcome"] == "APPROVE":
+    send_email(...)            # agent's own tool
+elif decision["outcome"] == "ASK_FOR_APPROVAL":
+    # surface to user, call submit_approval, then send if approved
+elif decision["outcome"] == "REJECT":
+    # explain to user, do not send
+```
+
+No special proxy tools or server-side execution plumbing is needed. The agent's
+existing action tools (email, HTTP, file, database) stay exactly where they are.
+`evaluate_action` is the single integration point.
+
+
+---
+
+## ⚠️ Enforcement model and its limits
+
+Unreal Objects relies on the agent calling `evaluate_action` before acting.
+For a compliant, well-aligned model this is a strong and effective control —
+the mandatory protocol injected at `initialize` and the `REJECT`/`ASK_FOR_APPROVAL`
+outcomes are clear and hard to misinterpret.
+
+The model of enforcement is **instructional, not architectural**. The server
+does not intercept network traffic or own the agent's action tools. An agent
+that bypasses `evaluate_action` — whether due to jailbreak, prompt injection,
+or a separate tool on a different MCP server — is not constrained at the
+transport layer.
+
+| Threat | Stopped? |
+|---|---|
+| Agent forgets to call evaluate_action | Yes — mandatory protocol instruction |
+| User instructs agent to skip rules | Partially — strong deterrent for aligned models |
+| Jailbreak / adversarial prompt injection | No — instructional controls only |
+| Agent has a parallel MCP tool for the same action | No — nothing prevents a direct call |
+
+### How to strengthen enforcement
+
+- **Single-MCP deployment:** Give the agent only one MCP server (Unreal
+  Objects). Any action capability the agent needs should be implemented there,
+  not on a separate server it can call without going through `evaluate_action`.
+- **Operator system prompt:** Reinforce the governance requirement in your
+  own system prompt. The MCP `instructions` field is a strong nudge; an
+  explicit operator-level instruction adds a second layer.
+- **Audit log monitoring:** Check `get_decision_log` regularly. Any real-world
+  action that has no matching evaluation entry is a signal of bypass.
 
 ---
 
@@ -563,3 +790,46 @@ evidence instead of a single monolithic benchmark.
 
 > *V3/V4 accuracy reflects a dataset generation flaw (missing context
 > variables), not a translation regression.
+
+---
+
+## Appendix: Tool Creation Agent *(not ready for use)*
+
+> **Do not use this in production.** The Tool Creation Agent is an early
+> experiment and is preserved in the repository for reference only. It is not
+> wired into the UI or the default startup. The core principle of Unreal Objects
+> is that it holds business rules and governs decisions — it does not generate
+> or execute code.
+
+The **Tool Creation Agent** (`mcp_server/tool_agent.py`) is a FastAPI service
+(port 8003) that watches new rules as they are created and uses an LLM to
+propose MCP tool scaffolds when a new feature domain appears. Every generated
+scaffold requires human approval before any code is written.
+
+**To run it manually (for experimentation only):**
+
+```bash
+ANTHROPIC_API_KEY=sk-...  uvicorn mcp_server.tool_agent:app --port 8003
+# or: OPENAI_API_KEY=sk-...  / GOOGLE_API_KEY=...
+```
+
+**Interact via curl:**
+
+```bash
+# List proposals
+curl http://127.0.0.1:8003/v1/proposals | python3 -m json.tool
+
+# Approve a proposal (writes scaffold to mcp_server/server.py)
+curl -X POST http://127.0.0.1:8003/v1/proposals/<id>/review \
+  -H "Content-Type: application/json" \
+  -d '{"approved": true, "reviewer": "Your Name"}'
+
+# Reject
+curl -X POST http://127.0.0.1:8003/v1/proposals/<id>/review \
+  -H "Content-Type: application/json" \
+  -d '{"approved": false, "reviewer": "Your Name"}'
+```
+
+On startup it creates an **"Unreal Objects System"** rule group in the Rule
+Engine with a meta-rule (`IF action = 'tool_generation' THEN ASK_FOR_APPROVAL`)
+so the agent can never approve its own code.

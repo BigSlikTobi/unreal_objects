@@ -1,9 +1,12 @@
-from fastapi import FastAPI, HTTPException, Response
+import httpx
+from fastapi import BackgroundTasks, FastAPI, HTTPException, Response
 from fastapi.middleware.cors import CORSMiddleware
 from typing import List
 
 from .models import BusinessRule, BusinessRuleGroup, CreateRule, CreateRuleGroup, DatapointDefinition
 from .store import RuleStore
+
+TOOL_AGENT_URL = "http://127.0.0.1:8003"
 
 app = FastAPI(title="Unreal Objects Rule Engine API")
 
@@ -43,11 +46,33 @@ async def delete_group(group_id: str):
     if not store.delete_group(group_id):
         raise HTTPException(status_code=404, detail="Group not found")
 
+async def _notify_tool_agent(group_id: str, rule: BusinessRule, group_name: str):
+    """Fire-and-forget webhook to the Tool Creation Agent. Silently ignored if agent is down."""
+    try:
+        async with httpx.AsyncClient(timeout=3.0) as client:
+            await client.post(
+                f"{TOOL_AGENT_URL}/v1/webhook/rule-created",
+                json={
+                    "group_id": group_id,
+                    "group_name": group_name,
+                    "rule_id": rule.id,
+                    "rule_name": rule.name,
+                    "feature": rule.feature,
+                    "rule_logic": rule.rule_logic,
+                    "datapoints": rule.datapoints,
+                },
+            )
+    except Exception:
+        pass  # Non-blocking: tool agent may not be running
+
+
 @app.post("/v1/groups/{group_id}/rules", response_model=BusinessRule, status_code=201)
-async def add_rule(group_id: str, rule: CreateRule):
+async def add_rule(group_id: str, rule: CreateRule, background_tasks: BackgroundTasks):
     created = store.add_rule(group_id, rule)
     if not created:
         raise HTTPException(status_code=404, detail="Group not found")
+    group = store.get_group(group_id)
+    background_tasks.add_task(_notify_tool_agent, group_id, created, group.name)
     return created
 
 @app.get("/v1/groups/{group_id}/rules/{rule_id}", response_model=BusinessRule)

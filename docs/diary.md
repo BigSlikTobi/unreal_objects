@@ -1,5 +1,27 @@
 # Unreal Objects Diary
 
+## UI App Import Parse Fix
+
+**What was built:**
+
+- Added a UI regression test that inspects `ui/src/App.tsx` source imports and
+  fails if React hooks are split across duplicate `react` import lines.
+- Removed the duplicate `useEffect` import from `ui/src/App.tsx` by merging the
+  hook imports into a single React import statement.
+
+**How it was validated:**
+
+- Ran `npm test -- src/AppSource.test.ts` to prove the new regression fails
+  before the fix and passes after it.
+- Ran `npm test -- src/App.test.tsx`, `npm test`, `npm run lint`, and
+  `npm run build` in `ui/` after the import fix landed.
+
+**Key Findings:**
+
+- The Vite dev-server failure came from a straightforward duplicate hook import,
+  but a source-level regression is the safest guard here because syntax errors
+  in `App.tsx` can prevent the normal component tests from loading at all.
+
 ## README Updated for Finance V6 Evaluation
 
 **What was built:**
