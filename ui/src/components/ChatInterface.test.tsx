@@ -1,10 +1,11 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { useState } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { ChatInterface } from './ChatInterface';
 import { createRule, getGroup, translateRule, updateDatapointDefinitions, updateRule } from '../api';
-import type { RuleGroup } from '../types';
+import type { Rule, RuleGroup } from '../types';
 
 vi.mock('../api', () => ({
   createRule: vi.fn(),
@@ -96,5 +97,62 @@ describe('ChatInterface rule management', () => {
       }));
     });
     expect(createRule).not.toHaveBeenCalled();
+  });
+
+  it('keeps the builder attached to the saved rule after accepting an edit', async () => {
+    const user = userEvent.setup();
+
+    render(
+      <ChatInterface
+        groupId="group_123"
+        llmConfig={{ provider: 'openai', model: 'gpt-5.2', api_key: 'test-key' }}
+        selectedRule={existingRule}
+        onRuleCreated={vi.fn()}
+        onStartTest={vi.fn()}
+      />
+    );
+
+    const conditionInput = screen.getByPlaceholderText('e.g. amount > 500');
+    await user.clear(conditionInput);
+    await user.type(conditionInput, 'transaction_amount > 700');
+    await user.click(screen.getByRole('button', { name: /translate with ai/i }));
+    await screen.findByText(/proposed logic/i);
+    await user.click(screen.getByRole('button', { name: /accept & save/i }));
+
+    await screen.findByText("✅ Rule 'High Value Review' updated successfully! You are still editing it.");
+    await screen.findByText(/editing stored rule/i);
+    expect((screen.getByPlaceholderText('Rule name') as HTMLInputElement).value).toBe('High Value Review');
+    expect((screen.getByPlaceholderText('Feature (e.g. Fraud Check)') as HTMLInputElement).value).toBe('Fraud');
+    expect((screen.getByPlaceholderText('e.g. amount > 500') as HTMLInputElement).value).toBe('transaction_amount > 700');
+  });
+
+  it('leaves edit mode when stop editing is clicked', async () => {
+    const user = userEvent.setup();
+
+    const Wrapper = () => {
+      const [selectedRule, setSelectedRule] = useState<Rule | null>(existingRule);
+      return (
+        <ChatInterface
+          groupId="group_123"
+          llmConfig={{ provider: 'openai', model: 'gpt-5.2', api_key: 'test-key' }}
+          selectedRule={selectedRule}
+          onRuleCreated={vi.fn()}
+          onStartTest={vi.fn()}
+          onStopEditing={() => setSelectedRule(null)}
+        />
+      );
+    };
+
+    render(<Wrapper />);
+
+    await screen.findByText(/editing stored rule/i);
+    await user.click(screen.getByRole('button', { name: /stop editing/i }));
+
+    await waitFor(() => {
+      expect(screen.queryByText(/editing stored rule/i)).toBeNull();
+    });
+    expect((screen.getByPlaceholderText('Rule name') as HTMLInputElement).value).toBe('');
+    expect((screen.getByPlaceholderText('Feature (e.g. Fraud Check)') as HTMLInputElement).value).toBe('');
+    expect((screen.getByPlaceholderText('e.g. amount > 500') as HTMLInputElement).value).toBe('');
   });
 });

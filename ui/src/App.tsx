@@ -83,7 +83,6 @@ function App() {
   const handleRuleSaved = (rule: Rule) => {
     setRulePanelRefreshKey((prev) => prev + 1);
     setSelectedRule(rule);
-    setSelectedRuleToken(Date.now());
     loadGroups();
   };
 
@@ -212,6 +211,10 @@ function App() {
                 systemNoticeToken={systemNoticeToken}
                 onRuleCreated={handleRuleSaved}
                 onStartTest={(rule, defs) => { setRuleToTest(rule); setTestDatapointDefs(defs); }}
+                onStopEditing={() => {
+                  setSelectedRule(null);
+                  setSelectedRuleToken(0);
+                }}
               />
             ) : (
               <EmptyState

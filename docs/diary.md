@@ -1,5 +1,27 @@
 # Unreal Objects Diary
 
+## Saved Rules Stay Attached to the Builder
+
+**What was built:**
+
+- Clarified and aligned the React save flow so saved rules remain attached to
+  the builder after **Accept & Save** and **Save & Test** instead of appearing
+  to clear and then silently re-enter edit mode.
+- Kept **Stop Editing** as the explicit way to clear the builder and leave edit
+  mode, and fixed the clear path so it also drops the parent-selected rule
+  instead of instantly reloading the same saved rule.
+
+**How it was validated:**
+
+- Added UI regression coverage for the post-save editing state and the
+  save-and-test flow.
+
+**Key Findings:**
+
+- The underlying workflow already depended on saving before testing. The real
+  UX problem was mixed signaling: the UI claimed to clear the builder while the
+  parent state immediately reattached the same saved rule for continued edits.
+
 ## Rule Management UX Hardening Wrap-Up
 
 **What was built:**

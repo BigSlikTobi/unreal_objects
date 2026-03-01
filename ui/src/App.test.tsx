@@ -7,6 +7,7 @@ import {
   checkLLMConnection,
   createGroup,
   createRule,
+  executeTest,
   fetchGroups,
   getGroup,
   translateRule,
@@ -77,6 +78,10 @@ describe('App rule library layout', () => {
     vi.mocked(updateDatapointDefinitions).mockResolvedValue(baseGroup);
     vi.mocked(createRule).mockResolvedValue(existingRule);
     vi.mocked(updateRule).mockResolvedValue(existingRule);
+    vi.mocked(executeTest).mockResolvedValue({
+      outcome: 'APPROVE',
+      request_id: 'req_123',
+    });
   });
 
   it('loads a selected rule from the rule panel into the builder', async () => {
@@ -127,5 +132,27 @@ describe('App rule library layout', () => {
     await user.click(screen.getByRole('button', { name: /deactivate/i }));
 
     await screen.findByText("Rule 'High Value Review' deactivated. It remains documented but will be skipped during evaluation.");
+  });
+
+  it('keeps the saved rule in the builder when save and test opens the test console', async () => {
+    const user = userEvent.setup();
+
+    render(<App />);
+
+    await screen.findByText('High Value Review');
+    await user.click(screen.getByRole('button', { name: /use in builder/i }));
+
+    const conditionInput = await screen.findByPlaceholderText('e.g. amount > 500');
+    await user.clear(conditionInput);
+    await user.type(conditionInput, 'transaction_amount > 700');
+    await user.click(screen.getByRole('button', { name: /translate with ai/i }));
+    await screen.findByText(/proposed logic/i);
+    await user.click(screen.getByRole('button', { name: /save & test/i }));
+
+    await screen.findByText("✅ Rule 'High Value Review' updated. Opening test console while you stay in edit mode.");
+    await screen.findByText(/test rule setup/i);
+    await screen.findByText(/editing stored rule/i);
+    expect((screen.getByPlaceholderText('Rule name') as HTMLInputElement).value).toBe('High Value Review');
+    expect((screen.getByPlaceholderText('e.g. amount > 500') as HTMLInputElement).value).toBe('transaction_amount > 700');
   });
 });

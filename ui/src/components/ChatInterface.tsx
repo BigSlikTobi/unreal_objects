@@ -28,6 +28,7 @@ interface ChatInterfaceProps {
   systemNoticeToken?: number;
   onRuleCreated: (rule: Rule) => void;
   onStartTest: (rule: Rule, datapointDefs: DatapointDefinition[]) => void;
+  onStopEditing?: () => void;
 }
 
 const OUTCOMES = ['APPROVE', 'ASK_FOR_APPROVAL', 'REJECT'] as const;
@@ -106,7 +107,8 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
   systemNotice = null,
   systemNoticeToken = 0,
   onRuleCreated,
-  onStartTest
+  onStartTest,
+  onStopEditing,
 }) => {
   const [messages, setMessages] = useState<Message[]>([{
     id: 'init',
@@ -201,10 +203,10 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
   }, []);
 
   useEffect(() => {
-    if (selectedRule) {
+    if (selectedRule && selectedRule.id !== editingRule?.id) {
       startEditingRule(selectedRule);
     }
-  }, [selectedRule, selectedRuleToken, startEditingRule]);
+  }, [selectedRule, selectedRuleToken, startEditingRule, editingRule?.id]);
 
   useEffect(() => {
     if (!systemNotice) {
@@ -351,15 +353,17 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
       const saved = editingRule
         ? await updateRule(groupId, editingRule.id, payload)
         : await createRule(groupId, payload);
+      setEditingRule(saved);
+      setRuleName(saved.name);
+      setFeature(saved.feature);
 
       setMessages(prev => [...prev, {
         id: Date.now().toString(),
         role: 'assistant',
         content: editingRule
-          ? `✅ Rule '${saved.name}' updated successfully!`
-          : `✅ Rule '${saved.name}' created and saved successfully!`
+          ? `✅ Rule '${saved.name}' updated successfully! You are still editing it.`
+          : `✅ Rule '${saved.name}' created and saved successfully! You are now editing the saved rule.`
       }]);
-      clearBuilder();
       onRuleCreated(saved);
     } catch (err: unknown) {
        setMessages(prev => [...prev, {
@@ -384,14 +388,16 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
       const saved = editingRule
         ? await updateRule(groupId, editingRule.id, payload)
         : await createRule(groupId, payload);
+      setEditingRule(saved);
+      setRuleName(saved.name);
+      setFeature(saved.feature);
       setMessages(prev => [...prev, {
         id: Date.now().toString(),
         role: 'assistant',
         content: editingRule
-          ? `✅ Rule '${saved.name}' updated. Opening test console...`
-          : `✅ Rule '${saved.name}' saved. Opening test console...`,
+          ? `✅ Rule '${saved.name}' updated. Opening test console while you stay in edit mode.`
+          : `✅ Rule '${saved.name}' saved. Opening test console while you stay in edit mode.`,
       }]);
-      clearBuilder();
       onRuleCreated(saved);
       onStartTest(saved, datapointDefs);
     } catch (err: unknown) {
@@ -439,6 +445,11 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
       role: 'assistant',
       content: "Rule discarded. Fill in the builder below to start fresh."
     }]);
+  };
+
+  const handleStopEditing = () => {
+    clearBuilder();
+    onStopEditing?.();
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -602,7 +613,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
                 <div className="flex items-center justify-between gap-3 rounded-xl border border-blue-200 bg-blue-50 px-3 py-2 text-sm text-blue-800 dark:border-blue-900/40 dark:bg-blue-900/20 dark:text-blue-200">
                   <span>Editing stored rule: <strong>{editingRule.name}</strong></span>
                   <button
-                    onClick={clearBuilder}
+                    onClick={handleStopEditing}
                     className="rounded-md px-2 py-1 text-xs font-medium text-blue-700 hover:bg-blue-100 dark:text-blue-300 dark:hover:bg-blue-900/30"
                   >
                     Stop Editing

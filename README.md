@@ -200,6 +200,11 @@ IF [amount > 500 ──────────────────] THEN [A
    - **Add Edge Case** — add another row to the builder and re-translate
    - **Optimize** — update fields in the builder and re-translate
    - **Refuse** — discard and clear the builder
+7. After a save, the builder stays attached to that saved rule so you can keep
+   iterating without reselecting it from the rule library. Use **Stop Editing**
+   when you want to clear the builder and leave edit mode. Leaving edit mode
+   also clears the current rule selection, so the builder stays blank until you
+   explicitly pick another saved rule.
 
 ### Test Console
 
