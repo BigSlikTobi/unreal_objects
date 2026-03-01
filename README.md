@@ -27,14 +27,14 @@ promotion. The current checked-in stress-test state by schema is:
 | Schema | Status | Current Signal | Evidence |
 | ------ | ------ | -------------- | -------- |
 | **E-Commerce** | `Strongest committed evidence` | Full end-to-end stress-test report checked in | `evals/generative_evaluation_report_v5.md` |
-| **Finance** | `Ready with reusable baseline` | Stable dataset available for repeat runs | `evals/artifacts/finance/llm_test_dataset.json` |
+| **Finance** | `Committed schema report available` | Full finance-schema report now checked in, with reusable baseline for follow-up runs | `evals/generative_evaluation_report_v6.md` |
 | **No Schema** | `CLI-ready` | Evaluation path supported, but no committed baseline/report yet | Generated on demand via CLI |
 
 ```text
 Trust Signal Summary
 
 E-Commerce   [##########] 98.7% committed full-report pass rate
-Finance      [######----] reusable baseline present, full committed report pending
+Finance      [#########-] 92.3% committed finance-schema pass rate
 No Schema    [####------] CLI path ready, baseline/report not committed yet
 ```
 
@@ -42,9 +42,9 @@ This is meant as a trust signal, not marketing gloss:
 
 - **E-Commerce** has the strongest committed evidence today, with a checked-in
   end-to-end report showing **98.7%** pass rate across **532** cases.
-- **Finance** already has a reusable baseline dataset in
-  `evals/artifacts/finance/llm_test_dataset.json`, so repeated stress tests can
-  run against a stable corpus.
+- **Finance** now also has a checked-in schema-specific report showing
+  **92.3%** pass rate across **519** cases, alongside its reusable baseline
+  dataset for repeat runs.
 - **No schema** is supported by the same CLI and evaluation pipeline, but no
   committed baseline/report is checked in yet.
 
@@ -486,10 +486,17 @@ The checked-in evaluation evidence in this repository currently shows:
 | Schema | Current committed state | Evidence |
 | ------ | ----------------------- | -------- |
 | `ecommerce` | Latest full end-to-end report available | `evals/generative_evaluation_report_v5.md` |
-| `finance` | Reusable baseline dataset available; full report not committed yet | `evals/artifacts/finance/llm_test_dataset.json` |
+| `finance` | Full finance-schema report and reusable baseline dataset available | `evals/generative_evaluation_report_v6.md` |
 | `none` | Supported by CLI; no committed baseline/report yet | Generated on demand via CLI |
 
-The latest committed full-report result is the **E-Commerce V5** run:
+The latest committed full-report results are:
+
+| Schema | Cases | Pass Rate | Failed | Translation Errors | Report |
+| ------ | ----- | --------- | ------ | ------------------ | ------ |
+| `ecommerce` | 532 | 98.7% | 6 safe mismatches | 1 parse error | `evals/generative_evaluation_report_v5.md` |
+| `finance` | 519 | 92.3% | 6 | 34 | `evals/generative_evaluation_report_v6.md` |
+
+The strongest committed benchmark remains the **E-Commerce V5** run:
 
 | Metric | Result |
 | ------ | ------ |
@@ -539,12 +546,12 @@ fixed an async variable-shadowing bug in the translation pipeline. V5 corrected
 the dataset generation so every variable mentioned in a rule is guaranteed
 present in `context_data`.
 
-**Result:** V5 achieved **98.7% accuracy** across 532 cases with 0 parse errors
-and 0 insecure approvals. The remaining 1.3% are the engine's deliberate
-fail-closed safety behaviour firing on legitimately incomplete context — correct
-and expected in production. The evaluation confirms that the translation
-pipeline is production-ready and that the fail-closed guarantee holds
-unconditionally across all evaluated inputs.
+**Result:** The best committed end-to-end result is still **V5 E-Commerce** at
+**98.7% accuracy** across 532 cases. The newly committed **V6 Finance** run
+lands at **92.3%** across 519 cases, with the main drag coming from **34
+translation errors** rather than evaluator instability. Together, these runs
+show that the stress-test CLI is now producing schema-specific, repeatable
+evidence instead of a single monolithic benchmark.
 
 | Version | Key Change                                                | Accuracy  |
 | ------- | --------------------------------------------------------- | --------- |

@@ -1,5 +1,26 @@
 # Unreal Objects Diary
 
+## README Updated for Finance V6 Evaluation
+
+**What was built:**
+
+- Updated the README trust-signal snapshot and evaluation section to include the
+  newly committed finance stress-test report in
+  `evals/generative_evaluation_report_v6.md`.
+- Kept the ecommerce V5 run as the strongest committed benchmark while adding
+  the finance V6 metrics as a second schema-specific evidence point.
+
+**How it was validated:**
+
+- Cross-checked the README figures against `evals/generative_evaluation_report_v6.md`
+  before updating the committed evidence tables and summary text.
+
+**Key Findings:**
+
+- The README now better reflects the actual evaluation state of the repo: one
+  very strong ecommerce benchmark, one committed finance benchmark, and the
+  remaining no-schema path still CLI-ready but not yet checked in as a report.
+
 ## Full Removal of Legacy `scripts/stress_test`
 
 **What was built:**
