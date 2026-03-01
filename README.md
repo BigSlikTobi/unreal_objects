@@ -18,6 +18,36 @@ Human-in-the-Loop approval.
 
 Think of it as **Autonomy with Receipts.** 🧾
 
+## 📈 Stress-Test Snapshot
+
+The project now carries a schema-aware generative evaluation harness with
+reusable baselines, candidate dataset generation, and explicit dataset
+promotion. The current checked-in stress-test state by schema is:
+
+| Schema | Status | Current Signal | Evidence |
+| ------ | ------ | -------------- | -------- |
+| **E-Commerce** | `Strongest committed evidence` | Full end-to-end stress-test report checked in | `evals/generative_evaluation_report_v5.md` |
+| **Finance** | `Committed schema report available` | Full finance-schema report now checked in, with reusable baseline for follow-up runs | `evals/generative_evaluation_report_v6.md` |
+| **No Schema** | `CLI-ready` | Evaluation path supported, but no committed baseline/report yet | Generated on demand via CLI |
+
+```text
+Trust Signal Summary
+
+E-Commerce   [##########] 98.7% committed full-report pass rate
+Finance      [#########-] 92.3% committed finance-schema pass rate
+No Schema    [####------] CLI path ready, baseline/report not committed yet
+```
+
+This is meant as a trust signal, not marketing gloss:
+
+- **E-Commerce** has the strongest committed evidence today, with a checked-in
+  end-to-end report showing **98.7%** pass rate across **532** cases.
+- **Finance** now also has a checked-in schema-specific report showing
+  **92.3%** pass rate across **519** cases, alongside its reusable baseline
+  dataset for repeat runs.
+- **No schema** is supported by the same CLI and evaluation pipeline, but no
+  committed baseline/report is checked in yet.
+
 ## 🏗️ Architecture
 
 Unreal Objects is cleanly decoupled into modular services:
@@ -306,9 +336,190 @@ Your infrastructure is now fully governed and transparent! ✨
 
 ## 📊 Evaluation
 
-We ran a five-iteration generative evaluation to validate that the full pipeline
-— natural language rule → LLM translation → JSON Logic → Decision Center
-evaluation — works correctly at scale.
+The generative evaluation harness now runs through a single CLI entrypoint:
+
+```bash
+uo-stress-test --schema ecommerce
+uo-stress-test --schema finance
+uo-stress-test --schema none
+uo-stress-test --schema all
+```
+
+If the console script has not been reinstalled into your virtualenv yet, the
+equivalent module form is:
+
+```bash
+python -m decision_center.stress_test.cli --schema finance
+```
+
+The CLI performs the full pipeline in one command:
+
+1. generate a synthetic dataset of natural-language rules and matching context
+2. translate those rules into JSON Logic
+3. evaluate them against the running Rule Engine and Decision Center
+4. write a versioned markdown report to `evals/generative_evaluation_report_vN.md`
+
+When the CLI starts, it clears the terminal, prints an ASCII-art banner, and
+shows explicit phase markers such as service checks, dataset generation,
+translation, evaluation, and report writing so the operator can see which step
+is active during long runs. Before dataset generation begins, it also prints a
+short explanatory paragraph describing what the evaluation is doing, why the
+first phase takes time, why the pipeline is useful, and what report/artifact
+output to expect at the end.
+
+The translation stage is also resilient to occasional malformed LLM outputs. If
+a provider returns a schema-shaped object or another invalid rule payload, the
+harness retries the translation once and otherwise records that case as a
+translation error instead of aborting the full schema run.
+
+By default, the CLI now reuses an existing generated dataset for the selected
+schema so repeated evaluation runs stay fast and comparable. Use
+`--refresh-dataset` when you want a brand-new synthetic sample instead of the
+stored one. When a dataset is reused, the CLI shows the artifact age in the
+phase output.
+
+Reusable datasets are now managed in two layers:
+
+- the promoted baseline dataset at `evals/artifacts/<schema>/llm_test_dataset.json`
+- versioned candidate datasets under `evals/artifacts/<schema>/datasets/`
+
+Create fresh candidate datasets without running a full evaluation:
+
+```bash
+uo-stress-test --prepare-datasets --schema finance
+uo-stress-test --prepare-datasets --schema all --background
+```
+
+Promote a candidate dataset into the active baseline:
+
+```bash
+uo-stress-test --schema finance --promote-dataset latest
+uo-stress-test --schema finance --promote-dataset evals/artifacts/finance/datasets/llm_test_dataset_20260301_130000.json
+```
+
+`--prepare-datasets` generates versioned candidates only. It does not replace
+the active baseline automatically. `--promote-dataset` is the explicit workflow
+that copies a chosen candidate into the schema’s reusable baseline.
+
+List the active baseline and available candidate datasets before promotion:
+
+```bash
+uo-stress-test --schema finance --list-datasets
+uo-stress-test --schema all --list-datasets
+```
+
+### Recommended Workflow
+
+For routine regression checks:
+
+```bash
+python -m decision_center.stress_test.cli --schema finance
+```
+
+That reuses the promoted baseline dataset automatically when one exists.
+
+For a fresh dataset candidate:
+
+```bash
+python -m decision_center.stress_test.cli --prepare-datasets --schema finance
+python -m decision_center.stress_test.cli --schema finance --list-datasets
+python -m decision_center.stress_test.cli --schema finance --promote-dataset latest
+python -m decision_center.stress_test.cli --schema finance
+```
+
+For bulk candidate refresh:
+
+```bash
+python -m decision_center.stress_test.cli --prepare-datasets --schema all --background
+```
+
+This keeps the benchmark stable by default while still making it easy to create
+and promote fresher datasets intentionally.
+
+The canonical implementation now lives under `decision_center/stress_test/`.
+There is no secondary legacy stress-test path anymore; routine evaluation work
+should go through the CLI/module entrypoint only.
+
+### Schema-Aware Evaluation
+
+The CLI discovers available schemas automatically from `schemas/*.json`. The
+filename stem becomes the CLI slug:
+
+- `schemas/ecommerce.json` → `--schema ecommerce`
+- `schemas/finance.json` → `--schema finance`
+
+To add a new schema to the stress-test CLI:
+
+1. create a valid JSON file in `schemas/<slug>.json`
+2. include either a top-level `schema` object or a plain dictionary body
+3. run `uo-stress-test --schema <slug>`
+
+No code change should be required to expose a new schema in the CLI.
+
+Special modes:
+
+- `--schema none` runs the evaluation without injecting any schema vocabulary
+- `--schema all` runs every discovered schema sequentially and then runs the
+  no-schema scenario last
+
+### Artifact Layout
+
+Each schema run writes intermediate artifacts into its own folder:
+
+- `evals/artifacts/<schema>/llm_test_dataset.json`
+- `evals/artifacts/<schema>/dataset_manifest.json`
+- `evals/artifacts/<schema>/datasets/llm_test_dataset_<timestamp>.json`
+- `evals/artifacts/<schema>/batch_results.jsonl`
+- `evals/artifacts/<schema>/eval_output_raw.txt`
+
+Each completed run writes one new markdown report:
+
+- `evals/generative_evaluation_report_vN.md`
+
+When `--schema all` is used, the CLI writes one new versioned report per schema
+run.
+
+### Current Recorded Evidence
+
+The checked-in evaluation evidence in this repository currently shows:
+
+| Schema | Current committed state | Evidence |
+| ------ | ----------------------- | -------- |
+| `ecommerce` | Latest full end-to-end report available | `evals/generative_evaluation_report_v5.md` |
+| `finance` | Full finance-schema report and reusable baseline dataset available | `evals/generative_evaluation_report_v6.md` |
+| `none` | Supported by CLI; no committed baseline/report yet | Generated on demand via CLI |
+
+The latest committed full-report results are:
+
+| Schema | Cases | Pass Rate | Failed | Translation Errors | Report |
+| ------ | ----- | --------- | ------ | ------------------ | ------ |
+| `ecommerce` | 532 | 98.7% | 6 safe mismatches | 1 parse error | `evals/generative_evaluation_report_v5.md` |
+| `finance` | 519 | 92.3% | 6 | 34 | `evals/generative_evaluation_report_v6.md` |
+
+The strongest committed benchmark remains the **E-Commerce V5** run:
+
+| Metric | Result |
+| ------ | ------ |
+| Cases | 532 |
+| Pass Rate | 98.7% |
+| Safe Mismatches | 6 |
+| Parse Errors | 1 |
+| Report | `evals/generative_evaluation_report_v5.md` |
+
+### Operational Requirements
+
+Before running the CLI:
+
+- Rule Engine must already be running on `http://127.0.0.1:8001`
+- Decision Center must already be running on `http://127.0.0.1:8002`
+- the relevant provider API key must be present either in your shell
+  environment or in a project `.env` file that the CLI can load automatically
+
+### Historical Results
+
+We previously ran a five-iteration generative evaluation to validate that the
+full pipeline — natural language rule → LLM translation → JSON Logic →
+Decision Center evaluation — works correctly at scale.
 
 **What we evaluated:** The end-to-end accuracy of translating 532 business rules
 written in plain English into executable JSON Logic, and then evaluating those
@@ -335,12 +546,12 @@ fixed an async variable-shadowing bug in the translation pipeline. V5 corrected
 the dataset generation so every variable mentioned in a rule is guaranteed
 present in `context_data`.
 
-**Result:** V5 achieved **98.7% accuracy** across 532 cases with 0 parse errors
-and 0 insecure approvals. The remaining 1.3% are the engine's deliberate
-fail-closed safety behaviour firing on legitimately incomplete context — correct
-and expected in production. The evaluation confirms that the translation
-pipeline is production-ready and that the fail-closed guarantee holds
-unconditionally across all evaluated inputs.
+**Result:** The best committed end-to-end result is still **V5 E-Commerce** at
+**98.7% accuracy** across 532 cases. The newly committed **V6 Finance** run
+lands at **92.3%** across 519 cases, with the main drag coming from **34
+translation errors** rather than evaluator instability. Together, these runs
+show that the stress-test CLI is now producing schema-specific, repeatable
+evidence instead of a single monolithic benchmark.
 
 | Version | Key Change                                                | Accuracy  |
 | ------- | --------------------------------------------------------- | --------- |
