@@ -146,7 +146,7 @@ async def guardrail_heartbeat(ctx: Context):
 @mcp.tool(annotations=ToolAnnotations(readOnlyHint=True, openWorldHint=True))
 @fail_closed
 async def evaluate_action(
-    request_description: str, context_json: str, group_id: str = None, ctx: Context = None
+    request_description: str, context_json: str, ctx: Context, group_id: str = None
 ):
     """Evaluate a planned action against business rules before executing it.
 
@@ -158,8 +158,7 @@ async def evaluate_action(
         context_json: JSON string with the relevant data (e.g. recipient, amount).
         group_id: Rule group to evaluate against. If omitted, uses the server default.
     """
-    if ctx:
-        await ctx.info(f"evaluate_action called: group_id={group_id}")
+    await ctx.info(f"evaluate_action called: group_id={group_id}")
 
     if len(context_json.encode("utf-8")) > MAX_CONTEXT_JSON_BYTES:
         return _invalid_input(
@@ -181,8 +180,7 @@ async def evaluate_action(
 
     resp = await clients.decision_center.get("/v1/decide", params=params)
     resp.raise_for_status()
-    if ctx:
-        await ctx.debug("evaluate_action success")
+    await ctx.debug("evaluate_action success")
     return resp.json()
 
 
@@ -232,15 +230,14 @@ async def get_rule_group(group_id: str, ctx: Context):
 
 @mcp.tool(annotations=ToolAnnotations(readOnlyHint=True, openWorldHint=True))
 @fail_closed
-async def get_decision_log(log_type: str, request_id: str = None, ctx: Context = None):
+async def get_decision_log(log_type: str, ctx: Context, request_id: str = None):
     """Retrieve decision logs.
 
     Args:
         log_type: 'atomic' (all decisions), 'chains' (all chains), or 'chain' (one chain by request_id).
         request_id: Required when log_type is 'chain'.
     """
-    if ctx:
-        await ctx.info(f"get_decision_log called: log_type={log_type}")
+    await ctx.info(f"get_decision_log called: log_type={log_type}")
 
     if log_type == "atomic":
         url = "/v1/logs/atomic"
@@ -256,8 +253,7 @@ async def get_decision_log(log_type: str, request_id: str = None, ctx: Context =
     clients = _clients(ctx)
     resp = await clients.decision_center.get(url)
     resp.raise_for_status()
-    if ctx:
-        await ctx.debug("get_decision_log success")
+    await ctx.debug("get_decision_log success")
     return resp.json()
 
 
