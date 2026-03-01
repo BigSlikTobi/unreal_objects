@@ -88,9 +88,12 @@ def _validate_rule_payload(parsed: dict) -> dict:
     for index, ec_str in enumerate(parsed.get("edge_cases", [])):
         ec_json = parsed.get("edge_cases_json", [])
         ec_logic = ec_json[index] if index < len(ec_json) else {}
-        if "null" not in ec_str.lower() and "invalid" not in ec_str.lower():
-            filtered_ec_str.append(ec_str)
-            filtered_ec_json.append(ec_logic)
+        if isinstance(ec_str, str):
+            normalized_edge_case = ec_str.lower()
+            if "null" in normalized_edge_case or "invalid" in normalized_edge_case:
+                continue
+        filtered_ec_str.append(ec_str)
+        filtered_ec_json.append(ec_logic)
 
     parsed["edge_cases"] = filtered_ec_str
     parsed["edge_cases_json"] = filtered_ec_json

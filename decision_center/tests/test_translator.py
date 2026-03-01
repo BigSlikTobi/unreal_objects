@@ -1,7 +1,8 @@
-import pytest
 import json
 from unittest.mock import patch, MagicMock
-from decision_center.translator import check_llm_connection, translate_rule
+import pytest
+from pydantic import ValidationError
+from decision_center.translator import _validate_rule_payload, check_llm_connection, translate_rule
 
 @patch("openai.OpenAI")
 def test_test_llm_connection_openai(mock_openai):
@@ -119,6 +120,21 @@ def test_translate_rule_openai_retries_schema_shaped_response(mock_openai):
     assert result["datapoints"] == ["withdrawal_amount"]
     assert result["rule_logic"] == "IF withdrawal_amount > 1000 THEN ASK_FOR_APPROVAL"
     assert mock_client.chat.completions.create.call_count == 2
+
+
+def test_validate_rule_payload_raises_validation_error_for_non_string_edge_cases():
+    with pytest.raises(ValidationError):
+        _validate_rule_payload(
+            {
+                "datapoints": ["withdrawal_amount"],
+                "edge_cases": [None, 7],
+                "edge_cases_json": [{}, {}],
+                "rule_logic": "IF withdrawal_amount > 1000 THEN ASK_FOR_APPROVAL",
+                "rule_logic_json": {
+                    "if": [{">": [{"var": "withdrawal_amount"}, 1000]}, "ASK_FOR_APPROVAL", None]
+                },
+            }
+        )
 
 @patch("anthropic.Anthropic")
 def test_translate_rule_anthropic(mock_anthropic):

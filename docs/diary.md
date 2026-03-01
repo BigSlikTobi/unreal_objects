@@ -543,3 +543,30 @@
   payloads. The solution relies on falling back to the standard `.create` method
   with `response_format={"type": "json_object"}` while manually injecting the
   Pydantic stringified schema directly into the prompt.
+
+## Translator Edge Case Type Guard
+
+**What was built:**
+
+- Hardened `decision_center/translator.py` so `_validate_rule_payload()` only
+  lowercases edge-case entries when they are actual strings.
+- Preserved the existing validation contract for malformed model output:
+  non-string `edge_cases` values now continue through Pydantic validation and
+  raise `ValidationError` instead of crashing early with `AttributeError`.
+- Added a regression test in `decision_center/tests/test_translator.py` that
+  exercises `edge_cases` payloads containing `null` and numeric values.
+
+**How it was validated:**
+
+- Ran `.venv/bin/pytest decision_center/tests/test_translator.py -q` and
+  confirmed the translator test module passed (`9 passed`).
+- Ran `.venv/bin/pytest -q` and confirmed the full Python suite passed
+  (`77 passed`).
+
+**Key Findings:**
+
+- The edge-case filtering logic was doing two jobs at once: removing known
+  unwanted string patterns and implicitly assuming every model-provided value
+  was already typed correctly. That assumption was the real bug.
+- Guarding the string normalization step is sufficient here because it restores
+  the intended failure mode without weakening the schema validation layer.
