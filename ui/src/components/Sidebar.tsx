@@ -1,8 +1,9 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Plus, Settings, ListTodo, Sun, Moon, Check, X, AlertTriangle } from 'lucide-react';
+import type { RuleGroup } from '../types';
 
 interface SidebarProps {
-  groups: any[];
+  groups: RuleGroup[];
   selectedGroupId: string | null;
   onSelectGroup: (id: string) => void;
   onCreateGroup: (name: string, description: string) => Promise<void>;
@@ -10,6 +11,7 @@ interface SidebarProps {
   toggleDarkMode: () => void;
   onOpenSettings: () => void;
   llmConfigured: boolean;
+  className?: string;
 }
 
 export const Sidebar: React.FC<SidebarProps> = ({
@@ -21,6 +23,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   toggleDarkMode,
   onOpenSettings,
   llmConfigured,
+  className = '',
 }) => {
   const [showForm, setShowForm] = useState(false);
   const [name, setName] = useState('');
@@ -54,10 +57,10 @@ export const Sidebar: React.FC<SidebarProps> = ({
   };
 
   return (
-    <div className="w-64 h-full bg-gray-50 dark:bg-gray-900 border-r border-gray-200 dark:border-gray-800 flex flex-col transition-colors duration-200">
+    <div className={`h-full w-full bg-gray-50 dark:bg-gray-900 border-r border-gray-200 dark:border-gray-800 flex flex-col transition-colors duration-200 ${className}`}>
 
       {/* New Group Button or Inline Form */}
-      <div className="p-4 border-b border-gray-200 dark:border-gray-800">
+      <div className="sticky top-0 z-10 p-4 border-b border-gray-200 dark:border-gray-800 bg-gray-50/95 dark:bg-gray-900/95 backdrop-blur">
         {!showForm ? (
           <button
             onClick={() => setShowForm(true)}
@@ -141,7 +144,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
       </div>
 
       {/* Footer */}
-      <div className="p-4 border-t border-gray-200 dark:border-gray-800 space-y-1">
+      <div className="sticky bottom-0 p-4 border-t border-gray-200 dark:border-gray-800 space-y-1 bg-gray-50/95 dark:bg-gray-900/95 backdrop-blur">
         <button
           onClick={onOpenSettings}
           className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-left transition-colors ${

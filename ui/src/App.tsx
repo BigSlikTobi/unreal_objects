@@ -1,12 +1,14 @@
-import React, { useState, useEffect } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Sidebar } from './components/Sidebar';
 import { ChatInterface } from './components/ChatInterface';
+import { RuleLibrary } from './components/RuleLibrary';
 import { TestConsole } from './components/TestConsole';
 import { fetchGroups, createGroup, checkLLMConnection } from './api';
-import { Bot, Settings, X, Save, Plus } from 'lucide-react';
+import { Bot, Settings, X, Save, Plus, PanelLeftOpen, PanelRightOpen } from 'lucide-react';
+import type { DatapointDefinition, LlmConfig, Rule, RuleGroup } from './types';
 
 function App() {
-  const [groups, setGroups] = useState<any[]>([]);
+  const [groups, setGroups] = useState<RuleGroup[]>([]);
   const [selectedGroupId, setSelectedGroupId] = useState<string | null>(null);
   const [isDarkMode, setIsDarkMode] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
@@ -15,7 +17,7 @@ function App() {
   const [provider, setProvider] = useState(() => sessionStorage.getItem('llm_provider') || 'openai');
   const [model, setModel] = useState(() => sessionStorage.getItem('llm_model') || 'gpt-4o');
   const [apiKey, setApiKey] = useState(() => sessionStorage.getItem('llm_api_key') || '');
-  const [llmConfig, setLlmConfig] = useState<any>(() => {
+  const [llmConfig, setLlmConfig] = useState<LlmConfig | null>(() => {
     const key = sessionStorage.getItem('llm_api_key');
     const m = sessionStorage.getItem('llm_model');
     const p = sessionStorage.getItem('llm_provider');
@@ -25,8 +27,15 @@ function App() {
   const [llmError, setLlmError] = useState<string | null>(null);
 
   // Testing Support
-  const [ruleToTest, setRuleToTest] = useState<any>(null);
-  const [testDatapointDefs, setTestDatapointDefs] = useState<any[]>([]);
+  const [ruleToTest, setRuleToTest] = useState<Rule | null>(null);
+  const [testDatapointDefs, setTestDatapointDefs] = useState<DatapointDefinition[]>([]);
+  const [selectedRule, setSelectedRule] = useState<Rule | null>(null);
+  const [selectedRuleToken, setSelectedRuleToken] = useState(0);
+  const [rulePanelRefreshKey, setRulePanelRefreshKey] = useState(0);
+  const [showGroupPanel, setShowGroupPanel] = useState(false);
+  const [showRulePanel, setShowRulePanel] = useState(false);
+  const [systemNotice, setSystemNotice] = useState<string | null>(null);
+  const [systemNoticeToken, setSystemNoticeToken] = useState(0);
 
   useEffect(() => {
     if (isDarkMode) {
@@ -36,11 +45,7 @@ function App() {
     }
   }, [isDarkMode]);
 
-  useEffect(() => {
-    loadGroups();
-  }, []);
-
-  const loadGroups = async () => {
+  const loadGroups = useCallback(async () => {
     try {
       const data = await fetchGroups();
       setGroups(data);
@@ -50,12 +55,50 @@ function App() {
     } catch (err) {
       console.error('Failed to load groups:', err);
     }
-  };
+  }, [selectedGroupId]);
+
+  useEffect(() => {
+    loadGroups();
+  }, [loadGroups]);
+
+  useEffect(() => {
+    setSelectedRule(null);
+    setSelectedRuleToken(0);
+    setShowGroupPanel(false);
+    setShowRulePanel(false);
+  }, [selectedGroupId]);
 
   const handleCreateGroup = async (name: string, description: string) => {
     const g = await createGroup(name, description);
     setGroups((prev) => [...prev, g]);
     setSelectedGroupId(g.id);
+  };
+
+  const handleSelectRuleForBuilder = (rule: Rule) => {
+    setSelectedRule(rule);
+    setSelectedRuleToken(Date.now());
+    setShowRulePanel(false);
+  };
+
+  const handleRuleSaved = (rule: Rule) => {
+    setRulePanelRefreshKey((prev) => prev + 1);
+    setSelectedRule(rule);
+    setSelectedRuleToken(Date.now());
+    loadGroups();
+  };
+
+  const handleRuleUpdated = (rule: Rule) => {
+    setSelectedRule((current) => current?.id === rule.id ? rule : current);
+  };
+
+  const handleRuleStatusChanged = (rule: Rule) => {
+    setSelectedRule((current) => current?.id === rule.id ? rule : current);
+    setSystemNotice(
+      rule.active
+        ? `Rule '${rule.name}' reactivated. It is live in evaluation again.`
+        : `Rule '${rule.name}' deactivated. It remains documented but will be skipped during evaluation.`
+    );
+    setSystemNoticeToken(Date.now());
   };
 
   const handleSaveLlmConfig = async () => {
@@ -68,8 +111,8 @@ function App() {
       sessionStorage.setItem('llm_api_key', apiKey);
       setLlmConfig({ provider, model, api_key: apiKey });
       setShowSettings(false);
-    } catch (err: any) {
-      setLlmError(err.message || 'Connection failed. Please check your API key.');
+    } catch (err: unknown) {
+      setLlmError(err instanceof Error ? err.message : 'Connection failed. Please check your API key.');
     } finally {
       setIsTestingLlm(false);
     }
@@ -77,32 +120,118 @@ function App() {
 
   return (
     <div className="flex h-screen bg-white transition-colors dark:bg-gray-900 overflow-hidden font-sans">
+      <div className="hidden lg:block lg:w-64 lg:flex-shrink-0">
+        <Sidebar
+          groups={groups}
+          selectedGroupId={selectedGroupId}
+          onSelectGroup={setSelectedGroupId}
+          onCreateGroup={handleCreateGroup}
+          isDarkMode={isDarkMode}
+          toggleDarkMode={() => setIsDarkMode(!isDarkMode)}
+          onOpenSettings={() => setShowSettings(true)}
+          llmConfigured={!!llmConfig}
+        />
+      </div>
 
-      <Sidebar
-        groups={groups}
-        selectedGroupId={selectedGroupId}
-        onSelectGroup={setSelectedGroupId}
-        onCreateGroup={handleCreateGroup}
-        isDarkMode={isDarkMode}
-        toggleDarkMode={() => setIsDarkMode(!isDarkMode)}
-        onOpenSettings={() => setShowSettings(true)}
-        llmConfigured={!!llmConfig}
-      />
+      {showGroupPanel && (
+        <div className="fixed inset-0 z-40 bg-black/50 backdrop-blur-sm lg:hidden" onClick={() => setShowGroupPanel(false)}>
+          <div className="panel-enter-left h-full w-80 max-w-[85vw] shadow-2xl" onClick={(e) => e.stopPropagation()}>
+            <Sidebar
+              groups={groups}
+              selectedGroupId={selectedGroupId}
+              onSelectGroup={(id) => {
+                setSelectedGroupId(id);
+                setShowGroupPanel(false);
+              }}
+              onCreateGroup={handleCreateGroup}
+              isDarkMode={isDarkMode}
+              toggleDarkMode={() => setIsDarkMode(!isDarkMode)}
+              onOpenSettings={() => {
+                setShowSettings(true);
+                setShowGroupPanel(false);
+              }}
+              llmConfigured={!!llmConfig}
+            />
+          </div>
+        </div>
+      )}
 
-      <main className="flex-1 flex flex-col min-w-0 bg-white dark:bg-gray-900 transition-colors">
-        {selectedGroupId ? (
-          <ChatInterface
-            key={selectedGroupId}
+      {showRulePanel && selectedGroupId && (
+        <div className="fixed inset-0 z-40 bg-black/50 backdrop-blur-sm lg:hidden" onClick={() => setShowRulePanel(false)}>
+          <div className="panel-enter-right ml-auto h-full w-96 max-w-[92vw] shadow-2xl" onClick={(e) => e.stopPropagation()}>
+            <RuleLibrary
+              groupId={selectedGroupId}
+              selectedRuleId={selectedRule?.id ?? null}
+              onSelectRule={handleSelectRuleForBuilder}
+              onRuleUpdated={handleRuleUpdated}
+              onRuleStatusChanged={handleRuleStatusChanged}
+              refreshKey={rulePanelRefreshKey}
+              className="w-full"
+            />
+          </div>
+        </div>
+      )}
+
+      <main className="flex min-w-0 flex-1 bg-white transition-colors dark:bg-gray-900">
+        <div className="flex min-w-0 flex-1 flex-col">
+          {selectedGroupId && (
+            <div className="border-b border-gray-200 bg-white px-4 py-3 dark:border-gray-800 dark:bg-gray-900 lg:hidden">
+              <div className="flex items-center justify-between gap-2">
+                <button
+                  onClick={() => setShowGroupPanel(true)}
+                  className="inline-flex items-center gap-2 rounded-lg border border-gray-300 px-3 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-100 dark:border-gray-700 dark:text-gray-200 dark:hover:bg-gray-800"
+                  aria-label="Open groups"
+                >
+                  <PanelLeftOpen size={16} />
+                  Groups
+                </button>
+                <div className="min-w-0 flex-1 text-center text-sm font-semibold text-gray-800 dark:text-gray-100">
+                  <span className="truncate">{groups.find((group) => group.id === selectedGroupId)?.name ?? 'Rule Group'}</span>
+                </div>
+                <button
+                  onClick={() => setShowRulePanel(true)}
+                  className="inline-flex items-center gap-2 rounded-lg border border-gray-300 px-3 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-100 dark:border-gray-700 dark:text-gray-200 dark:hover:bg-gray-800"
+                  aria-label="Open rules"
+                >
+                  <PanelRightOpen size={16} />
+                  Rules
+                </button>
+              </div>
+            </div>
+          )}
+
+          <div className="min-h-0 flex-1">
+            {selectedGroupId ? (
+              <ChatInterface
+                key={selectedGroupId}
+                groupId={selectedGroupId}
+                llmConfig={llmConfig}
+                selectedRule={selectedRule}
+                selectedRuleToken={selectedRuleToken}
+                systemNotice={systemNotice}
+                systemNoticeToken={systemNoticeToken}
+                onRuleCreated={handleRuleSaved}
+                onStartTest={(rule, defs) => { setRuleToTest(rule); setTestDatapointDefs(defs); }}
+              />
+            ) : (
+              <EmptyState
+                hasGroups={groups.length > 0}
+                llmConfigured={!!llmConfig}
+                onOpenSettings={() => setShowSettings(true)}
+              />
+            )}
+          </div>
+        </div>
+
+        {selectedGroupId && (
+          <RuleLibrary
             groupId={selectedGroupId}
-            llmConfig={llmConfig}
-            onRuleCreated={() => loadGroups()}
-            onStartTest={(rule, defs) => { setRuleToTest(rule); setTestDatapointDefs(defs); }}
-          />
-        ) : (
-          <EmptyState
-            hasGroups={groups.length > 0}
-            llmConfigured={!!llmConfig}
-            onOpenSettings={() => setShowSettings(true)}
+            selectedRuleId={selectedRule?.id ?? null}
+            onSelectRule={handleSelectRuleForBuilder}
+            onRuleUpdated={handleRuleUpdated}
+            onRuleStatusChanged={handleRuleStatusChanged}
+            refreshKey={rulePanelRefreshKey}
+            className="hidden w-[24rem] flex-shrink-0 lg:flex"
           />
         )}
       </main>

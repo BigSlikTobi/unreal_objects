@@ -1,4 +1,4 @@
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Response
 from fastapi.middleware.cors import CORSMiddleware
 from typing import List
 
@@ -22,11 +22,13 @@ async def create_group(group: CreateRuleGroup):
     return store.create_group(group)
 
 @app.get("/v1/groups", response_model=List[BusinessRuleGroup])
-async def list_groups():
+async def list_groups(response: Response):
+    response.headers["Cache-Control"] = "no-store"
     return store.list_groups()
 
 @app.get("/v1/groups/{group_id}", response_model=BusinessRuleGroup)
-async def get_group(group_id: str):
+async def get_group(group_id: str, response: Response):
+    response.headers["Cache-Control"] = "no-store"
     group = store.get_group(group_id)
     if not group:
         raise HTTPException(status_code=404, detail="Group not found")
@@ -45,7 +47,8 @@ async def add_rule(group_id: str, rule: CreateRule):
     return created
 
 @app.get("/v1/groups/{group_id}/rules/{rule_id}", response_model=BusinessRule)
-async def get_rule(group_id: str, rule_id: str):
+async def get_rule(group_id: str, rule_id: str, response: Response):
+    response.headers["Cache-Control"] = "no-store"
     rule = store.get_rule(group_id, rule_id)
     if not rule:
         raise HTTPException(status_code=404, detail="Rule not found")
@@ -73,4 +76,3 @@ async def update_datapoints(group_id: str, definitions: List[DatapointDefinition
         existing[defn.name] = defn
     group.datapoint_definitions = list(existing.values())
     return group
-

@@ -1,11 +1,11 @@
 import React, { useState } from 'react';
 import { executeTest } from '../api';
 import { FlaskConical, Play, X } from 'lucide-react';
-import type { DatapointDefinition } from './DatapointConfigurator';
+import type { DatapointDefinition, DecisionResult, Rule } from '../types';
 
 interface TestConsoleProps {
   groupId: string;
-  ruleToTest: any;
+  ruleToTest: Rule;
   datapointDefinitions: DatapointDefinition[];
   onClose: () => void;
 }
@@ -13,7 +13,7 @@ interface TestConsoleProps {
 export const TestConsole: React.FC<TestConsoleProps> = ({ groupId, ruleToTest, datapointDefinitions, onClose }) => {
   const [description, setDescription] = useState('');
   const [context, setContext] = useState<Record<string, string>>({});
-  const [result, setResult] = useState<any>(null);
+  const [result, setResult] = useState<DecisionResult | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -26,7 +26,7 @@ export const TestConsole: React.FC<TestConsoleProps> = ({ groupId, ruleToTest, d
     setError(null);
     setResult(null);
 
-    const parsedContext: Record<string, any> = {};
+    const parsedContext: Record<string, string | number | boolean> = {};
     for (const [k, v] of Object.entries(context)) {
       const def = datapointDefinitions.find(d => d.name === k);
       if (def?.type === 'boolean') {
@@ -41,14 +41,15 @@ export const TestConsole: React.FC<TestConsoleProps> = ({ groupId, ruleToTest, d
     try {
       const res = await executeTest(groupId, description, parsedContext);
       setResult(res);
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Test evaluation failed');
     } finally {
       setIsLoading(false);
     }
   };
 
   const datapoints: string[] = ruleToTest?.datapoints || [];
+  const matchedDetails = result?.matched_details ?? [];
 
   const renderInput = (dp: string) => {
     const def = datapointDefinitions.find(d => d.name === dp);
@@ -107,8 +108,8 @@ export const TestConsole: React.FC<TestConsoleProps> = ({ groupId, ruleToTest, d
   };
 
   return (
-    <div className="w-80 h-full bg-white dark:bg-gray-800 border-l border-gray-200 dark:border-gray-700 flex flex-col shadow-xl">
-      <div className="p-4 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center bg-gray-50 dark:bg-gray-900/50">
+    <div className="panel-enter-up fixed inset-x-0 bottom-0 z-50 h-[75vh] w-full rounded-t-2xl border-t border-gray-200 bg-white shadow-2xl dark:border-gray-700 dark:bg-gray-800 md:panel-enter-right md:static md:h-full md:w-80 md:rounded-none md:border-t-0 md:border-l md:shadow-xl flex flex-col">
+      <div className="sticky top-0 z-10 p-4 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center bg-gray-50/95 dark:bg-gray-900/95 backdrop-blur">
         <h3 className="font-semibold text-gray-800 dark:text-gray-200 flex items-center gap-2">
           <FlaskConical size={18} className="text-purple-500" />
           Test Rule Setup
@@ -183,11 +184,11 @@ export const TestConsole: React.FC<TestConsoleProps> = ({ groupId, ruleToTest, d
               <div className="font-bold text-lg">{result.outcome}</div>
             </div>
 
-            {result.matched_details?.length > 0 && (
+            {matchedDetails.length > 0 && (
               <div className="p-3 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
                  <div className="text-xs uppercase opacity-70 font-semibold tracking-wider mb-2 text-gray-500 dark:text-gray-400">Triggered By</div>
                  <div className="space-y-2">
-                   {result.matched_details.map((d: any, i: number) => (
+                   {matchedDetails.map((d, i: number) => (
                       <div key={i} className="text-sm">
                         <span className="font-semibold text-gray-800 dark:text-gray-200">{d.rule_name}</span> ({d.hit_type.toUpperCase()})
                         <div className="text-xs font-mono text-gray-500 dark:text-gray-400 mt-1">{d.trigger_expression}</div>

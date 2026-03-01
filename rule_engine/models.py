@@ -14,6 +14,7 @@ class BusinessRule(BaseModel):
     id: str = Field(default_factory=generate_id)
     name: str
     feature: str
+    active: bool = True
     datapoints: list[str]
     edge_cases: list[str]
     edge_cases_json: list[dict] = Field(default_factory=list)
@@ -31,6 +32,7 @@ class BusinessRuleGroup(BaseModel):
 class CreateRule(BaseModel):
     name: str
     feature: str
+    active: bool = True
     datapoints: list[str]
     edge_cases: list[str]
     edge_cases_json: list[dict] = Field(default_factory=list)
@@ -40,4 +42,3 @@ class CreateRule(BaseModel):
 class CreateRuleGroup(BaseModel):
     name: str
     description: str = ""
-

@@ -75,6 +75,7 @@ def test_prompt_rule_creation(mock_post, mock_input):
     assert kwargs["json"] == {
         "name": "My Rule",
         "feature": "Fraud Check",
+        "active": True,
         "datapoints": ["amount", "user_idx"],
         "edge_cases": [],
         "edge_cases_json": [],
@@ -126,7 +127,16 @@ def test_prompt_llm_setup_no(mock_input):
     config = prompt_llm_setup()
     assert config is None
 
-@patch("builtins.input", side_effect=["My LLM Rule", "Fraud Feature", "if they owe more than 100 then ask them", "A"])
+@patch("builtins.input", side_effect=[
+    "My LLM Rule",
+    "Fraud Feature",
+    "",
+    "amount_owed > 100",
+    "2",
+    "4",
+    "n",
+    "A",
+])
 @patch("decision_center.cli.translate_rule")
 @patch("httpx.Client.post")
 @patch("httpx.Client.get")
@@ -166,21 +176,29 @@ def test_prompt_rule_creation_with_llm(mock_get, mock_post, mock_translate, mock
     rule = prompt_rule_creation("group_123", llm_config=llm_config)
 
     assert rule["id"] == "rule_llm_1"
-    # KEY ASSERTION: datapoint_definitions must be forwarded to the LLM
-    mock_translate.assert_called_once_with(
-        natural_language="if they owe more than 100 then ask them",
-        feature="Fraud Feature",
-        name="My LLM Rule",
-        provider="openai",
-        model="gpt-5.2",
-        api_key="test_key",
-        datapoint_definitions=[{"name": "existing_dp", "type": "text", "values": []}],
+    _, kwargs = mock_translate.call_args
+    assert kwargs["natural_language"] == (
+        "Translate this structured rule into JSON Logic format.\n"
+        "Main rule: IF amount_owed > 100 THEN ASK_FOR_APPROVAL"
     )
+    assert kwargs["feature"] == "Fraud Feature"
+    assert kwargs["name"] == "My LLM Rule"
+    assert kwargs["provider"] == "openai"
+    assert kwargs["model"] == "gpt-5.2"
+    assert kwargs["api_key"] == "test_key"
+    assert kwargs["context_schema"] is None
+    assert kwargs["datapoint_definitions"] == [{"name": "existing_dp", "type": "text", "values": []}]
 
 
 @patch("builtins.input", side_effect=[
-    # prompt_rule_creation: name, feature, natural language, accept
-    "New Rule", "Fraud", "rule with new dp", "A",
+    "New Rule",
+    "Fraud",
+    "",
+    "new_dp > 50",
+    "3",
+    "4",
+    "n",
+    "A",
     # _prompt_datapoint_type for 'new_dp': type = number (2)
     "2",
 ])
@@ -230,6 +248,112 @@ def test_prompt_rule_creation_saves_new_datapoints(mock_get, mock_post, mock_pat
     assert saved_defs[0]["type"] == "number"
 
 
+@patch("builtins.input", side_effect=[
+    "1",
+    "E",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "n",
+    "n",
+    "A",
+])
+@patch("decision_center.cli.translate_rule")
+@patch("httpx.Client.put")
+@patch("httpx.Client.get")
+def test_prompt_rule_creation_existing_rule_keeps_current_logic_by_default(mock_get, mock_put, mock_translate, mock_input):
+    llm_config = {"provider": "openai", "model": "gpt-5.2", "api_key": "test_key"}
+    existing_rule = {
+        "id": "rule_1",
+        "name": "Existing Rule",
+        "feature": "Fraud",
+        "active": True,
+        "datapoints": ["transaction_amount", "currency"],
+        "edge_cases": ["IF currency != EUR THEN REJECT"],
+        "edge_cases_json": [{"if": [{"!=": [{"var": "currency"}, "EUR"]}, "REJECT", None]}],
+        "rule_logic": "IF transaction_amount > 500 THEN ASK_FOR_APPROVAL ELSE APPROVE",
+        "rule_logic_json": {"if": [{">": [{"var": "transaction_amount"}, 500]}, "ASK_FOR_APPROVAL", "APPROVE"]},
+    }
+
+    mock_get_resp = MagicMock()
+    mock_get_resp.status_code = 200
+    mock_get_resp.json.return_value = {
+        "rules": [existing_rule],
+        "datapoint_definitions": [
+            {"name": "transaction_amount", "type": "number", "values": []},
+            {"name": "currency", "type": "enum", "values": ["EUR"]},
+        ],
+    }
+    mock_get.return_value = mock_get_resp
+
+    mock_translate.return_value = {
+        "datapoints": ["transaction_amount", "currency"],
+        "edge_cases": existing_rule["edge_cases"],
+        "edge_cases_json": existing_rule["edge_cases_json"],
+        "rule_logic": existing_rule["rule_logic"],
+        "rule_logic_json": existing_rule["rule_logic_json"],
+    }
+
+    mock_put_resp = MagicMock()
+    mock_put_resp.status_code = 200
+    mock_put_resp.json.return_value = existing_rule
+    mock_put.return_value = mock_put_resp
+
+    rule = prompt_rule_creation("group_123", llm_config=llm_config)
+
+    assert rule["id"] == "rule_1"
+    _, kwargs = mock_translate.call_args
+    assert kwargs["natural_language"] == (
+        "Translate this structured rule into JSON Logic format.\n"
+        "Main rule: IF transaction_amount > 500 THEN ASK_FOR_APPROVAL ELSE APPROVE\n"
+        "Edge cases (each a separate entry in edge_cases):\n"
+        "- IF currency != EUR THEN REJECT"
+    )
+    put_args, put_kwargs = mock_put.call_args
+    assert "rule_1" in put_args[0]
+    assert put_kwargs["json"]["active"] is True
+
+
+@patch("builtins.input", side_effect=["1", "D"])
+@patch("httpx.Client.put")
+@patch("httpx.Client.get")
+def test_prompt_rule_creation_existing_rule_can_deactivate(mock_get, mock_put, mock_input):
+    existing_rule = {
+        "id": "rule_1",
+        "name": "Existing Rule",
+        "feature": "Fraud",
+        "active": True,
+        "datapoints": ["transaction_amount"],
+        "edge_cases": [],
+        "edge_cases_json": [],
+        "rule_logic": "IF transaction_amount > 500 THEN ASK_FOR_APPROVAL",
+        "rule_logic_json": {"if": [{">": [{"var": "transaction_amount"}, 500]}, "ASK_FOR_APPROVAL", None]},
+    }
+
+    mock_get_resp = MagicMock()
+    mock_get_resp.status_code = 200
+    mock_get_resp.json.return_value = {
+        "rules": [existing_rule],
+        "datapoint_definitions": [],
+    }
+    mock_get.return_value = mock_get_resp
+
+    mock_put_resp = MagicMock()
+    mock_put_resp.status_code = 200
+    mock_put_resp.json.return_value = {**existing_rule, "active": False}
+    mock_put.return_value = mock_put_resp
+
+    rule = prompt_rule_creation("group_123", llm_config={"provider": "openai", "model": "gpt-5.2", "api_key": "test_key"})
+
+    assert rule["active"] is False
+    _, put_kwargs = mock_put.call_args
+    assert put_kwargs["json"]["name"] == "Existing Rule"
+    assert put_kwargs["json"]["active"] is False
+
+
 @patch("builtins.input", side_effect=["EUR", "Test purchase"])
 @patch("httpx.Client.get")
 def test_prompt_auto_test_enum_aware(mock_get, mock_input):
@@ -260,4 +384,3 @@ def test_prompt_auto_test_enum_aware(mock_get, mock_input):
     context = _json.loads(parsed["context"][0])
     assert context["currency"] == "EUR"
     assert isinstance(context["currency"], str)
-

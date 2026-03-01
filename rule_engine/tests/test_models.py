@@ -15,6 +15,7 @@ def test_business_rule_validation():
         created_at=datetime.now()
     )
     assert rule.id == "rule-1"
+    assert rule.active is True
 
     # Test missing fields
     with pytest.raises(ValidationError):
@@ -39,3 +40,14 @@ def test_business_rule_group_validation():
     )
     assert group.id == "group-1"
     assert len(group.rules) == 1
+
+
+def test_create_rule_defaults_to_active():
+    rule = CreateRule(
+        name="Draft Rule",
+        feature="Fraud",
+        datapoints=["amount"],
+        edge_cases=[],
+        rule_logic="IF amount > 10 THEN ASK_FOR_APPROVAL",
+    )
+    assert rule.active is True

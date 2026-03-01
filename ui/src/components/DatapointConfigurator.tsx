@@ -1,15 +1,10 @@
 import React, { useState } from 'react';
 import { Save, X, CheckCircle2 } from 'lucide-react';
-
-export interface DatapointDefinition {
-  name: string;
-  type: string; // "text" | "number" | "boolean" | "enum"
-  values: string[];
-}
+import type { DatapointDefinition, DatapointType } from '../types';
 
 interface DatapointRow {
   name: string;
-  type: string;
+  type: '' | DatapointType;
   enumInput: string;
   values: string[];
 }
@@ -46,7 +41,7 @@ export const DatapointConfigurator: React.FC<DatapointConfiguratorProps> = ({ ne
   const canSave = rows.every((r) => r.type !== '' && (r.type !== 'enum' || r.values.length > 0));
 
   const handleSave = () => {
-    onSave(rows.map(({ name, type, values }) => ({ name, type, values })));
+    onSave(rows.map(({ name, type, values }) => ({ name, type: type as DatapointType, values })));
     setSaved(true);
   };
 
@@ -70,7 +65,7 @@ export const DatapointConfigurator: React.FC<DatapointConfiguratorProps> = ({ ne
               </span>
               <select
                 value={row.type}
-                onChange={(e) => updateRow(i, { type: e.target.value, values: [], enumInput: '' })}
+                onChange={(e) => updateRow(i, { type: e.target.value as DatapointRow['type'], values: [], enumInput: '' })}
                 className="flex-1 text-sm bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg px-2 py-1.5 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none"
               >
                 <option value="">Select type…</option>
