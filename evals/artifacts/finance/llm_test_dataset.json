@@ -1,0 +1,5036 @@
+[
+  {
+    "natural_language_rule": "If withdrawal_amount <= account_balance AND withdrawal_amount <= daily_withdrawal_limit then APPROVE",
+    "context_data": {
+      "withdrawal_amount": 200,
+      "account_balance": 1000,
+      "daily_withdrawal_limit": 500
+    },
+    "expected_outcome": "APPROVE"
+  },
+  {
+    "natural_language_rule": "If withdrawal_amount > account_balance then REJECT",
+    "context_data": {
+      "withdrawal_amount": 1200,
+      "account_balance": 1000
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "If withdrawal_amount > daily_withdrawal_limit AND is_corporate_account == false then REJECT",
+    "context_data": {
+      "withdrawal_amount": 1500,
+      "daily_withdrawal_limit": 1000,
+      "is_corporate_account": false
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "If is_corporate_account == true AND withdrawal_amount <= (daily_withdrawal_limit * 2) AND withdrawal_amount <= account_balance then APPROVE",
+    "context_data": {
+      "withdrawal_amount": 1800,
+      "daily_withdrawal_limit": 1000,
+      "account_balance": 5000,
+      "is_corporate_account": true
+    },
+    "expected_outcome": "APPROVE"
+  },
+  {
+    "natural_language_rule": "If kyc_verified == false AND withdrawal_amount > 1000 then ASK_FOR_APPROVAL",
+    "context_data": {
+      "withdrawal_amount": 1500,
+      "kyc_verified": false
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "If aml_risk_score >= 80 AND beneficiary_country == \"IR\" then REJECT",
+    "context_data": {
+      "aml_risk_score": 85,
+      "beneficiary_country": "IR"
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "If transaction_time_hour >= 0 AND transaction_time_hour <= 5 AND device_trust_score < 50 AND failed_login_attempts > 0 then ASK_FOR_APPROVAL",
+    "context_data": {
+      "transaction_time_hour": 3,
+      "device_trust_score": 40,
+      "failed_login_attempts": 1
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "If loan_amount_requested > 50000 AND user_credit_score < 600 then REJECT",
+    "context_data": {
+      "loan_amount_requested": 60000,
+      "user_credit_score": 580
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "If failed_login_attempts >= 5 AND device_trust_score < 30 then REJECT",
+    "context_data": {
+      "failed_login_attempts": 5,
+      "device_trust_score": 20
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "If kyc_verified == true AND aml_risk_score < 50 AND withdrawal_amount <= daily_withdrawal_limit then APPROVE",
+    "context_data": {
+      "kyc_verified": true,
+      "aml_risk_score": 30,
+      "withdrawal_amount": 400,
+      "daily_withdrawal_limit": 1000
+    },
+    "expected_outcome": "APPROVE"
+  },
+  {
+    "natural_language_rule": "If beneficiary_country != \"US\" AND aml_risk_score >= 70 THEN ASK_FOR_APPROVAL",
+    "context_data": {
+      "beneficiary_country": "RU",
+      "aml_risk_score": 72
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "Edge case: If withdrawal_amount == 0 then REJECT (no-zero-withdrawal policy)",
+    "context_data": {
+      "withdrawal_amount": 0
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "If user_credit_score >= 750 AND loan_amount_requested <= 50000 AND aml_risk_score < 40 then APPROVE",
+    "context_data": {
+      "user_credit_score": 780,
+      "loan_amount_requested": 40000,
+      "aml_risk_score": 30
+    },
+    "expected_outcome": "APPROVE"
+  },
+  {
+    "natural_language_rule": "If transaction_time_hour == 23 AND device_trust_score < 20 AND failed_login_attempts > 2 then REJECT",
+    "context_data": {
+      "transaction_time_hour": 23,
+      "device_trust_score": 10,
+      "failed_login_attempts": 3
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "If is_corporate_account == false AND withdrawal_amount > (daily_withdrawal_limit / 2) AND aml_risk_score >= 60 then ASK_FOR_APPROVAL",
+    "context_data": {
+      "is_corporate_account": false,
+      "withdrawal_amount": 600,
+      "daily_withdrawal_limit": 1000,
+      "aml_risk_score": 60
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "If loan_amount_requested <= 10000 AND user_credit_score >= 650 then APPROVE",
+    "context_data": {
+      "loan_amount_requested": 8000,
+      "user_credit_score": 700
+    },
+    "expected_outcome": "APPROVE"
+  },
+  {
+    "natural_language_rule": "If aml_risk_score > 90 OR (beneficiary_country == \"KP\" AND aml_risk_score >= 70) then REJECT",
+    "context_data": {
+      "aml_risk_score": 75,
+      "beneficiary_country": "KP"
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "If failed_login_attempts == 0 AND device_trust_score >= 80 AND withdrawal_amount <= account_balance then APPROVE",
+    "context_data": {
+      "failed_login_attempts": 0,
+      "device_trust_score": 90,
+      "withdrawal_amount": 300,
+      "account_balance": 1000
+    },
+    "expected_outcome": "APPROVE"
+  },
+  {
+    "natural_language_rule": "If kyc_verified == false AND aml_risk_score >= 50 then REJECT",
+    "context_data": {
+      "kyc_verified": false,
+      "aml_risk_score": 55
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "If withdrawal_amount > 10000 AND user_credit_score < 500 then REJECT",
+    "context_data": {
+      "withdrawal_amount": 15000,
+      "user_credit_score": 480
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "If is_corporate_account == true AND beneficiary_country == \"US\" AND aml_risk_score < 60 then APPROVE",
+    "context_data": {
+      "is_corporate_account": true,
+      "beneficiary_country": "US",
+      "aml_risk_score": 45
+    },
+    "expected_outcome": "APPROVE"
+  },
+  {
+    "natural_language_rule": "If transaction_time_hour < 6 AND withdrawal_amount >= 5000 then ASK_FOR_APPROVAL",
+    "context_data": {
+      "transaction_time_hour": 5,
+      "withdrawal_amount": 5000
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "If account_balance - withdrawal_amount < 0 then REJECT",
+    "context_data": {
+      "account_balance": 100,
+      "withdrawal_amount": 150
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "If (daily_withdrawal_limit - withdrawal_amount) < 0 AND is_corporate_account == false then REJECT",
+    "context_data": {
+      "daily_withdrawal_limit": 1000,
+      "withdrawal_amount": 1200,
+      "is_corporate_account": false
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "If aml_risk_score between 40 and 60 inclusive AND kyc_verified == true then ASK_FOR_APPROVAL",
+    "context_data": {
+      "aml_risk_score": 50,
+      "kyc_verified": true
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "If device_trust_score == 100 AND failed_login_attempts == 0 AND withdrawal_amount <= account_balance then APPROVE",
+    "context_data": {
+      "device_trust_score": 100,
+      "failed_login_attempts": 0,
+      "withdrawal_amount": 50,
+      "account_balance": 1000
+    },
+    "expected_outcome": "APPROVE"
+  },
+  {
+    "natural_language_rule": "If beneficiary_country == \"GB\" AND aml_risk_score < 30 AND withdrawal_amount <= daily_withdrawal_limit then APPROVE",
+    "context_data": {
+      "beneficiary_country": "GB",
+      "aml_risk_score": 20,
+      "withdrawal_amount": 400,
+      "daily_withdrawal_limit": 1000
+    },
+    "expected_outcome": "APPROVE"
+  },
+  {
+    "natural_language_rule": "If user_credit_score < 300 then REJECT (credit floor)",
+    "context_data": {
+      "user_credit_score": 299
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "If loan_amount_requested > (user_credit_score * 200) then REJECT",
+    "context_data": {
+      "loan_amount_requested": 120000,
+      "user_credit_score": 500
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "Edge case: If transaction_time_hour == 0 AND device_trust_score < 1 then REJECT",
+    "context_data": {
+      "transaction_time_hour": 0,
+      "device_trust_score": 0
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "If aml_risk_score <= 20 AND kyc_verified == true AND withdrawal_amount <= account_balance then APPROVE",
+    "context_data": {
+      "aml_risk_score": 15,
+      "kyc_verified": true,
+      "withdrawal_amount": 100,
+      "account_balance": 500
+    },
+    "expected_outcome": "APPROVE"
+  },
+  {
+    "natural_language_rule": "If failed_login_attempts > 3 AND (device_trust_score < 40 OR aml_risk_score > 70) then REJECT",
+    "context_data": {
+      "failed_login_attempts": 4,
+      "device_trust_score": 35,
+      "aml_risk_score": 50
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "If is_corporate_account == false AND beneficiary_country == \"US\" AND aml_risk_score < 50 then APPROVE",
+    "context_data": {
+      "is_corporate_account": false,
+      "beneficiary_country": "US",
+      "aml_risk_score": 45
+    },
+    "expected_outcome": "APPROVE"
+  },
+  {
+    "natural_language_rule": "If kyc_verified == true AND failed_login_attempts == 0 AND device_trust_score >= 60 then APPROVE",
+    "context_data": {
+      "kyc_verified": true,
+      "failed_login_attempts": 0,
+      "device_trust_score": 75
+    },
+    "expected_outcome": "APPROVE"
+  },
+  {
+    "natural_language_rule": "If beneficiary_country in high_risk list (\"SY\",\"IR\",\"KP\") AND aml_risk_score >= 50 then REJECT",
+    "context_data": {
+      "beneficiary_country": "SY",
+      "aml_risk_score": 55
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "If withdrawal_amount > 0 AND withdrawal_amount < 1 then REJECT (fractional-cents edge)",
+    "context_data": {
+      "withdrawal_amount": 0.5
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "If user_credit_score >= 680 AND aml_risk_score <= 45 AND loan_amount_requested <= 3 * user_credit_score * 100 then APPROVE",
+    "context_data": {
+      "user_credit_score": 700,
+      "aml_risk_score": 40,
+      "loan_amount_requested": 200000
+    },
+    "expected_outcome": "APPROVE"
+  },
+  {
+    "natural_language_rule": "If transaction_time_hour >= 22 AND transaction_time_hour <= 23 AND failed_login_attempts > 1 then ASK_FOR_APPROVAL",
+    "context_data": {
+      "transaction_time_hour": 22,
+      "failed_login_attempts": 2
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "If account_balance >= withdrawal_amount AND aml_risk_score < 60 AND failed_login_attempts == 0 then APPROVE",
+    "context_data": {
+      "account_balance": 2000,
+      "withdrawal_amount": 1500,
+      "aml_risk_score": 55,
+      "failed_login_attempts": 0
+    },
+    "expected_outcome": "APPROVE"
+  },
+  {
+    "natural_language_rule": "If is_corporate_account == true AND aml_risk_score >= 85 then REJECT",
+    "context_data": {
+      "is_corporate_account": true,
+      "aml_risk_score": 90
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "If aml_risk_score == 0 AND beneficiary_country == \"US\" AND kyc_verified == true then APPROVE",
+    "context_data": {
+      "aml_risk_score": 0,
+      "beneficiary_country": "US",
+      "kyc_verified": true
+    },
+    "expected_outcome": "APPROVE"
+  },
+  {
+    "natural_language_rule": "If failed_login_attempts >= 10 then REJECT (lockout threshold)",
+    "context_data": {
+      "failed_login_attempts": 10
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "If withdrawal_amount <= daily_withdrawal_limit AND aml_risk_score <= 65 AND device_trust_score >= 50 then APPROVE",
+    "context_data": {
+      "withdrawal_amount": 700,
+      "daily_withdrawal_limit": 1000,
+      "aml_risk_score": 60,
+      "device_trust_score": 55
+    },
+    "expected_outcome": "APPROVE"
+  },
+  {
+    "natural_language_rule": "If loan_amount_requested > 0 AND user_credit_score >= 720 AND aml_risk_score < 55 then APPROVE",
+    "context_data": {
+      "loan_amount_requested": 25000,
+      "user_credit_score": 730,
+      "aml_risk_score": 50
+    },
+    "expected_outcome": "APPROVE"
+  },
+  {
+    "natural_language_rule": "If beneficiary_country == \"CN\" AND aml_risk_score >= 65 then ASK_FOR_APPROVAL",
+    "context_data": {
+      "beneficiary_country": "CN",
+      "aml_risk_score": 70
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "Edge disguised rule: If device_trust_score is missing or null treat as 0 and if failed_login_attempts > 2 then REJECT (simulate missing-device-trust)",
+    "context_data": {
+      "failed_login_attempts": 3
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "If withdrawal_amount >= account_balance AND kyc_verified == false then REJECT",
+    "context_data": {
+      "withdrawal_amount": 1000,
+      "account_balance": 1000,
+      "kyc_verified": false
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "If aml_risk_score >= 75 AND (beneficiary_country == \"US\" OR beneficiary_country == \"GB\") then ASK_FOR_APPROVAL",
+    "context_data": {
+      "aml_risk_score": 78,
+      "beneficiary_country": "GB"
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "If (daily_withdrawal_limit == 0) then REJECT (no withdrawals allowed today)",
+    "context_data": {
+      "daily_withdrawal_limit": 0,
+      "withdrawal_amount": 10
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "If user_credit_score between 600 and 699 inclusive AND aml_risk_score <= 50 AND loan_amount_requested <= 20000 then ASK_FOR_APPROVAL",
+    "context_data": {
+      "user_credit_score": 650,
+      "aml_risk_score": 50,
+      "loan_amount_requested": 15000
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "If is_corporate_account == false AND withdrawal_amount > account_balance * 0.9 then ASK_FOR_APPROVAL (near-overdraft check)",
+    "context_data": {
+      "is_corporate_account": false,
+      "withdrawal_amount": 900,
+      "account_balance": 1000
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "If aml_risk_score < 10 AND device_trust_score > 90 AND failed_login_attempts == 0 then APPROVE (trusted user)",
+    "context_data": {
+      "aml_risk_score": 5,
+      "device_trust_score": 95,
+      "failed_login_attempts": 0
+    },
+    "expected_outcome": "APPROVE"
+  },
+  {
+    "natural_language_rule": "Approve if withdrawal_amount <= account_balance and withdrawal_amount <= daily_withdrawal_limit and kyc_verified is true",
+    "context_data": {
+      "withdrawal_amount": 200,
+      "account_balance": 1000,
+      "daily_withdrawal_limit": 500,
+      "kyc_verified": true
+    },
+    "expected_outcome": "APPROVE"
+  },
+  {
+    "natural_language_rule": "Reject if withdrawal_amount > account_balance",
+    "context_data": {
+      "withdrawal_amount": 1500,
+      "account_balance": 1000
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "Ask for approval if withdrawal_amount > daily_withdrawal_limit and is_corporate_account is true",
+    "context_data": {
+      "withdrawal_amount": 1500,
+      "daily_withdrawal_limit": 1000,
+      "is_corporate_account": true
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "Reject if kyc_verified is false and withdrawal_amount > 1000",
+    "context_data": {
+      "kyc_verified": false,
+      "withdrawal_amount": 1500
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "Ask for approval if transaction_time_hour >= 0 and transaction_time_hour <= 5 and withdrawal_amount > 500",
+    "context_data": {
+      "transaction_time_hour": 2,
+      "withdrawal_amount": 600
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "Reject if beneficiary_country == 'IR' or beneficiary_country == 'KP' or beneficiary_country == 'SY' and aml_risk_score > 60",
+    "context_data": {
+      "beneficiary_country": "IR",
+      "aml_risk_score": 70
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "Ask for approval if aml_risk_score >= 40 and aml_risk_score <= 60",
+    "context_data": {
+      "aml_risk_score": 50
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "Approve if loan_amount_requested > 0 and user_credit_score >= 700 and aml_risk_score < 50",
+    "context_data": {
+      "loan_amount_requested": 20000,
+      "user_credit_score": 730,
+      "aml_risk_score": 30
+    },
+    "expected_outcome": "APPROVE"
+  },
+  {
+    "natural_language_rule": "Reject if loan_amount_requested > 0 and user_credit_score < 600",
+    "context_data": {
+      "loan_amount_requested": 10000,
+      "user_credit_score": 580
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "Ask for approval if loan_amount_requested > 50000 and user_credit_score < 700",
+    "context_data": {
+      "loan_amount_requested": 75000,
+      "user_credit_score": 680
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "Reject if failed_login_attempts >= 5 and device_trust_score < 30",
+    "context_data": {
+      "failed_login_attempts": 5,
+      "device_trust_score": 20
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "Ask for approval if failed_login_attempts >= 3 and device_trust_score < 50",
+    "context_data": {
+      "failed_login_attempts": 3,
+      "device_trust_score": 45
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "Approve if is_corporate_account is true and withdrawal_amount <= daily_withdrawal_limit * 2 and withdrawal_amount <= account_balance",
+    "context_data": {
+      "is_corporate_account": true,
+      "withdrawal_amount": 1800,
+      "daily_withdrawal_limit": 1000,
+      "account_balance": 5000
+    },
+    "expected_outcome": "APPROVE"
+  },
+  {
+    "natural_language_rule": "Reject if is_corporate_account is true and kyc_verified is false",
+    "context_data": {
+      "is_corporate_account": true,
+      "kyc_verified": false
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "Approve if withdrawal_amount == 0",
+    "context_data": {
+      "withdrawal_amount": 0
+    },
+    "expected_outcome": "APPROVE"
+  },
+  {
+    "natural_language_rule": "Reject if withdrawal_amount < 0",
+    "context_data": {
+      "withdrawal_amount": -50
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "Ask for approval if transaction_time_hour == 0 and withdrawal_amount > 1000",
+    "context_data": {
+      "transaction_time_hour": 0,
+      "withdrawal_amount": 2000
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "Reject if withdrawal_amount == account_balance and kyc_verified is false",
+    "context_data": {
+      "withdrawal_amount": 1000,
+      "account_balance": 1000,
+      "kyc_verified": false
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "Approve if aml_risk_score == 0 and beneficiary_country == 'US'",
+    "context_data": {
+      "aml_risk_score": 0,
+      "beneficiary_country": "US"
+    },
+    "expected_outcome": "APPROVE"
+  },
+  {
+    "natural_language_rule": "Approve if device_trust_score >= 90 and failed_login_attempts == 0",
+    "context_data": {
+      "device_trust_score": 95,
+      "failed_login_attempts": 0
+    },
+    "expected_outcome": "APPROVE"
+  },
+  {
+    "natural_language_rule": "Reject if withdrawal_amount > 10000 and user_credit_score < 650",
+    "context_data": {
+      "withdrawal_amount": 15000,
+      "user_credit_score": 640
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "Approve if loan_amount_requested <= account_balance * 2 and user_credit_score >= 650",
+    "context_data": {
+      "loan_amount_requested": 40000,
+      "account_balance": 25000,
+      "user_credit_score": 660
+    },
+    "expected_outcome": "APPROVE"
+  },
+  {
+    "natural_language_rule": "Ask for approval if loan_amount_requested > account_balance * 5",
+    "context_data": {
+      "loan_amount_requested": 600000,
+      "account_balance": 100000
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "Reject if beneficiary_country == 'KP' or beneficiary_country == 'IR'",
+    "context_data": {
+      "beneficiary_country": "KP"
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "Reject if aml_risk_score > 85 and loan_amount_requested > 100000",
+    "context_data": {
+      "aml_risk_score": 90,
+      "loan_amount_requested": 150000
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "Ask for approval if transaction_time_hour >= 22 and transaction_time_hour <= 23 and failed_login_attempts > 0",
+    "context_data": {
+      "transaction_time_hour": 22,
+      "failed_login_attempts": 1
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "Ask for approval if withdrawal_amount > daily_withdrawal_limit and account_balance >= withdrawal_amount and kyc_verified is true and device_trust_score >= 70",
+    "context_data": {
+      "withdrawal_amount": 1200,
+      "daily_withdrawal_limit": 1000,
+      "account_balance": 5000,
+      "kyc_verified": true,
+      "device_trust_score": 75
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "Ask for approval if is_corporate_account is true and aml_risk_score > 70",
+    "context_data": {
+      "is_corporate_account": true,
+      "aml_risk_score": 75
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "Reject if is_corporate_account is true and aml_risk_score > 90",
+    "context_data": {
+      "is_corporate_account": true,
+      "aml_risk_score": 95
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "Approve if device_trust_score >= 50 and failed_login_attempts <= 2",
+    "context_data": {
+      "device_trust_score": 50,
+      "failed_login_attempts": 2
+    },
+    "expected_outcome": "APPROVE"
+  },
+  {
+    "natural_language_rule": "Approve if aml_risk_score < 40; ask for approval if aml_risk_score >= 40",
+    "context_data": {
+      "aml_risk_score": 35
+    },
+    "expected_outcome": "APPROVE"
+  },
+  {
+    "natural_language_rule": "Reject if transaction_time_hour < 0 or transaction_time_hour > 23",
+    "context_data": {
+      "transaction_time_hour": 24
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "Ask for approval if withdrawal_amount == daily_withdrawal_limit and kyc_verified is false",
+    "context_data": {
+      "withdrawal_amount": 1000,
+      "daily_withdrawal_limit": 1000,
+      "kyc_verified": false
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "Approve if withdrawal_amount < 10 regardless of kyc_verified",
+    "context_data": {
+      "withdrawal_amount": 5,
+      "kyc_verified": false
+    },
+    "expected_outcome": "APPROVE"
+  },
+  {
+    "natural_language_rule": "Reject if loan_amount_requested == 0",
+    "context_data": {
+      "loan_amount_requested": 0
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "Reject if account_balance >= 0 and beneficiary_country == 'IR' and withdrawal_amount > 0",
+    "context_data": {
+      "account_balance": 1000,
+      "beneficiary_country": "IR",
+      "withdrawal_amount": 100
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "Approve if withdrawal_amount <= account_balance and aml_risk_score < 30 and device_trust_score > 60",
+    "context_data": {
+      "withdrawal_amount": 400,
+      "account_balance": 1000,
+      "aml_risk_score": 25,
+      "device_trust_score": 70
+    },
+    "expected_outcome": "APPROVE"
+  },
+  {
+    "natural_language_rule": "Reject if failed_login_attempts > 3 and device_trust_score < 20",
+    "context_data": {
+      "failed_login_attempts": 4,
+      "device_trust_score": 10
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "Approve if user_credit_score > 800 and loan_amount_requested < 50000",
+    "context_data": {
+      "user_credit_score": 820,
+      "loan_amount_requested": 30000
+    },
+    "expected_outcome": "APPROVE"
+  },
+  {
+    "natural_language_rule": "Ask for approval if user_credit_score >= 650 and user_credit_score <= 700 and loan_amount_requested > 100000",
+    "context_data": {
+      "user_credit_score": 670,
+      "loan_amount_requested": 150000
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "Ask for approval if withdrawal_amount > account_balance * 0.9 and kyc_verified is false",
+    "context_data": {
+      "withdrawal_amount": 950,
+      "account_balance": 1000,
+      "kyc_verified": false
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "Approve if aml_risk_score >= 20 and aml_risk_score <= 40 and (beneficiary_country == 'DE' or beneficiary_country == 'FR' or beneficiary_country == 'GB')",
+    "context_data": {
+      "aml_risk_score": 30,
+      "beneficiary_country": "DE"
+    },
+    "expected_outcome": "APPROVE"
+  },
+  {
+    "natural_language_rule": "Reject if beneficiary_country == ''",
+    "context_data": {
+      "beneficiary_country": ""
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "Approve if kyc_verified is true and failed_login_attempts == 0 and device_trust_score >= 80",
+    "context_data": {
+      "kyc_verified": true,
+      "failed_login_attempts": 0,
+      "device_trust_score": 80
+    },
+    "expected_outcome": "APPROVE"
+  },
+  {
+    "natural_language_rule": "Ask for approval if withdrawal_amount > 100000",
+    "context_data": {
+      "withdrawal_amount": 150000
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "Reject if withdrawal_amount > 50000 and is_corporate_account is false",
+    "context_data": {
+      "withdrawal_amount": 60000,
+      "is_corporate_account": false
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "Ask for approval if loan_amount_requested > 0 and aml_risk_score > 75",
+    "context_data": {
+      "loan_amount_requested": 50000,
+      "aml_risk_score": 80
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "Reject if loan_amount_requested > 100000 and user_credit_score < 600",
+    "context_data": {
+      "loan_amount_requested": 200000,
+      "user_credit_score": 580
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "Ask for approval if transaction_time_hour == 23 and aml_risk_score > 70",
+    "context_data": {
+      "transaction_time_hour": 23,
+      "aml_risk_score": 75
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "Reject if withdrawal_amount < 1 and withdrawal_amount >= 0",
+    "context_data": {
+      "withdrawal_amount": 0.5
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "Approve the withdrawal if withdrawal_amount is less than or equal to account_balance and withdrawal_amount is less than or equal to daily_withdrawal_limit.",
+    "context_data": {
+      "withdrawal_amount": 200.0,
+      "account_balance": 1000.0,
+      "daily_withdrawal_limit": 500.0
+    },
+    "expected_outcome": "APPROVE"
+  },
+  {
+    "natural_language_rule": "Reject the withdrawal if withdrawal_amount is greater than account_balance.",
+    "context_data": {
+      "withdrawal_amount": 1500.0,
+      "account_balance": 1200.0
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "If withdrawal_amount is greater than daily_withdrawal_limit and is_corporate_account is false then reject the transaction.",
+    "context_data": {
+      "withdrawal_amount": 2000.0,
+      "daily_withdrawal_limit": 1000.0,
+      "is_corporate_account": false
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "If withdrawal_amount is greater than daily_withdrawal_limit and is_corporate_account is true then ask for approval.",
+    "context_data": {
+      "withdrawal_amount": 15000.0,
+      "daily_withdrawal_limit": 10000.0,
+      "is_corporate_account": true
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "Reject the transaction if kyc_verified is false and withdrawal_amount is greater than 1000.",
+    "context_data": {
+      "withdrawal_amount": 2500.0,
+      "kyc_verified": false
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "Reject the transaction if transaction_time_hour is between 0 and 5 inclusive and aml_risk_score is greater than 70.",
+    "context_data": {
+      "transaction_time_hour": 3,
+      "aml_risk_score": 75
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "Reject the transaction if beneficiary_country is IR or KP or SY and aml_risk_score is greater than 50.",
+    "context_data": {
+      "beneficiary_country": "IR",
+      "aml_risk_score": 65
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "Reject the loan if loan_amount_requested is greater than account_balance times 5 and user_credit_score is less than 600.",
+    "context_data": {
+      "loan_amount_requested": 60000.0,
+      "account_balance": 10000.0,
+      "user_credit_score": 580
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "Approve the loan if loan_amount_requested is less than or equal to account_balance times 2 and user_credit_score is greater than or equal to 700 and kyc_verified is true.",
+    "context_data": {
+      "loan_amount_requested": 15000.0,
+      "account_balance": 10000.0,
+      "user_credit_score": 720,
+      "kyc_verified": true
+    },
+    "expected_outcome": "APPROVE"
+  },
+  {
+    "natural_language_rule": "Reject the account access if failed_login_attempts is greater than or equal to 5 and device_trust_score is less than 40.",
+    "context_data": {
+      "failed_login_attempts": 6,
+      "device_trust_score": 30
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "Ask for approval if failed_login_attempts is between 3 and 4 inclusive.",
+    "context_data": {
+      "failed_login_attempts": 3
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "Reject the transaction if aml_risk_score is greater than 90 regardless of other factors.",
+    "context_data": {
+      "aml_risk_score": 95
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "Ask for approval if aml_risk_score is between 60 and 90 inclusive and beneficiary_country is in the high risk list (IR, KP, SY).",
+    "context_data": {
+      "aml_risk_score": 75,
+      "beneficiary_country": "KP"
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "Ask for approval if withdrawal_amount equals account_balance and kyc_verified is true (all-in withdrawal requires review).",
+    "context_data": {
+      "withdrawal_amount": 1000.0,
+      "account_balance": 1000.0,
+      "kyc_verified": true
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "Reject the withdrawal if withdrawal_amount is equal to 0.",
+    "context_data": {
+      "withdrawal_amount": 0.0
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "Reject the withdrawal if daily_withdrawal_limit is zero and withdrawal_amount is greater than zero.",
+    "context_data": {
+      "daily_withdrawal_limit": 0.0,
+      "withdrawal_amount": 50.0
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "Approve the corporate withdrawal if is_corporate_account is true and aml_risk_score is less than 30 and transaction_time_hour is between 8 and 18 inclusive and withdrawal_amount is less than or equal to daily_withdrawal_limit.",
+    "context_data": {
+      "is_corporate_account": true,
+      "aml_risk_score": 20,
+      "transaction_time_hour": 10,
+      "withdrawal_amount": 8000.0,
+      "daily_withdrawal_limit": 10000.0
+    },
+    "expected_outcome": "APPROVE"
+  },
+  {
+    "natural_language_rule": "Ask for approval if transaction_time_hour equals 2 and withdrawal_amount is greater than 500 (late-night medium withdrawal).",
+    "context_data": {
+      "transaction_time_hour": 2,
+      "withdrawal_amount": 750.0
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "Approve the transfer if beneficiary_country is US and aml_risk_score is less than 50 and kyc_verified is true.",
+    "context_data": {
+      "beneficiary_country": "US",
+      "aml_risk_score": 30,
+      "kyc_verified": true
+    },
+    "expected_outcome": "APPROVE"
+  },
+  {
+    "natural_language_rule": "Reject the transfer if beneficiary_country is US and aml_risk_score is greater than 80.",
+    "context_data": {
+      "beneficiary_country": "US",
+      "aml_risk_score": 85
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "Approve the withdrawal if device_trust_score is greater than or equal to 80 and failed_login_attempts equals 0 and kyc_verified is true and withdrawal_amount is less than or equal to 10000.",
+    "context_data": {
+      "device_trust_score": 85,
+      "failed_login_attempts": 0,
+      "kyc_verified": true,
+      "withdrawal_amount": 5000.0
+    },
+    "expected_outcome": "APPROVE"
+  },
+  {
+    "natural_language_rule": "Reject the loan if user_credit_score is less than 400 and loan_amount_requested is greater than 10000.",
+    "context_data": {
+      "user_credit_score": 350,
+      "loan_amount_requested": 15000.0
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "Ask for approval if user_credit_score is between 650 and 699 inclusive and loan_amount_requested is less than or equal to 20000 and kyc_verified is true.",
+    "context_data": {
+      "user_credit_score": 670,
+      "loan_amount_requested": 18000.0,
+      "kyc_verified": true
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "Ask for approval for personal accounts if is_corporate_account is false and withdrawal_amount is greater than 20000.",
+    "context_data": {
+      "is_corporate_account": false,
+      "withdrawal_amount": 25000.0
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "Ask for approval for corporate accounts if is_corporate_account is true and withdrawal_amount is greater than 100000.",
+    "context_data": {
+      "is_corporate_account": true,
+      "withdrawal_amount": 150000.0
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "Approve the transaction if aml_risk_score is less than or equal to 20 and beneficiary_country is in a safe list (CA, GB, AU).",
+    "context_data": {
+      "aml_risk_score": 15,
+      "beneficiary_country": "GB"
+    },
+    "expected_outcome": "APPROVE"
+  },
+  {
+    "natural_language_rule": "Ask for approval if transaction_time_hour equals 23 and withdrawal_amount is greater than 5000 and device_trust_score is less than 50.",
+    "context_data": {
+      "transaction_time_hour": 23,
+      "withdrawal_amount": 7000.0,
+      "device_trust_score": 45
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "Ask for approval if account_balance minus withdrawal_amount is less than 100 (low remaining balance after withdrawal).",
+    "context_data": {
+      "account_balance": 1000.0,
+      "withdrawal_amount": 920.0
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "Reject the withdrawal if account_balance minus withdrawal_amount is less than 0 (insufficient funds).",
+    "context_data": {
+      "account_balance": 500.0,
+      "withdrawal_amount": 600.0
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "Reject the transaction if withdrawal_amount is greater than or equal to daily_withdrawal_limit and kyc_verified is false.",
+    "context_data": {
+      "withdrawal_amount": 1000.0,
+      "daily_withdrawal_limit": 1000.0,
+      "kyc_verified": false
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "Approve small withdrawals if failed_login_attempts is greater than 0 but device_trust_score is greater than or equal to 90 and kyc_verified is true for withdrawal_amount less than or equal to 500.",
+    "context_data": {
+      "failed_login_attempts": 1,
+      "device_trust_score": 92,
+      "kyc_verified": true,
+      "withdrawal_amount": 300.0
+    },
+    "expected_outcome": "APPROVE"
+  },
+  {
+    "natural_language_rule": "Reject the loan request if loan_amount_requested equals 0.",
+    "context_data": {
+      "loan_amount_requested": 0.0
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "Approve the loan if user_credit_score is greater than or equal to 750 and aml_risk_score is less than 40 and loan_amount_requested is less than or equal to 50000.",
+    "context_data": {
+      "user_credit_score": 760,
+      "aml_risk_score": 35,
+      "loan_amount_requested": 40000.0
+    },
+    "expected_outcome": "APPROVE"
+  },
+  {
+    "natural_language_rule": "Ask for approval if transaction_time_hour is between 6 and 8 inclusive and withdrawal_amount is greater than 5000 and is_corporate_account is false.",
+    "context_data": {
+      "transaction_time_hour": 7,
+      "withdrawal_amount": 6000.0,
+      "is_corporate_account": false
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "Reject the transaction if aml_risk_score is greater than or equal to 50 and user_credit_score is less than 550.",
+    "context_data": {
+      "aml_risk_score": 55,
+      "user_credit_score": 520
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "Reject access if device_trust_score equals 0 and failed_login_attempts is greater than or equal to 1.",
+    "context_data": {
+      "device_trust_score": 0,
+      "failed_login_attempts": 1
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "Approve the withdrawal if kyc_verified is true and aml_risk_score is less than 70 and withdrawal_amount is less than or equal to account_balance and withdrawal_amount is less than or equal to daily_withdrawal_limit.",
+    "context_data": {
+      "kyc_verified": true,
+      "aml_risk_score": 65,
+      "withdrawal_amount": 400.0,
+      "account_balance": 1000.0,
+      "daily_withdrawal_limit": 1000.0
+    },
+    "expected_outcome": "APPROVE"
+  },
+  {
+    "natural_language_rule": "Approve small transfers if kyc_verified is false but device_trust_score is greater than 80 and failed_login_attempts equals 0 and withdrawal_amount is less than or equal to 100.",
+    "context_data": {
+      "kyc_verified": false,
+      "device_trust_score": 85,
+      "failed_login_attempts": 0,
+      "withdrawal_amount": 50.0
+    },
+    "expected_outcome": "APPROVE"
+  },
+  {
+    "natural_language_rule": "Ask for approval if beneficiary_country is ZZ (unknown/reserved code) regardless of aml_risk_score.",
+    "context_data": {
+      "beneficiary_country": "ZZ",
+      "aml_risk_score": 10
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "Approve the corporate withdrawal if daily_withdrawal_limit is greater than or equal to 50000 and is_corporate_account is true and withdrawal_amount is less than or equal to daily_withdrawal_limit.",
+    "context_data": {
+      "daily_withdrawal_limit": 100000.0,
+      "is_corporate_account": true,
+      "withdrawal_amount": 40000.0
+    },
+    "expected_outcome": "APPROVE"
+  },
+  {
+    "natural_language_rule": "Ask for approval if account_balance minus withdrawal_amount is less than 0.01 (very small remaining balance after withdrawal).",
+    "context_data": {
+      "account_balance": 100.01,
+      "withdrawal_amount": 100.0
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "Ask for approval if aml_risk_score is between 30 and 50 inclusive and withdrawal_amount is greater than 10000.",
+    "context_data": {
+      "aml_risk_score": 45,
+      "withdrawal_amount": 15000.0
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "Reject access if failed_login_attempts is greater than or equal to 10.",
+    "context_data": {
+      "failed_login_attempts": 12
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "Ask for approval if user_credit_score is between 300 and 499 inclusive and loan_amount_requested is less than or equal to 5000 and kyc_verified is true.",
+    "context_data": {
+      "user_credit_score": 450,
+      "loan_amount_requested": 4000.0,
+      "kyc_verified": true
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "Ask for approval if account_balance is greater than 1000000 and withdrawal_amount is greater than 500000 and aml_risk_score is less than 20 (very large transfer requiring manual review even if AML is low).",
+    "context_data": {
+      "account_balance": 2000000.0,
+      "withdrawal_amount": 750000.0,
+      "aml_risk_score": 10
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "Reject the transaction if withdrawal_amount is negative (invalid input).",
+    "context_data": {
+      "withdrawal_amount": -50.0
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "Ask for approval if loan_amount_requested is greater than 0 and kyc_verified is false (loan applications without KYC need manual review).",
+    "context_data": {
+      "loan_amount_requested": 10000.0,
+      "kyc_verified": false
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "Reject the withdrawal if is_corporate_account is false and beneficiary_country is CN and aml_risk_score is greater than 60.",
+    "context_data": {
+      "is_corporate_account": false,
+      "beneficiary_country": "CN",
+      "aml_risk_score": 65
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "Ask for approval if device_trust_score is between 40 and 60 inclusive and failed_login_attempts is greater than or equal to 2.",
+    "context_data": {
+      "device_trust_score": 50,
+      "failed_login_attempts": 2
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "Approve if withdrawal_amount <= account_balance AND withdrawal_amount <= daily_withdrawal_limit.",
+    "context_data": {
+      "withdrawal_amount": 200,
+      "account_balance": 1000,
+      "daily_withdrawal_limit": 500,
+      "is_corporate_account": false,
+      "kyc_verified": true,
+      "transaction_time_hour": 10,
+      "beneficiary_country": "US",
+      "aml_risk_score": 10,
+      "loan_amount_requested": 0,
+      "user_credit_score": 700,
+      "failed_login_attempts": 0,
+      "device_trust_score": 90
+    },
+    "expected_outcome": "APPROVE"
+  },
+  {
+    "natural_language_rule": "Reject if withdrawal_amount > account_balance.",
+    "context_data": {
+      "withdrawal_amount": 1200,
+      "account_balance": 1000,
+      "daily_withdrawal_limit": 5000,
+      "is_corporate_account": false,
+      "kyc_verified": true,
+      "transaction_time_hour": 14,
+      "beneficiary_country": "GB",
+      "aml_risk_score": 20,
+      "loan_amount_requested": 0,
+      "user_credit_score": 720,
+      "failed_login_attempts": 0,
+      "device_trust_score": 80
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "Reject if withdrawal_amount > daily_withdrawal_limit.",
+    "context_data": {
+      "withdrawal_amount": 600,
+      "account_balance": 2000,
+      "daily_withdrawal_limit": 500,
+      "is_corporate_account": false,
+      "kyc_verified": true,
+      "transaction_time_hour": 11,
+      "beneficiary_country": "DE",
+      "aml_risk_score": 5,
+      "loan_amount_requested": 0,
+      "user_credit_score": 680,
+      "failed_login_attempts": 0,
+      "device_trust_score": 85
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "Approve when withdrawal_amount == daily_withdrawal_limit and account_balance >= withdrawal_amount.",
+    "context_data": {
+      "withdrawal_amount": 500,
+      "account_balance": 500,
+      "daily_withdrawal_limit": 500,
+      "is_corporate_account": false,
+      "kyc_verified": true,
+      "transaction_time_hour": 9,
+      "beneficiary_country": "US",
+      "aml_risk_score": 15,
+      "loan_amount_requested": 0,
+      "user_credit_score": 750,
+      "failed_login_attempts": 0,
+      "device_trust_score": 95
+    },
+    "expected_outcome": "APPROVE"
+  },
+  {
+    "natural_language_rule": "Reject if withdrawal_amount == 0.",
+    "context_data": {
+      "withdrawal_amount": 0,
+      "account_balance": 1000,
+      "daily_withdrawal_limit": 2000,
+      "is_corporate_account": false,
+      "kyc_verified": true,
+      "transaction_time_hour": 12,
+      "beneficiary_country": "FR",
+      "aml_risk_score": 10,
+      "loan_amount_requested": 0,
+      "user_credit_score": 700,
+      "failed_login_attempts": 0,
+      "device_trust_score": 100
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "If is_corporate_account == true then allow withdrawal_amount <= daily_withdrawal_limit * 2; otherwise allow withdrawal_amount <= daily_withdrawal_limit.",
+    "context_data": {
+      "withdrawal_amount": 900,
+      "account_balance": 2000,
+      "daily_withdrawal_limit": 500,
+      "is_corporate_account": true,
+      "kyc_verified": true,
+      "transaction_time_hour": 10,
+      "beneficiary_country": "US",
+      "aml_risk_score": 25,
+      "loan_amount_requested": 0,
+      "user_credit_score": 720,
+      "failed_login_attempts": 0,
+      "device_trust_score": 85
+    },
+    "expected_outcome": "APPROVE"
+  },
+  {
+    "natural_language_rule": "For corporate accounts (is_corporate_account == true) require kyc_verified == true; if kyc_verified == false then REJECT.",
+    "context_data": {
+      "withdrawal_amount": 100,
+      "account_balance": 5000,
+      "daily_withdrawal_limit": 2000,
+      "is_corporate_account": true,
+      "kyc_verified": false,
+      "transaction_time_hour": 15,
+      "beneficiary_country": "US",
+      "aml_risk_score": 10,
+      "loan_amount_requested": 0,
+      "user_credit_score": 700,
+      "failed_login_attempts": 0,
+      "device_trust_score": 90
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "If kyc_verified == false AND withdrawal_amount > 1000 then ASK_FOR_APPROVAL.",
+    "context_data": {
+      "withdrawal_amount": 1500,
+      "account_balance": 5000,
+      "daily_withdrawal_limit": 5000,
+      "is_corporate_account": false,
+      "kyc_verified": false,
+      "transaction_time_hour": 13,
+      "beneficiary_country": "GB",
+      "aml_risk_score": 20,
+      "loan_amount_requested": 0,
+      "user_credit_score": 700,
+      "failed_login_attempts": 0,
+      "device_trust_score": 80
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "Reject if aml_risk_score >= 90 regardless of other checks.",
+    "context_data": {
+      "withdrawal_amount": 50,
+      "account_balance": 1000,
+      "daily_withdrawal_limit": 1000,
+      "is_corporate_account": false,
+      "kyc_verified": true,
+      "transaction_time_hour": 10,
+      "beneficiary_country": "US",
+      "aml_risk_score": 95,
+      "loan_amount_requested": 0,
+      "user_credit_score": 700,
+      "failed_login_attempts": 0,
+      "device_trust_score": 90
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "If beneficiary_country in ['IR','KP','SY','SD'] AND aml_risk_score > 50 then REJECT.",
+    "context_data": {
+      "withdrawal_amount": 200,
+      "account_balance": 1000,
+      "daily_withdrawal_limit": 1000,
+      "is_corporate_account": false,
+      "kyc_verified": true,
+      "transaction_time_hour": 11,
+      "beneficiary_country": "IR",
+      "aml_risk_score": 60,
+      "loan_amount_requested": 0,
+      "user_credit_score": 700,
+      "failed_login_attempts": 0,
+      "device_trust_score": 90
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "If transaction_time_hour < 6 OR transaction_time_hour >= 22 then ASK_FOR_APPROVAL for transactions where withdrawal_amount > 500.",
+    "context_data": {
+      "withdrawal_amount": 600,
+      "account_balance": 5000,
+      "daily_withdrawal_limit": 2000,
+      "is_corporate_account": false,
+      "kyc_verified": true,
+      "transaction_time_hour": 23,
+      "beneficiary_country": "US",
+      "aml_risk_score": 20,
+      "loan_amount_requested": 0,
+      "user_credit_score": 730,
+      "failed_login_attempts": 0,
+      "device_trust_score": 88
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "If failed_login_attempts >= 5 AND device_trust_score < 30 then REJECT.",
+    "context_data": {
+      "withdrawal_amount": 100,
+      "account_balance": 1000,
+      "daily_withdrawal_limit": 1000,
+      "is_corporate_account": false,
+      "kyc_verified": true,
+      "transaction_time_hour": 16,
+      "beneficiary_country": "US",
+      "aml_risk_score": 5,
+      "loan_amount_requested": 0,
+      "user_credit_score": 710,
+      "failed_login_attempts": 6,
+      "device_trust_score": 20
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "If failed_login_attempts >= 3 AND device_trust_score < 50 then ASK_FOR_APPROVAL.",
+    "context_data": {
+      "withdrawal_amount": 200,
+      "account_balance": 1000,
+      "daily_withdrawal_limit": 1000,
+      "is_corporate_account": false,
+      "kyc_verified": true,
+      "transaction_time_hour": 10,
+      "beneficiary_country": "GB",
+      "aml_risk_score": 10,
+      "loan_amount_requested": 0,
+      "user_credit_score": 700,
+      "failed_login_attempts": 3,
+      "device_trust_score": 45
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "Approve if withdrawal_amount <= account_balance AND kyc_verified == true AND aml_risk_score < 50.",
+    "context_data": {
+      "withdrawal_amount": 300,
+      "account_balance": 2000,
+      "daily_withdrawal_limit": 1000,
+      "is_corporate_account": false,
+      "kyc_verified": true,
+      "transaction_time_hour": 9,
+      "beneficiary_country": "DE",
+      "aml_risk_score": 30,
+      "loan_amount_requested": 0,
+      "user_credit_score": 740,
+      "failed_login_attempts": 0,
+      "device_trust_score": 85
+    },
+    "expected_outcome": "APPROVE"
+  },
+  {
+    "natural_language_rule": "Reject if loan_amount_requested > account_balance * 10 OR user_credit_score < 500.",
+    "context_data": {
+      "withdrawal_amount": 0,
+      "account_balance": 1000,
+      "daily_withdrawal_limit": 1000,
+      "is_corporate_account": false,
+      "kyc_verified": true,
+      "transaction_time_hour": 10,
+      "beneficiary_country": "US",
+      "aml_risk_score": 10,
+      "loan_amount_requested": 0,
+      "user_credit_score": 450,
+      "failed_login_attempts": 0,
+      "device_trust_score": 80
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "Ask for approval if user_credit_score >= 500 AND user_credit_score <= 650 AND loan_amount_requested > 5000.",
+    "context_data": {
+      "withdrawal_amount": 0,
+      "account_balance": 2000,
+      "daily_withdrawal_limit": 2000,
+      "is_corporate_account": false,
+      "kyc_verified": true,
+      "transaction_time_hour": 11,
+      "beneficiary_country": "US",
+      "aml_risk_score": 20,
+      "loan_amount_requested": 10000,
+      "user_credit_score": 600,
+      "failed_login_attempts": 0,
+      "device_trust_score": 90
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "Reject if beneficiary_country == 'NG' AND aml_risk_score >= 70 AND withdrawal_amount > 10000.",
+    "context_data": {
+      "withdrawal_amount": 15000,
+      "account_balance": 50000,
+      "daily_withdrawal_limit": 20000,
+      "is_corporate_account": false,
+      "kyc_verified": true,
+      "transaction_time_hour": 12,
+      "beneficiary_country": "NG",
+      "aml_risk_score": 75,
+      "loan_amount_requested": 0,
+      "user_credit_score": 700,
+      "failed_login_attempts": 0,
+      "device_trust_score": 85
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "If is_corporate_account == false AND withdrawal_amount > 10000 then ASK_FOR_APPROVAL.",
+    "context_data": {
+      "withdrawal_amount": 15000,
+      "account_balance": 50000,
+      "daily_withdrawal_limit": 20000,
+      "is_corporate_account": false,
+      "kyc_verified": true,
+      "transaction_time_hour": 14,
+      "beneficiary_country": "US",
+      "aml_risk_score": 30,
+      "loan_amount_requested": 0,
+      "user_credit_score": 730,
+      "failed_login_attempts": 0,
+      "device_trust_score": 90
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "Approve if withdrawal_amount <= 0 (special allowance for zero or negative amounts).",
+    "context_data": {
+      "withdrawal_amount": 0,
+      "account_balance": 100,
+      "daily_withdrawal_limit": 100,
+      "is_corporate_account": false,
+      "kyc_verified": false,
+      "transaction_time_hour": 12,
+      "beneficiary_country": "US",
+      "aml_risk_score": 0,
+      "loan_amount_requested": 0,
+      "user_credit_score": 600,
+      "failed_login_attempts": 0,
+      "device_trust_score": 50
+    },
+    "expected_outcome": "APPROVE"
+  },
+  {
+    "natural_language_rule": "Reject if account_balance < 0 regardless of other checks.",
+    "context_data": {
+      "withdrawal_amount": 10,
+      "account_balance": -50,
+      "daily_withdrawal_limit": 100,
+      "is_corporate_account": false,
+      "kyc_verified": true,
+      "transaction_time_hour": 10,
+      "beneficiary_country": "US",
+      "aml_risk_score": 10,
+      "loan_amount_requested": 0,
+      "user_credit_score": 650,
+      "failed_login_attempts": 0,
+      "device_trust_score": 80
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "If aml_risk_score >= 50 AND aml_risk_score <= 89 AND beneficiary_country NOT IN ['US','GB','DE','FR'] then ASK_FOR_APPROVAL.",
+    "context_data": {
+      "withdrawal_amount": 1000,
+      "account_balance": 5000,
+      "daily_withdrawal_limit": 3000,
+      "is_corporate_account": false,
+      "kyc_verified": true,
+      "transaction_time_hour": 13,
+      "beneficiary_country": "PK",
+      "aml_risk_score": 70,
+      "loan_amount_requested": 0,
+      "user_credit_score": 700,
+      "failed_login_attempts": 0,
+      "device_trust_score": 80
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "Approve if withdrawal_amount <= daily_withdrawal_limit AND device_trust_score >= 80 AND failed_login_attempts == 0.",
+    "context_data": {
+      "withdrawal_amount": 400,
+      "account_balance": 2000,
+      "daily_withdrawal_limit": 500,
+      "is_corporate_account": false,
+      "kyc_verified": true,
+      "transaction_time_hour": 9,
+      "beneficiary_country": "DE",
+      "aml_risk_score": 10,
+      "loan_amount_requested": 0,
+      "user_credit_score": 760,
+      "failed_login_attempts": 0,
+      "device_trust_score": 80
+    },
+    "expected_outcome": "APPROVE"
+  },
+  {
+    "natural_language_rule": "Reject if transaction_time_hour == 2 AND withdrawal_amount > 5000 (suspicious off-hours large transfers).",
+    "context_data": {
+      "withdrawal_amount": 6000,
+      "account_balance": 100000,
+      "daily_withdrawal_limit": 50000,
+      "is_corporate_account": false,
+      "kyc_verified": true,
+      "transaction_time_hour": 2,
+      "beneficiary_country": "US",
+      "aml_risk_score": 20,
+      "loan_amount_requested": 0,
+      "user_credit_score": 700,
+      "failed_login_attempts": 0,
+      "device_trust_score": 90
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "If is_corporate_account == true AND beneficiary_country == 'US' AND aml_risk_score < 40 then APPROVE regardless of failed_login_attempts.",
+    "context_data": {
+      "withdrawal_amount": 10000,
+      "account_balance": 50000,
+      "daily_withdrawal_limit": 8000,
+      "is_corporate_account": true,
+      "kyc_verified": true,
+      "transaction_time_hour": 3,
+      "beneficiary_country": "US",
+      "aml_risk_score": 30,
+      "loan_amount_requested": 0,
+      "user_credit_score": 700,
+      "failed_login_attempts": 10,
+      "device_trust_score": 40
+    },
+    "expected_outcome": "APPROVE"
+  },
+  {
+    "natural_language_rule": "Ask for approval if withdrawal_amount > daily_withdrawal_limit AND user_credit_score < 600.",
+    "context_data": {
+      "withdrawal_amount": 1200,
+      "account_balance": 5000,
+      "daily_withdrawal_limit": 1000,
+      "is_corporate_account": false,
+      "kyc_verified": true,
+      "transaction_time_hour": 11,
+      "beneficiary_country": "US",
+      "aml_risk_score": 20,
+      "loan_amount_requested": 0,
+      "user_credit_score": 580,
+      "failed_login_attempts": 0,
+      "device_trust_score": 70
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "Reject if device_trust_score <= 10 OR failed_login_attempts > 10.",
+    "context_data": {
+      "withdrawal_amount": 50,
+      "account_balance": 1000,
+      "daily_withdrawal_limit": 1000,
+      "is_corporate_account": false,
+      "kyc_verified": true,
+      "transaction_time_hour": 10,
+      "beneficiary_country": "US",
+      "aml_risk_score": 5,
+      "loan_amount_requested": 0,
+      "user_credit_score": 700,
+      "failed_login_attempts": 2,
+      "device_trust_score": 10
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "Approve if withdrawal_amount <= account_balance AND (aml_risk_score <= 20 OR beneficiary_country IN ['US','GB','DE']).",
+    "context_data": {
+      "withdrawal_amount": 150,
+      "account_balance": 1000,
+      "daily_withdrawal_limit": 500,
+      "is_corporate_account": false,
+      "kyc_verified": true,
+      "transaction_time_hour": 10,
+      "beneficiary_country": "CA",
+      "aml_risk_score": 15,
+      "loan_amount_requested": 0,
+      "user_credit_score": 710,
+      "failed_login_attempts": 0,
+      "device_trust_score": 85
+    },
+    "expected_outcome": "APPROVE"
+  },
+  {
+    "natural_language_rule": "If kyc_verified == false AND aml_risk_score > 80 then REJECT; but if kyc_verified == false AND withdrawal_amount <= 100 then ASK_FOR_APPROVAL.",
+    "context_data": {
+      "withdrawal_amount": 200,
+      "account_balance": 1000,
+      "daily_withdrawal_limit": 1000,
+      "is_corporate_account": false,
+      "kyc_verified": false,
+      "transaction_time_hour": 10,
+      "beneficiary_country": "US",
+      "aml_risk_score": 85,
+      "loan_amount_requested": 0,
+      "user_credit_score": 650,
+      "failed_login_attempts": 0,
+      "device_trust_score": 60
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "If loan_amount_requested > 50000 AND user_credit_score < 600 AND is_corporate_account == false then REJECT.",
+    "context_data": {
+      "withdrawal_amount": 0,
+      "account_balance": 10000,
+      "daily_withdrawal_limit": 5000,
+      "is_corporate_account": false,
+      "kyc_verified": true,
+      "transaction_time_hour": 9,
+      "beneficiary_country": "US",
+      "aml_risk_score": 10,
+      "loan_amount_requested": 60000,
+      "user_credit_score": 580,
+      "failed_login_attempts": 0,
+      "device_trust_score": 70
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "Ask for approval when withdrawal_amount >= daily_withdrawal_limit - 1 AND withdrawal_amount <= daily_withdrawal_limit (within 1 unit of daily limit to handle rounding).",
+    "context_data": {
+      "withdrawal_amount": 499,
+      "account_balance": 1000,
+      "daily_withdrawal_limit": 500,
+      "is_corporate_account": false,
+      "kyc_verified": true,
+      "transaction_time_hour": 10,
+      "beneficiary_country": "US",
+      "aml_risk_score": 10,
+      "loan_amount_requested": 0,
+      "user_credit_score": 700,
+      "failed_login_attempts": 0,
+      "device_trust_score": 80
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "Reject if beneficiary_country == 'KP' OR beneficiary_country == 'IR'.",
+    "context_data": {
+      "withdrawal_amount": 20,
+      "account_balance": 500,
+      "daily_withdrawal_limit": 500,
+      "is_corporate_account": false,
+      "kyc_verified": true,
+      "transaction_time_hour": 12,
+      "beneficiary_country": "KP",
+      "aml_risk_score": 10,
+      "loan_amount_requested": 0,
+      "user_credit_score": 700,
+      "failed_login_attempts": 0,
+      "device_trust_score": 80
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "Approve if user_credit_score >= 750 AND loan_amount_requested <= user_credit_score * 100.",
+    "context_data": {
+      "withdrawal_amount": 0,
+      "account_balance": 1000,
+      "daily_withdrawal_limit": 1000,
+      "is_corporate_account": false,
+      "kyc_verified": true,
+      "transaction_time_hour": 11,
+      "beneficiary_country": "US",
+      "aml_risk_score": 10,
+      "loan_amount_requested": 80000,
+      "user_credit_score": 800,
+      "failed_login_attempts": 0,
+      "device_trust_score": 90
+    },
+    "expected_outcome": "APPROVE"
+  },
+  {
+    "natural_language_rule": "Ask for approval if failed_login_attempts > 0 AND device_trust_score < 60 AND withdrawal_amount > 1000.",
+    "context_data": {
+      "withdrawal_amount": 1500,
+      "account_balance": 5000,
+      "daily_withdrawal_limit": 2000,
+      "is_corporate_account": false,
+      "kyc_verified": true,
+      "transaction_time_hour": 10,
+      "beneficiary_country": "US",
+      "aml_risk_score": 20,
+      "loan_amount_requested": 0,
+      "user_credit_score": 700,
+      "failed_login_attempts": 1,
+      "device_trust_score": 50
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "Reject if transaction_time_hour NOT BETWEEN 8 AND 18 (inclusive) AND withdrawal_amount > 20000.",
+    "context_data": {
+      "withdrawal_amount": 25000,
+      "account_balance": 100000,
+      "daily_withdrawal_limit": 50000,
+      "is_corporate_account": false,
+      "kyc_verified": true,
+      "transaction_time_hour": 3,
+      "beneficiary_country": "US",
+      "aml_risk_score": 10,
+      "loan_amount_requested": 0,
+      "user_credit_score": 750,
+      "failed_login_attempts": 0,
+      "device_trust_score": 90
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "Approve corporate nocturnal transfers if is_corporate_account == true AND aml_risk_score < 30 AND withdrawal_amount <= daily_withdrawal_limit * 2.",
+    "context_data": {
+      "withdrawal_amount": 1500,
+      "account_balance": 100000,
+      "daily_withdrawal_limit": 1000,
+      "is_corporate_account": true,
+      "kyc_verified": true,
+      "transaction_time_hour": 1,
+      "beneficiary_country": "US",
+      "aml_risk_score": 25,
+      "loan_amount_requested": 0,
+      "user_credit_score": 800,
+      "failed_login_attempts": 0,
+      "device_trust_score": 70
+    },
+    "expected_outcome": "APPROVE"
+  },
+  {
+    "natural_language_rule": "Reject if withdrawal_amount > account_balance + 100 (overdraft beyond buffer).",
+    "context_data": {
+      "withdrawal_amount": 700,
+      "account_balance": 500,
+      "daily_withdrawal_limit": 1000,
+      "is_corporate_account": false,
+      "kyc_verified": true,
+      "transaction_time_hour": 10,
+      "beneficiary_country": "US",
+      "aml_risk_score": 10,
+      "loan_amount_requested": 0,
+      "user_credit_score": 700,
+      "failed_login_attempts": 0,
+      "device_trust_score": 80
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "If device_trust_score == 0 then REJECT all transactions.",
+    "context_data": {
+      "withdrawal_amount": 10,
+      "account_balance": 100,
+      "daily_withdrawal_limit": 100,
+      "is_corporate_account": false,
+      "kyc_verified": true,
+      "transaction_time_hour": 10,
+      "beneficiary_country": "US",
+      "aml_risk_score": 5,
+      "loan_amount_requested": 0,
+      "user_credit_score": 700,
+      "failed_login_attempts": 0,
+      "device_trust_score": 0
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "Ask for approval when beneficiary_country == 'AE' AND aml_risk_score >= 40 AND aml_risk_score <= 60.",
+    "context_data": {
+      "withdrawal_amount": 3000,
+      "account_balance": 10000,
+      "daily_withdrawal_limit": 5000,
+      "is_corporate_account": false,
+      "kyc_verified": true,
+      "transaction_time_hour": 12,
+      "beneficiary_country": "AE",
+      "aml_risk_score": 50,
+      "loan_amount_requested": 0,
+      "user_credit_score": 700,
+      "failed_login_attempts": 0,
+      "device_trust_score": 75
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "Approve only if kyc_verified == true AND user_credit_score >= 650 for loan requests (loan_amount_requested > 0).",
+    "context_data": {
+      "withdrawal_amount": 0,
+      "account_balance": 2000,
+      "daily_withdrawal_limit": 2000,
+      "is_corporate_account": false,
+      "kyc_verified": true,
+      "transaction_time_hour": 10,
+      "beneficiary_country": "US",
+      "aml_risk_score": 15,
+      "loan_amount_requested": 10000,
+      "user_credit_score": 650,
+      "failed_login_attempts": 0,
+      "device_trust_score": 85
+    },
+    "expected_outcome": "APPROVE"
+  },
+  {
+    "natural_language_rule": "Reject loan requests if loan_amount_requested <= 0.",
+    "context_data": {
+      "withdrawal_amount": 0,
+      "account_balance": 1000,
+      "daily_withdrawal_limit": 1000,
+      "is_corporate_account": false,
+      "kyc_verified": true,
+      "transaction_time_hour": 10,
+      "beneficiary_country": "US",
+      "aml_risk_score": 10,
+      "loan_amount_requested": 0,
+      "user_credit_score": 700,
+      "failed_login_attempts": 0,
+      "device_trust_score": 90
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "If is_corporate_account == false AND withdrawal_amount > daily_withdrawal_limit AND aml_risk_score > 80 then REJECT.",
+    "context_data": {
+      "withdrawal_amount": 6000,
+      "account_balance": 20000,
+      "daily_withdrawal_limit": 5000,
+      "is_corporate_account": false,
+      "kyc_verified": true,
+      "transaction_time_hour": 13,
+      "beneficiary_country": "US",
+      "aml_risk_score": 85,
+      "loan_amount_requested": 0,
+      "user_credit_score": 720,
+      "failed_login_attempts": 0,
+      "device_trust_score": 75
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "Ask for approval if beneficiary_country NOT IN ['US','GB','DE','FR','CA'] AND aml_risk_score >= 30 AND withdrawal_amount > 2000.",
+    "context_data": {
+      "withdrawal_amount": 3000,
+      "account_balance": 10000,
+      "daily_withdrawal_limit": 5000,
+      "is_corporate_account": false,
+      "kyc_verified": true,
+      "transaction_time_hour": 11,
+      "beneficiary_country": "IN",
+      "aml_risk_score": 35,
+      "loan_amount_requested": 0,
+      "user_credit_score": 700,
+      "failed_login_attempts": 0,
+      "device_trust_score": 80
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "Approve if failed_login_attempts < 3 AND device_trust_score >= 70 AND withdrawal_amount <= daily_withdrawal_limit AND kyc_verified == true.",
+    "context_data": {
+      "withdrawal_amount": 400,
+      "account_balance": 1000,
+      "daily_withdrawal_limit": 500,
+      "is_corporate_account": false,
+      "kyc_verified": true,
+      "transaction_time_hour": 10,
+      "beneficiary_country": "GB",
+      "aml_risk_score": 10,
+      "loan_amount_requested": 0,
+      "user_credit_score": 720,
+      "failed_login_attempts": 1,
+      "device_trust_score": 75
+    },
+    "expected_outcome": "APPROVE"
+  },
+  {
+    "natural_language_rule": "Reject if user_credit_score < 300 OR user_credit_score > 850 (invalid score).",
+    "context_data": {
+      "withdrawal_amount": 0,
+      "account_balance": 1000,
+      "daily_withdrawal_limit": 1000,
+      "is_corporate_account": false,
+      "kyc_verified": true,
+      "transaction_time_hour": 10,
+      "beneficiary_country": "US",
+      "aml_risk_score": 10,
+      "loan_amount_requested": 0,
+      "user_credit_score": 900,
+      "failed_login_attempts": 0,
+      "device_trust_score": 80
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "Ask for approval if user_credit_score == 600 AND loan_amount_requested >= 1000 AND loan_amount_requested <= 10000.",
+    "context_data": {
+      "withdrawal_amount": 0,
+      "account_balance": 2000,
+      "daily_withdrawal_limit": 2000,
+      "is_corporate_account": false,
+      "kyc_verified": true,
+      "transaction_time_hour": 11,
+      "beneficiary_country": "US",
+      "aml_risk_score": 15,
+      "loan_amount_requested": 5000,
+      "user_credit_score": 600,
+      "failed_login_attempts": 0,
+      "device_trust_score": 85
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "Reject if beneficiary_country == 'ZZ' (unknown country code).",
+    "context_data": {
+      "withdrawal_amount": 10,
+      "account_balance": 100,
+      "daily_withdrawal_limit": 100,
+      "is_corporate_account": false,
+      "kyc_verified": true,
+      "transaction_time_hour": 10,
+      "beneficiary_country": "ZZ",
+      "aml_risk_score": 10,
+      "loan_amount_requested": 0,
+      "user_credit_score": 700,
+      "failed_login_attempts": 0,
+      "device_trust_score": 80
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "Approve small withdrawals under 50 if device_trust_score >= 20 even if kyc_verified == false.",
+    "context_data": {
+      "withdrawal_amount": 25,
+      "account_balance": 100,
+      "daily_withdrawal_limit": 500,
+      "is_corporate_account": false,
+      "kyc_verified": false,
+      "transaction_time_hour": 10,
+      "beneficiary_country": "US",
+      "aml_risk_score": 5,
+      "loan_amount_requested": 0,
+      "user_credit_score": 600,
+      "failed_login_attempts": 0,
+      "device_trust_score": 25
+    },
+    "expected_outcome": "APPROVE"
+  },
+  {
+    "natural_language_rule": "Reject if failed_login_attempts >= 1 AND user_credit_score < 400 regardless of device_trust_score.",
+    "context_data": {
+      "withdrawal_amount": 10,
+      "account_balance": 100,
+      "daily_withdrawal_limit": 100,
+      "is_corporate_account": false,
+      "kyc_verified": true,
+      "transaction_time_hour": 10,
+      "beneficiary_country": "US",
+      "aml_risk_score": 5,
+      "loan_amount_requested": 0,
+      "user_credit_score": 350,
+      "failed_login_attempts": 1,
+      "device_trust_score": 90
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "Ask for approval for any withdrawal_amount between 10000 AND 10500 inclusive to handle limits changeover.",
+    "context_data": {
+      "withdrawal_amount": 10050,
+      "account_balance": 50000,
+      "daily_withdrawal_limit": 10000,
+      "is_corporate_account": false,
+      "kyc_verified": true,
+      "transaction_time_hour": 12,
+      "beneficiary_country": "US",
+      "aml_risk_score": 20,
+      "loan_amount_requested": 0,
+      "user_credit_score": 700,
+      "failed_login_attempts": 0,
+      "device_trust_score": 85
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "Approve if withdrawal_amount <= account_balance AND (daily_withdrawal_limit - withdrawal_amount) >= 100 (must leave at least a 100 buffer); otherwise ASK_FOR_APPROVAL.",
+    "context_data": {
+      "withdrawal_amount": 800,
+      "account_balance": 5000,
+      "daily_withdrawal_limit": 1000,
+      "is_corporate_account": false,
+      "kyc_verified": true,
+      "transaction_time_hour": 10,
+      "beneficiary_country": "US",
+      "aml_risk_score": 10,
+      "loan_amount_requested": 0,
+      "user_credit_score": 720,
+      "failed_login_attempts": 0,
+      "device_trust_score": 90
+    },
+    "expected_outcome": "APPROVE"
+  },
+  {
+    "natural_language_rule": "Reject if beneficiary_country == 'BR' AND aml_risk_score >= 85 AND withdrawal_amount > 5000.",
+    "context_data": {
+      "withdrawal_amount": 6000,
+      "account_balance": 20000,
+      "daily_withdrawal_limit": 10000,
+      "is_corporate_account": false,
+      "kyc_verified": true,
+      "transaction_time_hour": 13,
+      "beneficiary_country": "BR",
+      "aml_risk_score": 90,
+      "loan_amount_requested": 0,
+      "user_credit_score": 700,
+      "failed_login_attempts": 0,
+      "device_trust_score": 80
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "Ask for approval if kyc_verified == true AND aml_risk_score BETWEEN 30 AND 40 AND withdrawal_amount > 2500.",
+    "context_data": {
+      "withdrawal_amount": 3000,
+      "account_balance": 10000,
+      "daily_withdrawal_limit": 5000,
+      "is_corporate_account": false,
+      "kyc_verified": true,
+      "transaction_time_hour": 10,
+      "beneficiary_country": "IN",
+      "aml_risk_score": 35,
+      "loan_amount_requested": 0,
+      "user_credit_score": 700,
+      "failed_login_attempts": 0,
+      "device_trust_score": 80
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "Reject if transaction_time_hour >= 0 AND transaction_time_hour <= 4 AND aml_risk_score >= 60 for any withdrawal_amount.",
+    "context_data": {
+      "withdrawal_amount": 100,
+      "account_balance": 1000,
+      "daily_withdrawal_limit": 500,
+      "is_corporate_account": false,
+      "kyc_verified": true,
+      "transaction_time_hour": 2,
+      "beneficiary_country": "US",
+      "aml_risk_score": 65,
+      "loan_amount_requested": 0,
+      "user_credit_score": 700,
+      "failed_login_attempts": 0,
+      "device_trust_score": 80
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "Approve if is_corporate_account == true AND kyc_verified == true AND aml_risk_score < 50 AND withdrawal_amount <= account_balance.",
+    "context_data": {
+      "withdrawal_amount": 2000,
+      "account_balance": 10000,
+      "daily_withdrawal_limit": 5000,
+      "is_corporate_account": true,
+      "kyc_verified": true,
+      "transaction_time_hour": 16,
+      "beneficiary_country": "US",
+      "aml_risk_score": 45,
+      "loan_amount_requested": 0,
+      "user_credit_score": 780,
+      "failed_login_attempts": 0,
+      "device_trust_score": 90
+    },
+    "expected_outcome": "APPROVE"
+  },
+  {
+    "natural_language_rule": "Reject if withdrawal_amount is NaN or not a number (simulate by withdrawal_amount < 0 as an invalid input).",
+    "context_data": {
+      "withdrawal_amount": -1,
+      "account_balance": 1000,
+      "daily_withdrawal_limit": 1000,
+      "is_corporate_account": false,
+      "kyc_verified": true,
+      "transaction_time_hour": 10,
+      "beneficiary_country": "US",
+      "aml_risk_score": 10,
+      "loan_amount_requested": 0,
+      "user_credit_score": 700,
+      "failed_login_attempts": 0,
+      "device_trust_score": 80
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "Ask for approval if withdrawal_amount > 0 AND withdrawal_amount < 1 (fractional amounts) to handle precision issues.",
+    "context_data": {
+      "withdrawal_amount": 0.5,
+      "account_balance": 1000,
+      "daily_withdrawal_limit": 1000,
+      "is_corporate_account": false,
+      "kyc_verified": true,
+      "transaction_time_hour": 10,
+      "beneficiary_country": "US",
+      "aml_risk_score": 10,
+      "loan_amount_requested": 0,
+      "user_credit_score": 700,
+      "failed_login_attempts": 0,
+      "device_trust_score": 80
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "Approve if device_trust_score >= 95 AND failed_login_attempts == 0 AND aml_risk_score < 10 even for high withdrawal_amount within daily_withdrawal_limit.",
+    "context_data": {
+      "withdrawal_amount": 900,
+      "account_balance": 5000,
+      "daily_withdrawal_limit": 1000,
+      "is_corporate_account": false,
+      "kyc_verified": true,
+      "transaction_time_hour": 11,
+      "beneficiary_country": "US",
+      "aml_risk_score": 5,
+      "loan_amount_requested": 0,
+      "user_credit_score": 800,
+      "failed_login_attempts": 0,
+      "device_trust_score": 95
+    },
+    "expected_outcome": "APPROVE"
+  },
+  {
+    "natural_language_rule": "Reject if beneficiary_country == 'PK' AND (aml_risk_score >= 60 OR transaction_time_hour < 6).",
+    "context_data": {
+      "withdrawal_amount": 100,
+      "account_balance": 1000,
+      "daily_withdrawal_limit": 500,
+      "is_corporate_account": false,
+      "kyc_verified": true,
+      "transaction_time_hour": 2,
+      "beneficiary_country": "PK",
+      "aml_risk_score": 40,
+      "loan_amount_requested": 0,
+      "user_credit_score": 700,
+      "failed_login_attempts": 0,
+      "device_trust_score": 80
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "Ask for approval when withdrawal_amount >= 100 AND withdrawal_amount <= 200 AND aml_risk_score BETWEEN 30 AND 50.",
+    "context_data": {
+      "withdrawal_amount": 150,
+      "account_balance": 1000,
+      "daily_withdrawal_limit": 500,
+      "is_corporate_account": false,
+      "kyc_verified": true,
+      "transaction_time_hour": 10,
+      "beneficiary_country": "IN",
+      "aml_risk_score": 40,
+      "loan_amount_requested": 0,
+      "user_credit_score": 700,
+      "failed_login_attempts": 0,
+      "device_trust_score": 70
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "Approve if withdrawal_amount <= account_balance AND (is_corporate_account == true OR kyc_verified == true) AND aml_risk_score < 40.",
+    "context_data": {
+      "withdrawal_amount": 300,
+      "account_balance": 1000,
+      "daily_withdrawal_limit": 500,
+      "is_corporate_account": false,
+      "kyc_verified": true,
+      "transaction_time_hour": 10,
+      "beneficiary_country": "US",
+      "aml_risk_score": 30,
+      "loan_amount_requested": 0,
+      "user_credit_score": 710,
+      "failed_login_attempts": 0,
+      "device_trust_score": 85
+    },
+    "expected_outcome": "APPROVE"
+  },
+  {
+    "natural_language_rule": "Reject if user_credit_score < 500 AND loan_amount_requested > 10000 even if kyc_verified == true.",
+    "context_data": {
+      "withdrawal_amount": 0,
+      "account_balance": 5000,
+      "daily_withdrawal_limit": 5000,
+      "is_corporate_account": false,
+      "kyc_verified": true,
+      "transaction_time_hour": 10,
+      "beneficiary_country": "US",
+      "aml_risk_score": 10,
+      "loan_amount_requested": 15000,
+      "user_credit_score": 480,
+      "failed_login_attempts": 0,
+      "device_trust_score": 70
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "Ask for approval if withdrawal_amount > 0 AND device_trust_score BETWEEN 30 AND 60 AND aml_risk_score > 25.",
+    "context_data": {
+      "withdrawal_amount": 800,
+      "account_balance": 5000,
+      "daily_withdrawal_limit": 1000,
+      "is_corporate_account": false,
+      "kyc_verified": true,
+      "transaction_time_hour": 10,
+      "beneficiary_country": "IN",
+      "aml_risk_score": 40,
+      "loan_amount_requested": 0,
+      "user_credit_score": 700,
+      "failed_login_attempts": 0,
+      "device_trust_score": 50
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "Reject if withdrawal_amount > 100000 regardless of other checks (hard ceiling).",
+    "context_data": {
+      "withdrawal_amount": 150000,
+      "account_balance": 1000000,
+      "daily_withdrawal_limit": 200000,
+      "is_corporate_account": true,
+      "kyc_verified": true,
+      "transaction_time_hour": 10,
+      "beneficiary_country": "US",
+      "aml_risk_score": 10,
+      "loan_amount_requested": 0,
+      "user_credit_score": 800,
+      "failed_login_attempts": 0,
+      "device_trust_score": 90
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "If withdrawal_amount is greater than account_balance then REJECT.",
+    "context_data": {
+      "withdrawal_amount": 150,
+      "account_balance": 100
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "If withdrawal_amount is less than or equal to account_balance and withdrawal_amount is less than or equal to daily_withdrawal_limit then APPROVE.",
+    "context_data": {
+      "withdrawal_amount": 500,
+      "account_balance": 1000,
+      "daily_withdrawal_limit": 1000
+    },
+    "expected_outcome": "APPROVE"
+  },
+  {
+    "natural_language_rule": "If withdrawal_amount is greater than daily_withdrawal_limit then REJECT.",
+    "context_data": {
+      "withdrawal_amount": 2000,
+      "daily_withdrawal_limit": 1000
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "If is_corporate_account is true and withdrawal_amount is greater than daily_withdrawal_limit times 2 then ASK_FOR_APPROVAL.",
+    "context_data": {
+      "is_corporate_account": true,
+      "withdrawal_amount": 2500,
+      "daily_withdrawal_limit": 1000
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "If kyc_verified is false and withdrawal_amount is greater than 1000 then REJECT.",
+    "context_data": {
+      "kyc_verified": false,
+      "withdrawal_amount": 1500
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "If aml_risk_score is greater than or equal to 85 then REJECT.",
+    "context_data": {
+      "aml_risk_score": 90
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "If aml_risk_score is between 70 and 84 inclusive then ASK_FOR_APPROVAL.",
+    "context_data": {
+      "aml_risk_score": 75
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "If beneficiary_country is 'IR' or 'KP' and aml_risk_score is greater than 50 then REJECT.",
+    "context_data": {
+      "beneficiary_country": "KP",
+      "aml_risk_score": 60
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "If transaction_time_hour is less than 6 or greater than 22 and device_trust_score is less than 40 then ASK_FOR_APPROVAL.",
+    "context_data": {
+      "transaction_time_hour": 2,
+      "device_trust_score": 30
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "If failed_login_attempts is greater than 5 then REJECT.",
+    "context_data": {
+      "failed_login_attempts": 6
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "If loan_amount_requested is greater than 50000 and user_credit_score is less than 600 then REJECT.",
+    "context_data": {
+      "loan_amount_requested": 60000,
+      "user_credit_score": 580
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "If loan_amount_requested is less than or equal to 50000 and user_credit_score is greater than or equal to 700 then APPROVE.",
+    "context_data": {
+      "loan_amount_requested": 30000,
+      "user_credit_score": 720
+    },
+    "expected_outcome": "APPROVE"
+  },
+  {
+    "natural_language_rule": "If user_credit_score is between 650 and 699 and loan_amount_requested is less than or equal to 20000 then ASK_FOR_APPROVAL.",
+    "context_data": {
+      "user_credit_score": 670,
+      "loan_amount_requested": 15000
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "If withdrawal_amount equals account_balance exactly and kyc_verified is true then APPROVE.",
+    "context_data": {
+      "withdrawal_amount": 100,
+      "account_balance": 100,
+      "kyc_verified": true
+    },
+    "expected_outcome": "APPROVE"
+  },
+  {
+    "natural_language_rule": "If withdrawal_amount is 0 then REJECT.",
+    "context_data": {
+      "withdrawal_amount": 0,
+      "account_balance": 100
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "If device_trust_score equals 100 and failed_login_attempts is 0 then APPROVE.",
+    "context_data": {
+      "device_trust_score": 100,
+      "failed_login_attempts": 0
+    },
+    "expected_outcome": "APPROVE"
+  },
+  {
+    "natural_language_rule": "If device_trust_score is less than or equal to 10 and failed_login_attempts is greater than or equal to 3 then REJECT.",
+    "context_data": {
+      "device_trust_score": 8,
+      "failed_login_attempts": 4
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "If is_corporate_account is true and kyc_verified is false then ASK_FOR_APPROVAL.",
+    "context_data": {
+      "is_corporate_account": true,
+      "kyc_verified": false
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "If beneficiary_country is 'US' and aml_risk_score is less than 30 and transaction_time_hour is between 9 and 17 inclusive then APPROVE.",
+    "context_data": {
+      "beneficiary_country": "US",
+      "aml_risk_score": 20,
+      "transaction_time_hour": 10
+    },
+    "expected_outcome": "APPROVE"
+  },
+  {
+    "natural_language_rule": "If beneficiary_country is 'GB' and aml_risk_score is greater than 40 and withdrawal_amount is greater than 10000 then ASK_FOR_APPROVAL.",
+    "context_data": {
+      "beneficiary_country": "GB",
+      "aml_risk_score": 50,
+      "withdrawal_amount": 15000
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "If account_balance minus withdrawal_amount is less than 0 then REJECT.",
+    "context_data": {
+      "account_balance": 500,
+      "withdrawal_amount": 600
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "If daily_withdrawal_limit is 0 then REJECT any withdrawal_amount greater than 0.",
+    "context_data": {
+      "daily_withdrawal_limit": 0,
+      "withdrawal_amount": 100
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "If withdrawal_amount is negative (less than 0) then REJECT as invalid.",
+    "context_data": {
+      "withdrawal_amount": -50,
+      "account_balance": 100
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "If aml_risk_score is exactly 50 then ASK_FOR_APPROVAL.",
+    "context_data": {
+      "aml_risk_score": 50
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "If transaction_time_hour equals 0 and beneficiary_country is 'CA' and device_trust_score is less than 20 then ASK_FOR_APPROVAL.",
+    "context_data": {
+      "transaction_time_hour": 0,
+      "beneficiary_country": "CA",
+      "device_trust_score": 10
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "If user_credit_score is below 300 then REJECT.",
+    "context_data": {
+      "user_credit_score": 295
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "If failed_login_attempts is exactly 3 and device_trust_score is less than 50 then ASK_FOR_APPROVAL.",
+    "context_data": {
+      "failed_login_attempts": 3,
+      "device_trust_score": 40
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "If is_corporate_account is false and withdrawal_amount is greater than 10000 and aml_risk_score is greater than 60 then REJECT.",
+    "context_data": {
+      "is_corporate_account": false,
+      "withdrawal_amount": 15000,
+      "aml_risk_score": 70
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "If kyc_verified is true and aml_risk_score is less than 20 and failed_login_attempts is 0 then APPROVE.",
+    "context_data": {
+      "kyc_verified": true,
+      "aml_risk_score": 10,
+      "failed_login_attempts": 0
+    },
+    "expected_outcome": "APPROVE"
+  },
+  {
+    "natural_language_rule": "If loan_amount_requested is greater than 100000 and user_credit_score is between 600 and 650 inclusive then ASK_FOR_APPROVAL.",
+    "context_data": {
+      "loan_amount_requested": 150000,
+      "user_credit_score": 630
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "If beneficiary_country is 'FR' or 'DE' and transaction_time_hour is between 18 and 23 inclusive and device_trust_score is greater than or equal to 80 then APPROVE.",
+    "context_data": {
+      "beneficiary_country": "FR",
+      "transaction_time_hour": 20,
+      "device_trust_score": 85
+    },
+    "expected_outcome": "APPROVE"
+  },
+  {
+    "natural_language_rule": "If beneficiary_country is 'RU' and aml_risk_score is greater than or equal to 40 then REJECT.",
+    "context_data": {
+      "beneficiary_country": "RU",
+      "aml_risk_score": 45
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "If withdrawal_amount equals daily_withdrawal_limit and kyc_verified is false then ASK_FOR_APPROVAL.",
+    "context_data": {
+      "withdrawal_amount": 1000,
+      "daily_withdrawal_limit": 1000,
+      "kyc_verified": false
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "If device_trust_score is 0 and failed_login_attempts is greater than 0 then REJECT.",
+    "context_data": {
+      "device_trust_score": 0,
+      "failed_login_attempts": 1
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "If user_credit_score is greater than or equal to 800 and loan_amount_requested is less than or equal to 100000 then APPROVE.",
+    "context_data": {
+      "user_credit_score": 820,
+      "loan_amount_requested": 90000
+    },
+    "expected_outcome": "APPROVE"
+  },
+  {
+    "natural_language_rule": "If account_balance is greater than or equal to withdrawal_amount and aml_risk_score is less than 40 and transaction_time_hour is between 8 and 20 inclusive then APPROVE.",
+    "context_data": {
+      "account_balance": 2000,
+      "withdrawal_amount": 1500,
+      "aml_risk_score": 30,
+      "transaction_time_hour": 12
+    },
+    "expected_outcome": "APPROVE"
+  },
+  {
+    "natural_language_rule": "If is_corporate_account is true and beneficiary_country is not 'US' and aml_risk_score is greater than 70 then REJECT.",
+    "context_data": {
+      "is_corporate_account": true,
+      "beneficiary_country": "BR",
+      "aml_risk_score": 75
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "If failed_login_attempts is 0 and device_trust_score is less than 30 and withdrawal_amount is greater than 5000 then ASK_FOR_APPROVAL.",
+    "context_data": {
+      "failed_login_attempts": 0,
+      "device_trust_score": 25,
+      "withdrawal_amount": 6000
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "If kyc_verified is false and user_credit_score is greater than 700 and loan_amount_requested is less than 5000 then ASK_FOR_APPROVAL.",
+    "context_data": {
+      "kyc_verified": false,
+      "user_credit_score": 720,
+      "loan_amount_requested": 3000
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "If transaction_time_hour is greater than or equal to 23 or transaction_time_hour is less than or equal to 5 then if device_trust_score is less than 50 then REJECT else ASK_FOR_APPROVAL.",
+    "context_data": {
+      "transaction_time_hour": 23,
+      "device_trust_score": 60
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "If daily_withdrawal_limit is greater than or equal to 10000 and is_corporate_account is true and aml_risk_score is less than 30 then APPROVE.",
+    "context_data": {
+      "daily_withdrawal_limit": 20000,
+      "is_corporate_account": true,
+      "aml_risk_score": 20
+    },
+    "expected_outcome": "APPROVE"
+  },
+  {
+    "natural_language_rule": "If withdrawal_amount is greater than account_balance times 0.9 and withdrawal_amount is less than or equal to account_balance and aml_risk_score is greater than 60 then ASK_FOR_APPROVAL.",
+    "context_data": {
+      "withdrawal_amount": 950,
+      "account_balance": 1000,
+      "aml_risk_score": 70
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "If loan_amount_requested is 0 then REJECT as invalid.",
+    "context_data": {
+      "loan_amount_requested": 0,
+      "user_credit_score": 700
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "If beneficiary_country is an empty string or beneficiary_country is 'XX' then ASK_FOR_APPROVAL.",
+    "context_data": {
+      "beneficiary_country": ""
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "If device_trust_score is between 40 and 60 inclusive and failed_login_attempts is between 1 and 2 inclusive then ASK_FOR_APPROVAL.",
+    "context_data": {
+      "device_trust_score": 50,
+      "failed_login_attempts": 2
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "If user_credit_score is exactly 650 and loan_amount_requested is greater than 50000 then ASK_FOR_APPROVAL.",
+    "context_data": {
+      "user_credit_score": 650,
+      "loan_amount_requested": 60000
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "If aml_risk_score is less than 10 and withdrawal_amount is less than 100 then APPROVE.",
+    "context_data": {
+      "aml_risk_score": 5,
+      "withdrawal_amount": 50
+    },
+    "expected_outcome": "APPROVE"
+  },
+  {
+    "natural_language_rule": "If failed_login_attempts is greater than 10 then REJECT regardless of device_trust_score.",
+    "context_data": {
+      "failed_login_attempts": 11,
+      "device_trust_score": 90
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "If is_corporate_account is false and transaction_time_hour is between 0 and 4 inclusive and withdrawal_amount is greater than 1000 then REJECT.",
+    "context_data": {
+      "is_corporate_account": false,
+      "transaction_time_hour": 2,
+      "withdrawal_amount": 1500
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "If account_balance is 0 and withdrawal_amount is 0 then APPROVE (no-op transaction allowed).",
+    "context_data": {
+      "account_balance": 0,
+      "withdrawal_amount": 0
+    },
+    "expected_outcome": "APPROVE"
+  },
+  {
+    "natural_language_rule": "APPROVE the withdrawal when withdrawal_amount <= account_balance AND withdrawal_amount <= daily_withdrawal_limit AND kyc_verified is true AND aml_risk_score < 50.",
+    "context_data": {
+      "withdrawal_amount": 500,
+      "account_balance": 1000,
+      "daily_withdrawal_limit": 1000,
+      "kyc_verified": true,
+      "aml_risk_score": 10
+    },
+    "expected_outcome": "APPROVE"
+  },
+  {
+    "natural_language_rule": "REJECT the withdrawal if withdrawal_amount > account_balance regardless of other checks.",
+    "context_data": {
+      "withdrawal_amount": 1200,
+      "account_balance": 1000
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "ASK_FOR_APPROVAL when withdrawal_amount > daily_withdrawal_limit OR aml_risk_score >= 50 but withdrawal_amount <= account_balance.",
+    "context_data": {
+      "withdrawal_amount": 1500,
+      "account_balance": 2000,
+      "daily_withdrawal_limit": 1000,
+      "aml_risk_score": 30
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "REJECT if aml_risk_score >= 80 OR beneficiary_country is in ['KP','IR'] regardless of kyc_verified.",
+    "context_data": {
+      "aml_risk_score": 85,
+      "beneficiary_country": "US",
+      "kyc_verified": true
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "ASK_FOR_APPROVAL for corporate accounts when is_corporate_account is true AND withdrawal_amount > 10000 even if kyc_verified is true and aml_risk_score < 50.",
+    "context_data": {
+      "withdrawal_amount": 15000,
+      "is_corporate_account": true,
+      "kyc_verified": true,
+      "aml_risk_score": 20
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "REJECT if kyc_verified is false and withdrawal_amount > 0.",
+    "context_data": {
+      "withdrawal_amount": 100,
+      "kyc_verified": false
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "APPROVE if withdrawal_amount == account_balance AND kyc_verified is true AND aml_risk_score < 40 (edge case: full-balance withdrawal allowed when KYC low risk).",
+    "context_data": {
+      "withdrawal_amount": 1000,
+      "account_balance": 1000,
+      "kyc_verified": true,
+      "aml_risk_score": 30
+    },
+    "expected_outcome": "APPROVE"
+  },
+  {
+    "natural_language_rule": "REJECT if transaction_time_hour < 6 OR transaction_time_hour >= 23 AND aml_risk_score >= 60 (suspicious late-night high-risk).",
+    "context_data": {
+      "transaction_time_hour": 2,
+      "aml_risk_score": 65
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "ASK_FOR_APPROVAL when beneficiary_country is in ['RU','CN'] AND aml_risk_score between 40 and 79 inclusive.",
+    "context_data": {
+      "beneficiary_country": "RU",
+      "aml_risk_score": 55
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "REJECT loan request if loan_amount_requested > 5 * account_balance (insufficient collateral proxy) or user_credit_score < 500.",
+    "context_data": {
+      "loan_amount_requested": 60000,
+      "account_balance": 10000,
+      "user_credit_score": 650
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "APPROVE loan if user_credit_score >= 720 AND loan_amount_requested <= 2 * account_balance AND aml_risk_score < 40.",
+    "context_data": {
+      "user_credit_score": 740,
+      "loan_amount_requested": 15000,
+      "account_balance": 10000,
+      "aml_risk_score": 10
+    },
+    "expected_outcome": "APPROVE"
+  },
+  {
+    "natural_language_rule": "ASK_FOR_APPROVAL if failed_login_attempts >= 3 AND device_trust_score < 50 even if kyc_verified is true.",
+    "context_data": {
+      "failed_login_attempts": 4,
+      "device_trust_score": 30,
+      "kyc_verified": true
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "REJECT transaction when withdrawal_amount <= 0 (edge case: non-positive amounts invalid).",
+    "context_data": {
+      "withdrawal_amount": 0
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "ASK_FOR_APPROVAL for withdrawals over 80% of account_balance (withdrawal_amount >= 0.8 * account_balance) even if within daily limit and kyc_verified is true.",
+    "context_data": {
+      "withdrawal_amount": 800,
+      "account_balance": 1000,
+      "daily_withdrawal_limit": 2000,
+      "kyc_verified": true
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "REJECT if daily_withdrawal_limit is 0 (edge case: account restricted) irrespective of withdrawal_amount and kyc_verified.",
+    "context_data": {
+      "daily_withdrawal_limit": 0,
+      "withdrawal_amount": 10,
+      "kyc_verified": true
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "APPROVE corporate transfer if is_corporate_account is true AND aml_risk_score < 30 AND beneficiary_country not in ['KP','IR'].",
+    "context_data": {
+      "is_corporate_account": true,
+      "aml_risk_score": 20,
+      "beneficiary_country": "GB"
+    },
+    "expected_outcome": "APPROVE"
+  },
+  {
+    "natural_language_rule": "ASK_FOR_APPROVAL if is_corporate_account is true AND withdrawal_amount > daily_withdrawal_limit * 0.5 AND aml_risk_score between 50 and 79 inclusive.",
+    "context_data": {
+      "is_corporate_account": true,
+      "withdrawal_amount": 6000,
+      "daily_withdrawal_limit": 10000,
+      "aml_risk_score": 60
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "REJECT if user_credit_score < 300 or user_credit_score is missing (edge case low score); treat missing as 0 for this rule.",
+    "context_data": {
+      "user_credit_score": 250
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "APPROVE if user_credit_score >= 650 AND loan_amount_requested <= 0.3 * account_balance (conservative lending).",
+    "context_data": {
+      "user_credit_score": 680,
+      "loan_amount_requested": 3000,
+      "account_balance": 10000
+    },
+    "expected_outcome": "APPROVE"
+  },
+  {
+    "natural_language_rule": "REJECT transfer if beneficiary_country is 'KP' OR aml_risk_score >= 90 OR transaction_time_hour in [0,1,2] AND device_trust_score < 20 (multiple high-risk signals).",
+    "context_data": {
+      "beneficiary_country": "KP",
+      "aml_risk_score": 10,
+      "transaction_time_hour": 10,
+      "device_trust_score": 80
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "ASK_FOR_APPROVAL when withdrawal_amount > account_balance * 0.5 AND failed_login_attempts >= 1 AND device_trust_score < 60.",
+    "context_data": {
+      "withdrawal_amount": 600,
+      "account_balance": 1000,
+      "failed_login_attempts": 1,
+      "device_trust_score": 50
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "REJECT if aml_risk_score > 70 AND beneficiary_country in ['IR','SY','KP'] OR aml_risk_score > 95 regardless of country.",
+    "context_data": {
+      "aml_risk_score": 96,
+      "beneficiary_country": "US"
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "APPROVE if withdrawal_amount < 100 AND kyc_verified is true even if device_trust_score is low (low value transactions allowed).",
+    "context_data": {
+      "withdrawal_amount": 50,
+      "kyc_verified": true,
+      "device_trust_score": 10
+    },
+    "expected_outcome": "APPROVE"
+  },
+  {
+    "natural_language_rule": "ASK_FOR_APPROVAL if transaction_time_hour >= 22 OR transaction_time_hour < 6 AND withdrawal_amount > 500 regardless of aml_risk_score.",
+    "context_data": {
+      "transaction_time_hour": 23,
+      "withdrawal_amount": 600
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "REJECT loan if loan_amount_requested <= 0 (edge case: invalid request) OR user_credit_score < 350.",
+    "context_data": {
+      "loan_amount_requested": 0,
+      "user_credit_score": 700
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "APPROVE small loans when loan_amount_requested <= 1000 AND user_credit_score >= 600 even if aml_risk_score between 40 and 60.",
+    "context_data": {
+      "loan_amount_requested": 1000,
+      "user_credit_score": 610,
+      "aml_risk_score": 50
+    },
+    "expected_outcome": "APPROVE"
+  },
+  {
+    "natural_language_rule": "ASK_FOR_APPROVAL when withdrawal_amount > daily_withdrawal_limit * 0.9 OR withdrawal_amount == daily_withdrawal_limit (near-limit or exact-limit requires human review).",
+    "context_data": {
+      "withdrawal_amount": 900,
+      "daily_withdrawal_limit": 1000
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "REJECT if device_trust_score < 10 AND failed_login_attempts >= 5 (compromised device attack).",
+    "context_data": {
+      "device_trust_score": 5,
+      "failed_login_attempts": 6
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "APPROVE if kyc_verified is true AND aml_risk_score <= 20 AND (beneficiary_country == 'US' OR beneficiary_country == 'GB' OR beneficiary_country == 'CA').",
+    "context_data": {
+      "kyc_verified": true,
+      "aml_risk_score": 15,
+      "beneficiary_country": "GB"
+    },
+    "expected_outcome": "APPROVE"
+  },
+  {
+    "natural_language_rule": "ASK_FOR_APPROVAL when is_corporate_account is false AND withdrawal_amount > 20000 regardless of aml_risk_score (large retail withdrawals need review).",
+    "context_data": {
+      "is_corporate_account": false,
+      "withdrawal_amount": 25000
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "REJECT if beneficiary_country is not a valid 2-letter code (edge case) or beneficiary_country is an empty string.",
+    "context_data": {
+      "beneficiary_country": ""
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "APPROVE if failed_login_attempts == 0 AND device_trust_score >= 80 AND aml_risk_score < 30 for withdrawals up to daily_withdrawal_limit.",
+    "context_data": {
+      "failed_login_attempts": 0,
+      "device_trust_score": 85,
+      "aml_risk_score": 20,
+      "withdrawal_amount": 500,
+      "daily_withdrawal_limit": 1000
+    },
+    "expected_outcome": "APPROVE"
+  },
+  {
+    "natural_language_rule": "ASK_FOR_APPROVAL if user_credit_score between 600 and 699 inclusive AND loan_amount_requested > 0.5 * account_balance.",
+    "context_data": {
+      "user_credit_score": 650,
+      "loan_amount_requested": 6000,
+      "account_balance": 10000
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "REJECT if withdrawal_amount is NaN or not a number (edge case invalid input); treat missing as NaN.",
+    "context_data": {
+      "withdrawal_amount": 0,
+      "account_balance": 1000
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "APPROVE when aml_risk_score <= 35 AND (transaction_time_hour between 9 and 17 inclusive) AND kyc_verified is true.",
+    "context_data": {
+      "aml_risk_score": 20,
+      "transaction_time_hour": 10,
+      "kyc_verified": true
+    },
+    "expected_outcome": "APPROVE"
+  },
+  {
+    "natural_language_rule": "ASK_FOR_APPROVAL when aml_risk_score between 40 and 59 inclusive AND withdrawal_amount > 1000 AND kyc_verified is true.",
+    "context_data": {
+      "aml_risk_score": 45,
+      "withdrawal_amount": 1500,
+      "kyc_verified": true
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "REJECT if withdrawal_amount > daily_withdrawal_limit OR withdrawal_amount > account_balance (either limit exceeded).",
+    "context_data": {
+      "withdrawal_amount": 2000,
+      "daily_withdrawal_limit": 1500,
+      "account_balance": 3000
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "APPROVE if is_corporate_account is false AND aml_risk_score <= 25 AND beneficiary_country in ['AU','NZ'] AND transaction_time_hour between 8 and 18 inclusive.",
+    "context_data": {
+      "is_corporate_account": false,
+      "aml_risk_score": 10,
+      "beneficiary_country": "AU",
+      "transaction_time_hour": 9
+    },
+    "expected_outcome": "APPROVE"
+  },
+  {
+    "natural_language_rule": "ASK_FOR_APPROVAL if aml_risk_score >= 30 AND aml_risk_score <= 49 AND withdrawal_amount > 0.2 * account_balance.",
+    "context_data": {
+      "aml_risk_score": 35,
+      "withdrawal_amount": 300,
+      "account_balance": 1000
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "REJECT loan if user_credit_score < 450 OR loan_amount_requested > 100000 (high amount cap).",
+    "context_data": {
+      "user_credit_score": 400,
+      "loan_amount_requested": 50000
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "APPROVE if withdrawal_amount < 50 AND device_trust_score >= 20 AND failed_login_attempts <= 2 (micro withdrawal safe path).",
+    "context_data": {
+      "withdrawal_amount": 20,
+      "device_trust_score": 25,
+      "failed_login_attempts": 2
+    },
+    "expected_outcome": "APPROVE"
+  },
+  {
+    "natural_language_rule": "ASK_FOR_APPROVAL when beneficiary_country in ['BR','IN','MX'] AND aml_risk_score between 50 and 79 inclusive AND withdrawal_amount > 5000.",
+    "context_data": {
+      "beneficiary_country": "IN",
+      "aml_risk_score": 60,
+      "withdrawal_amount": 6000
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "REJECT if device_trust_score is negative or >100 (edge case invalid score).",
+    "context_data": {
+      "device_trust_score": -5
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "APPROVE internal refunds if beneficiary_country == 'US' AND withdrawal_amount <= account_balance AND aml_risk_score <= 40, even at night.",
+    "context_data": {
+      "beneficiary_country": "US",
+      "withdrawal_amount": 100,
+      "account_balance": 200,
+      "aml_risk_score": 40,
+      "transaction_time_hour": 2
+    },
+    "expected_outcome": "APPROVE"
+  },
+  {
+    "natural_language_rule": "ASK_FOR_APPROVAL when kyc_verified is true AND aml_risk_score >= 70 AND user_credit_score >= 700 (conflicting signals: good credit but high AML risk).",
+    "context_data": {
+      "kyc_verified": true,
+      "aml_risk_score": 75,
+      "user_credit_score": 720
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "REJECT if loan_amount_requested > 10 * account_balance (edge-case extreme leverage) regardless of credit score.",
+    "context_data": {
+      "loan_amount_requested": 110000,
+      "account_balance": 10000,
+      "user_credit_score": 800
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "APPROVE withdrawals equal to or under 10% of account_balance automatically: withdrawal_amount <= 0.1 * account_balance AND aml_risk_score < 60.",
+    "context_data": {
+      "withdrawal_amount": 100,
+      "account_balance": 1000,
+      "aml_risk_score": 50
+    },
+    "expected_outcome": "APPROVE"
+  },
+  {
+    "natural_language_rule": "ASK_FOR_APPROVAL if failed_login_attempts > 0 AND device_trust_score < 40 AND withdrawal_amount > 1000 (suspicious but not outright reject).",
+    "context_data": {
+      "failed_login_attempts": 2,
+      "device_trust_score": 30,
+      "withdrawal_amount": 1500
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "REJECT if kyc_verified is false AND aml_risk_score >= 50 (unverified and moderate-high risk).",
+    "context_data": {
+      "kyc_verified": false,
+      "aml_risk_score": 55
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "APPROVE when is_corporate_account is true AND failed_login_attempts == 0 AND device_trust_score >= 70 AND aml_risk_score <= 40.",
+    "context_data": {
+      "is_corporate_account": true,
+      "failed_login_attempts": 0,
+      "device_trust_score": 80,
+      "aml_risk_score": 30
+    },
+    "expected_outcome": "APPROVE"
+  },
+  {
+    "natural_language_rule": "ASK_FOR_APPROVAL when beneficiary_country in ['RU','CN','IR'] AND aml_risk_score between 30 and 69 inclusive AND withdrawal_amount > 100 (sensitive destination moderate risk).",
+    "context_data": {
+      "beneficiary_country": "CN",
+      "aml_risk_score": 50,
+      "withdrawal_amount": 200
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "REJECT if daily_withdrawal_limit < 0 (edge case invalid config) or account_balance < 0 (negative balance accounts blocked).",
+    "context_data": {
+      "daily_withdrawal_limit": -1,
+      "account_balance": 100
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "APPROVE if withdrawal_amount <= daily_withdrawal_limit AND withdrawal_amount <= account_balance AND aml_risk_score <= 45 AND transaction_time_hour between 7 and 21 inclusive.",
+    "context_data": {
+      "withdrawal_amount": 400,
+      "daily_withdrawal_limit": 1000,
+      "account_balance": 500,
+      "aml_risk_score": 40,
+      "transaction_time_hour": 12
+    },
+    "expected_outcome": "APPROVE"
+  },
+  {
+    "natural_language_rule": "ASK_FOR_APPROVAL for loan if user_credit_score between 550 and 599 inclusive OR loan_amount_requested between 50000 and 100000 inclusive.",
+    "context_data": {
+      "user_credit_score": 580,
+      "loan_amount_requested": 40000
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "REJECT if aml_risk_score is exactly 100 (edge case absolute risk).",
+    "context_data": {
+      "aml_risk_score": 100
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "Approve a cash withdrawal when withdrawal_amount is less than or equal to account_balance and withdrawal_amount is less than or equal to daily_withdrawal_limit and kyc_verified is true",
+    "context_data": {
+      "withdrawal_amount": 500,
+      "account_balance": 1000,
+      "daily_withdrawal_limit": 1000,
+      "kyc_verified": true
+    },
+    "expected_outcome": "APPROVE"
+  },
+  {
+    "natural_language_rule": "Reject a withdrawal when withdrawal_amount is greater than account_balance",
+    "context_data": {
+      "withdrawal_amount": 1200,
+      "account_balance": 1000
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "Ask for approval when withdrawal_amount is greater than daily_withdrawal_limit even if account_balance is sufficient",
+    "context_data": {
+      "withdrawal_amount": 2000,
+      "account_balance": 5000,
+      "daily_withdrawal_limit": 1000
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "Reject corporate account withdrawals when withdrawal_amount is greater than daily_withdrawal_limit multiplied by 5 even if kyc_verified is true and is_corporate_account is true",
+    "context_data": {
+      "withdrawal_amount": 60000,
+      "daily_withdrawal_limit": 10000,
+      "kyc_verified": true,
+      "is_corporate_account": true
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "Reject if aml_risk_score is greater than 80 and beneficiary_country is 'IR' regardless of amounts",
+    "context_data": {
+      "aml_risk_score": 85,
+      "beneficiary_country": "IR"
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "Ask for approval if aml_risk_score is between 60 and 80 inclusive and withdrawal_amount is greater than 10000",
+    "context_data": {
+      "aml_risk_score": 75,
+      "withdrawal_amount": 15000
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "Reject loan request when loan_amount_requested is greater than account_balance times 10 and user_credit_score below 600",
+    "context_data": {
+      "loan_amount_requested": 100000,
+      "account_balance": 9000,
+      "user_credit_score": 580
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "Approve loan if loan_amount_requested is less than or equal to account_balance times 2 and user_credit_score is greater than or equal to 700 and kyc_verified is true",
+    "context_data": {
+      "loan_amount_requested": 15000,
+      "account_balance": 10000,
+      "user_credit_score": 720,
+      "kyc_verified": true
+    },
+    "expected_outcome": "APPROVE"
+  },
+  {
+    "natural_language_rule": "Reject login if failed_login_attempts is greater than or equal to 5 and device_trust_score is less than 40",
+    "context_data": {
+      "failed_login_attempts": 5,
+      "device_trust_score": 30
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "Ask for approval if failed_login_attempts is between 3 and 4 inclusive and device_trust_score is below 60",
+    "context_data": {
+      "failed_login_attempts": 3,
+      "device_trust_score": 50
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "Reject withdrawal when transaction_time_hour is less than 6 or transaction_time_hour is greater than 22 and is_corporate_account is false",
+    "context_data": {
+      "transaction_time_hour": 2,
+      "is_corporate_account": false
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "Approve withdrawal for corporate accounts outside business hours when is_corporate_account is true and transaction_time_hour is less than 6",
+    "context_data": {
+      "is_corporate_account": true,
+      "transaction_time_hour": 3
+    },
+    "expected_outcome": "APPROVE"
+  },
+  {
+    "natural_language_rule": "Reject if withdrawal_amount is 0",
+    "context_data": {
+      "withdrawal_amount": 0
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "Ask for approval when withdrawal_amount equals account_balance and kyc_verified is false",
+    "context_data": {
+      "withdrawal_amount": 1000,
+      "account_balance": 1000,
+      "kyc_verified": false
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "Reject if beneficiary_country is 'KP' or beneficiary_country is 'SY' or aml_risk_score greater than 90",
+    "context_data": {
+      "beneficiary_country": "KP",
+      "aml_risk_score": 50
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "Ask for approval if beneficiary_country is 'US' and aml_risk_score greater than 50 and withdrawal_amount greater than 10000",
+    "context_data": {
+      "beneficiary_country": "US",
+      "aml_risk_score": 65,
+      "withdrawal_amount": 15000
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "Reject loan when user_credit_score below 500 even if loan_amount_requested is small",
+    "context_data": {
+      "user_credit_score": 480,
+      "loan_amount_requested": 1000
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "Approve small loan automatically when loan_amount_requested is less than or equal to 5000 and user_credit_score is greater than or equal to 650 and kyc_verified is true",
+    "context_data": {
+      "loan_amount_requested": 4000,
+      "user_credit_score": 680,
+      "kyc_verified": true
+    },
+    "expected_outcome": "APPROVE"
+  },
+  {
+    "natural_language_rule": "Reject if daily_withdrawal_limit is zero regardless of withdrawal_amount",
+    "context_data": {
+      "daily_withdrawal_limit": 0,
+      "withdrawal_amount": 100
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "Ask for approval if withdrawal_amount is greater than account_balance but is_corporate_account is true and kyc_verified is true",
+    "context_data": {
+      "withdrawal_amount": 1500,
+      "account_balance": 1000,
+      "is_corporate_account": true,
+      "kyc_verified": true
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "Reject when beneficiary_country is an empty string",
+    "context_data": {
+      "beneficiary_country": ""
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "Approve when aml_risk_score is exactly 0 and withdrawal_amount is less than 1000000",
+    "context_data": {
+      "aml_risk_score": 0,
+      "withdrawal_amount": 100000
+    },
+    "expected_outcome": "APPROVE"
+  },
+  {
+    "natural_language_rule": "Reject when device_trust_score is exactly 0 and failed_login_attempts is greater than 0",
+    "context_data": {
+      "device_trust_score": 0,
+      "failed_login_attempts": 1
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "Ask for approval for withdrawals exactly equal to daily_withdrawal_limit if kyc_verified is false",
+    "context_data": {
+      "withdrawal_amount": 1000,
+      "daily_withdrawal_limit": 1000,
+      "kyc_verified": false
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "Reject loan if loan_amount_requested is less than or equal to 0",
+    "context_data": {
+      "loan_amount_requested": -100
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "Approve withdrawal when withdrawal_amount is less than 100 and device_trust_score is greater than 80",
+    "context_data": {
+      "withdrawal_amount": 50,
+      "device_trust_score": 90
+    },
+    "expected_outcome": "APPROVE"
+  },
+  {
+    "natural_language_rule": "Ask for approval when aml_risk_score is greater than or equal to 50 and beneficiary_country is 'GB' and withdrawal_amount greater than 20000",
+    "context_data": {
+      "aml_risk_score": 55,
+      "beneficiary_country": "GB",
+      "withdrawal_amount": 25000
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "Reject if user_credit_score is greater than 850 or user_credit_score is less than 300",
+    "context_data": {
+      "user_credit_score": 900
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "Ask for approval when failed_login_attempts equals 0 but device_trust_score is less than 20",
+    "context_data": {
+      "failed_login_attempts": 0,
+      "device_trust_score": 10
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "Reject withdrawal when account_balance minus withdrawal_amount is less than -1000 regardless of is_corporate_account",
+    "context_data": {
+      "account_balance": 0,
+      "withdrawal_amount": 2000
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "Approve corporate overdraft when account_balance minus withdrawal_amount is greater than or equal to -1000 and is_corporate_account is true",
+    "context_data": {
+      "account_balance": 0,
+      "withdrawal_amount": 800,
+      "is_corporate_account": true
+    },
+    "expected_outcome": "APPROVE"
+  },
+  {
+    "natural_language_rule": "Reject any withdrawal when kyc_verified is false and aml_risk_score is greater than 70",
+    "context_data": {
+      "kyc_verified": false,
+      "aml_risk_score": 75
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "Ask for approval when kyc_verified is false and withdrawal_amount is less than or equal to account_balance and aml_risk_score is between 40 and 70 inclusive",
+    "context_data": {
+      "kyc_verified": false,
+      "withdrawal_amount": 500,
+      "account_balance": 1000,
+      "aml_risk_score": 50
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "Reject loan when loan_amount_requested is greater than account_balance multiplied by 5 or user_credit_score is less than 550",
+    "context_data": {
+      "loan_amount_requested": 60000,
+      "account_balance": 10000,
+      "user_credit_score": 700
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "Approve loan when loan_amount_requested is equal to 0 and user_credit_score is greater than or equal to 300",
+    "context_data": {
+      "loan_amount_requested": 0,
+      "user_credit_score": 700
+    },
+    "expected_outcome": "APPROVE"
+  },
+  {
+    "natural_language_rule": "Reject when transaction_time_hour is not between 0 and 23 inclusive (invalid transaction_time_hour)",
+    "context_data": {
+      "transaction_time_hour": 24
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "Ask for approval when beneficiary_country is 'CN' and aml_risk_score is greater than or equal to 40 and withdrawal_amount is greater than 5000",
+    "context_data": {
+      "beneficiary_country": "CN",
+      "aml_risk_score": 45,
+      "withdrawal_amount": 6000
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "Reject when beneficiary_country is 'RU' and aml_risk_score is greater than or equal to 70",
+    "context_data": {
+      "beneficiary_country": "RU",
+      "aml_risk_score": 75
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "Approve loan when user_credit_score is between 600 and 649 inclusive and loan_amount_requested is less than or equal to 10000 and kyc_verified is true",
+    "context_data": {
+      "user_credit_score": 620,
+      "loan_amount_requested": 8000,
+      "kyc_verified": true
+    },
+    "expected_outcome": "APPROVE"
+  },
+  {
+    "natural_language_rule": "Ask for approval if failed_login_attempts is greater than 10 and device_trust_score is greater than or equal to 80",
+    "context_data": {
+      "failed_login_attempts": 11,
+      "device_trust_score": 85
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "Reject if daily_withdrawal_limit is less than withdrawal_amount and is_corporate_account is false even when account_balance is sufficient",
+    "context_data": {
+      "daily_withdrawal_limit": 500,
+      "withdrawal_amount": 600,
+      "account_balance": 10000,
+      "is_corporate_account": false
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "Approve micro withdrawal when withdrawal_amount is equal to 1 and device_trust_score is greater than or equal to 0",
+    "context_data": {
+      "withdrawal_amount": 1,
+      "device_trust_score": 50
+    },
+    "expected_outcome": "APPROVE"
+  },
+  {
+    "natural_language_rule": "Ask for approval when loan_amount_requested is equal to account_balance and user_credit_score is between 650 and 699 inclusive",
+    "context_data": {
+      "loan_amount_requested": 10000,
+      "account_balance": 10000,
+      "user_credit_score": 670
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "Reject if aml_risk_score is greater than 100 or aml_risk_score is less than 0 (invalid aml_risk_score)",
+    "context_data": {
+      "aml_risk_score": 150
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "Approve when is_corporate_account is true and aml_risk_score is less than 40 and withdrawal_amount is less than or equal to daily_withdrawal_limit multiplied by 10",
+    "context_data": {
+      "is_corporate_account": true,
+      "aml_risk_score": 35,
+      "withdrawal_amount": 90000,
+      "daily_withdrawal_limit": 10000
+    },
+    "expected_outcome": "APPROVE"
+  },
+  {
+    "natural_language_rule": "Ask for approval when withdrawal_amount is greater than or equal to account_balance multiplied by 0.9 and kyc_verified is true",
+    "context_data": {
+      "withdrawal_amount": 950,
+      "account_balance": 1000,
+      "kyc_verified": true
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "Reject loan when user_credit_score is exactly 300 and loan_amount_requested is greater than 1000",
+    "context_data": {
+      "user_credit_score": 300,
+      "loan_amount_requested": 2000
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "Approve withdrawal when failed_login_attempts is 0 and device_trust_score is greater than 90 and aml_risk_score is less than 10",
+    "context_data": {
+      "failed_login_attempts": 0,
+      "device_trust_score": 95,
+      "aml_risk_score": 5
+    },
+    "expected_outcome": "APPROVE"
+  },
+  {
+    "natural_language_rule": "Ask for approval when beneficiary_country is 'AE' and withdrawal_amount is greater than 25000 and aml_risk_score is greater than or equal to 30",
+    "context_data": {
+      "beneficiary_country": "AE",
+      "withdrawal_amount": 30000,
+      "aml_risk_score": 30
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "Reject suspiciously large withdrawal when withdrawal_amount is greater than 10000000",
+    "context_data": {
+      "withdrawal_amount": 20000000
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "If withdrawal_amount > account_balance then REJECT.",
+    "context_data": {
+      "withdrawal_amount": 1500,
+      "account_balance": 1000
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "If withdrawal_amount <= account_balance AND withdrawal_amount <= daily_withdrawal_limit then APPROVE.",
+    "context_data": {
+      "withdrawal_amount": 500,
+      "account_balance": 1000,
+      "daily_withdrawal_limit": 1000
+    },
+    "expected_outcome": "APPROVE"
+  },
+  {
+    "natural_language_rule": "If withdrawal_amount > daily_withdrawal_limit then ASK_FOR_APPROVAL.",
+    "context_data": {
+      "withdrawal_amount": 1200,
+      "daily_withdrawal_limit": 1000,
+      "account_balance": 5000
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "If is_corporate_account is true AND withdrawal_amount <= daily_withdrawal_limit * 2 then APPROVE, otherwise ASK_FOR_APPROVAL.",
+    "context_data": {
+      "is_corporate_account": true,
+      "withdrawal_amount": 1800,
+      "daily_withdrawal_limit": 1000
+    },
+    "expected_outcome": "APPROVE"
+  },
+  {
+    "natural_language_rule": "If kyc_verified is false AND withdrawal_amount > 0 then ASK_FOR_APPROVAL.",
+    "context_data": {
+      "kyc_verified": false,
+      "withdrawal_amount": 50
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "If transaction_time_hour < 6 OR transaction_time_hour >= 23 AND withdrawal_amount > 1000 then ASK_FOR_APPROVAL.",
+    "context_data": {
+      "transaction_time_hour": 23,
+      "withdrawal_amount": 1500
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "If (beneficiary_country is \"IR\" OR beneficiary_country is \"KP\") AND aml_risk_score > 40 then REJECT.",
+    "context_data": {
+      "beneficiary_country": "IR",
+      "aml_risk_score": 45
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "If aml_risk_score >= 90 then REJECT.",
+    "context_data": {
+      "aml_risk_score": 90
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "If loan_amount_requested > account_balance * 2 OR user_credit_score < 550 then REJECT.",
+    "context_data": {
+      "loan_amount_requested": 3000,
+      "account_balance": 1000,
+      "user_credit_score": 650
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "If user_credit_score >= 700 AND loan_amount_requested <= account_balance * 0.5 then APPROVE.",
+    "context_data": {
+      "user_credit_score": 720,
+      "loan_amount_requested": 400,
+      "account_balance": 1000
+    },
+    "expected_outcome": "APPROVE"
+  },
+  {
+    "natural_language_rule": "If failed_login_attempts > 5 AND device_trust_score < 40 then REJECT.",
+    "context_data": {
+      "failed_login_attempts": 6,
+      "device_trust_score": 30,
+      "withdrawal_amount": 10
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "If withdrawal_amount == 0 then REJECT.",
+    "context_data": {
+      "withdrawal_amount": 0
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "If daily_withdrawal_limit == 0 AND withdrawal_amount > 0 then ASK_FOR_APPROVAL.",
+    "context_data": {
+      "daily_withdrawal_limit": 0,
+      "withdrawal_amount": 10,
+      "account_balance": 100
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "If is_corporate_account is false AND kyc_verified is true AND aml_risk_score < 50 AND withdrawal_amount <= daily_withdrawal_limit AND transaction_time_hour >= 8 AND transaction_time_hour <= 20 then APPROVE.",
+    "context_data": {
+      "is_corporate_account": false,
+      "kyc_verified": true,
+      "aml_risk_score": 30,
+      "withdrawal_amount": 200,
+      "daily_withdrawal_limit": 500,
+      "transaction_time_hour": 15
+    },
+    "expected_outcome": "APPROVE"
+  },
+  {
+    "natural_language_rule": "If (beneficiary_country is \"US\" OR beneficiary_country is \"CA\") AND aml_risk_score < 60 AND withdrawal_amount <= daily_withdrawal_limit then APPROVE.",
+    "context_data": {
+      "beneficiary_country": "US",
+      "aml_risk_score": 30,
+      "withdrawal_amount": 100,
+      "daily_withdrawal_limit": 500
+    },
+    "expected_outcome": "APPROVE"
+  },
+  {
+    "natural_language_rule": "If transaction_time_hour == 0 AND withdrawal_amount > 100 then ASK_FOR_APPROVAL.",
+    "context_data": {
+      "transaction_time_hour": 0,
+      "withdrawal_amount": 200
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "If (beneficiary_country is \"SY\" OR beneficiary_country is \"IR\") AND aml_risk_score > 30 AND (device_trust_score <= 20 OR failed_login_attempts >= 3) then REJECT.",
+    "context_data": {
+      "beneficiary_country": "SY",
+      "aml_risk_score": 35,
+      "device_trust_score": 15,
+      "failed_login_attempts": 1
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "If user_credit_score >= 600 AND user_credit_score <= 699 AND loan_amount_requested <= account_balance then ASK_FOR_APPROVAL.",
+    "context_data": {
+      "user_credit_score": 650,
+      "loan_amount_requested": 500,
+      "account_balance": 1000
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "If user_credit_score < 400 AND loan_amount_requested > account_balance then REJECT.",
+    "context_data": {
+      "user_credit_score": 390,
+      "loan_amount_requested": 2000,
+      "account_balance": 1000
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "If aml_risk_score >= 50 AND aml_risk_score <= 89 AND beneficiary_country != \"US\" AND beneficiary_country != \"CA\" AND beneficiary_country != \"GB\" then ASK_FOR_APPROVAL.",
+    "context_data": {
+      "aml_risk_score": 60,
+      "beneficiary_country": "RU"
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "If kyc_verified is true AND failed_login_attempts == 0 AND device_trust_score >= 80 AND withdrawal_amount <= 1000 then APPROVE.",
+    "context_data": {
+      "kyc_verified": true,
+      "failed_login_attempts": 0,
+      "device_trust_score": 85,
+      "withdrawal_amount": 500,
+      "daily_withdrawal_limit": 2000
+    },
+    "expected_outcome": "APPROVE"
+  },
+  {
+    "natural_language_rule": "If is_corporate_account is true AND aml_risk_score > 70 then ASK_FOR_APPROVAL.",
+    "context_data": {
+      "is_corporate_account": true,
+      "aml_risk_score": 75,
+      "withdrawal_amount": 100
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "If transaction_time_hour >= 21 AND transaction_time_hour <= 23 AND withdrawal_amount > 2000 then ASK_FOR_APPROVAL.",
+    "context_data": {
+      "transaction_time_hour": 21,
+      "withdrawal_amount": 2500
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "If withdrawal_amount == daily_withdrawal_limit AND kyc_verified is true then APPROVE.",
+    "context_data": {
+      "withdrawal_amount": 1000,
+      "daily_withdrawal_limit": 1000,
+      "kyc_verified": true,
+      "account_balance": 2000
+    },
+    "expected_outcome": "APPROVE"
+  },
+  {
+    "natural_language_rule": "If account_balance - withdrawal_amount < 50 then ASK_FOR_APPROVAL.",
+    "context_data": {
+      "account_balance": 550,
+      "withdrawal_amount": 510
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "If withdrawal_amount > 10000 AND NOT (is_corporate_account is true AND aml_risk_score < 30 AND kyc_verified is true) then REJECT, else ASK_FOR_APPROVAL.",
+    "context_data": {
+      "withdrawal_amount": 15000,
+      "is_corporate_account": true,
+      "aml_risk_score": 25,
+      "kyc_verified": true
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "If aml_risk_score == 50 AND beneficiary_country == \"GB\" then APPROVE.",
+    "context_data": {
+      "aml_risk_score": 50,
+      "beneficiary_country": "GB"
+    },
+    "expected_outcome": "APPROVE"
+  },
+  {
+    "natural_language_rule": "If failed_login_attempts > 0 AND device_trust_score < 50 AND withdrawal_amount > 200 then ASK_FOR_APPROVAL.",
+    "context_data": {
+      "failed_login_attempts": 1,
+      "device_trust_score": 45,
+      "withdrawal_amount": 250
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "If user_credit_score >= 800 AND loan_amount_requested <= 100000 then APPROVE.",
+    "context_data": {
+      "user_credit_score": 820,
+      "loan_amount_requested": 50000
+    },
+    "expected_outcome": "APPROVE"
+  },
+  {
+    "natural_language_rule": "If loan_amount_requested == 0 then REJECT.",
+    "context_data": {
+      "loan_amount_requested": 0
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "If withdrawal_amount <= account_balance AND aml_risk_score < 20 AND beneficiary_country == \"US\" then APPROVE.",
+    "context_data": {
+      "withdrawal_amount": 200,
+      "account_balance": 1000,
+      "aml_risk_score": 10,
+      "beneficiary_country": "US"
+    },
+    "expected_outcome": "APPROVE"
+  },
+  {
+    "natural_language_rule": "If beneficiary_country == \"GB\" AND transaction_time_hour < 8 AND withdrawal_amount > 500 then ASK_FOR_APPROVAL.",
+    "context_data": {
+      "beneficiary_country": "GB",
+      "transaction_time_hour": 7,
+      "withdrawal_amount": 600
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "If is_corporate_account is false AND withdrawal_amount > daily_withdrawal_limit * 0.5 AND aml_risk_score > 60 then ASK_FOR_APPROVAL.",
+    "context_data": {
+      "is_corporate_account": false,
+      "withdrawal_amount": 600,
+      "daily_withdrawal_limit": 1000,
+      "aml_risk_score": 65
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "If device_trust_score == 100 AND failed_login_attempts == 0 AND kyc_verified is true then APPROVE.",
+    "context_data": {
+      "device_trust_score": 100,
+      "failed_login_attempts": 0,
+      "kyc_verified": true,
+      "transaction_time_hour": 2,
+      "withdrawal_amount": 50
+    },
+    "expected_outcome": "APPROVE"
+  },
+  {
+    "natural_language_rule": "If beneficiary_country == \"RU\" AND aml_risk_score >= 70 then REJECT.",
+    "context_data": {
+      "beneficiary_country": "RU",
+      "aml_risk_score": 70
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "If (withdrawal_amount <= daily_withdrawal_limit AND withdrawal_amount <= account_balance) OR (is_corporate_account is true AND kyc_verified is true) then APPROVE.",
+    "context_data": {
+      "is_corporate_account": true,
+      "kyc_verified": true,
+      "withdrawal_amount": 5000,
+      "account_balance": 1000,
+      "daily_withdrawal_limit": 1000
+    },
+    "expected_outcome": "APPROVE"
+  },
+  {
+    "natural_language_rule": "If daily_withdrawal_limit < 0 then REJECT.",
+    "context_data": {
+      "daily_withdrawal_limit": -100,
+      "withdrawal_amount": 10
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "If failed_login_attempts >= 10 then REJECT.",
+    "context_data": {
+      "failed_login_attempts": 10
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "If user_credit_score >= 300 AND user_credit_score <= 499 AND loan_amount_requested > 1000 then ASK_FOR_APPROVAL.",
+    "context_data": {
+      "user_credit_score": 400,
+      "loan_amount_requested": 2000
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "If aml_risk_score < 10 AND device_trust_score > 90 AND kyc_verified is true AND withdrawal_amount <= daily_withdrawal_limit then APPROVE.",
+    "context_data": {
+      "aml_risk_score": 5,
+      "device_trust_score": 95,
+      "kyc_verified": true,
+      "withdrawal_amount": 900,
+      "daily_withdrawal_limit": 1000,
+      "account_balance": 5000
+    },
+    "expected_outcome": "APPROVE"
+  },
+  {
+    "natural_language_rule": "If withdrawal_amount == account_balance AND account_balance == 0 then REJECT.",
+    "context_data": {
+      "withdrawal_amount": 0,
+      "account_balance": 0
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "If beneficiary_country == \"CA\" AND aml_risk_score <= 30 AND withdrawal_amount <= daily_withdrawal_limit then APPROVE.",
+    "context_data": {
+      "beneficiary_country": "CA",
+      "aml_risk_score": 30,
+      "withdrawal_amount": 300,
+      "daily_withdrawal_limit": 500,
+      "account_balance": 1000
+    },
+    "expected_outcome": "APPROVE"
+  },
+  {
+    "natural_language_rule": "If loan_amount_requested > 500000 then REJECT.",
+    "context_data": {
+      "loan_amount_requested": 600000
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "If (failed_login_attempts > 3 AND device_trust_score < 30) OR aml_risk_score > 85 then REJECT.",
+    "context_data": {
+      "failed_login_attempts": 2,
+      "device_trust_score": 20,
+      "aml_risk_score": 90
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "If kyc_verified is false AND withdrawal_amount > 1000 then REJECT.",
+    "context_data": {
+      "kyc_verified": false,
+      "withdrawal_amount": 1500
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "If is_corporate_account is true AND daily_withdrawal_limit >= 10000 AND aml_risk_score < 40 AND withdrawal_amount <= daily_withdrawal_limit then APPROVE.",
+    "context_data": {
+      "is_corporate_account": true,
+      "daily_withdrawal_limit": 15000,
+      "aml_risk_score": 30,
+      "withdrawal_amount": 10000,
+      "account_balance": 20000
+    },
+    "expected_outcome": "APPROVE"
+  },
+  {
+    "natural_language_rule": "If transaction_time_hour == 24 then REJECT.",
+    "context_data": {
+      "transaction_time_hour": 24,
+      "withdrawal_amount": 10
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "If beneficiary_country != \"US\" AND aml_risk_score > 75 AND withdrawal_amount > 500 then REJECT.",
+    "context_data": {
+      "beneficiary_country": "BR",
+      "aml_risk_score": 80,
+      "withdrawal_amount": 600
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "If user_credit_score >= 650 AND loan_amount_requested <= account_balance * 1.5 then APPROVE.",
+    "context_data": {
+      "user_credit_score": 660,
+      "loan_amount_requested": 1200,
+      "account_balance": 1000
+    },
+    "expected_outcome": "APPROVE"
+  },
+  {
+    "natural_language_rule": "If withdrawal_amount > account_balance AND is_corporate_account is true AND kyc_verified is true then ASK_FOR_APPROVAL.",
+    "context_data": {
+      "withdrawal_amount": 1500,
+      "account_balance": 1000,
+      "is_corporate_account": true,
+      "kyc_verified": true
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "If withdrawal_amount <= account_balance AND withdrawal_amount <= daily_withdrawal_limit then APPROVE else REJECT",
+    "context_data": {
+      "withdrawal_amount": 200,
+      "account_balance": 500,
+      "daily_withdrawal_limit": 1000
+    },
+    "expected_outcome": "APPROVE"
+  },
+  {
+    "natural_language_rule": "If withdrawal_amount > account_balance then REJECT else APPROVE",
+    "context_data": {
+      "withdrawal_amount": 600,
+      "account_balance": 500
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "If withdrawal_amount == daily_withdrawal_limit then ASK_FOR_APPROVAL else APPROVE",
+    "context_data": {
+      "withdrawal_amount": 1000,
+      "daily_withdrawal_limit": 1000,
+      "account_balance": 5000
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "If is_corporate_account == true AND withdrawal_amount > 10000 then ASK_FOR_APPROVAL else APPROVE",
+    "context_data": {
+      "is_corporate_account": true,
+      "withdrawal_amount": 15000,
+      "account_balance": 50000,
+      "daily_withdrawal_limit": 20000
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "If is_corporate_account == false AND withdrawal_amount > 5000 then ASK_FOR_APPROVAL else APPROVE",
+    "context_data": {
+      "is_corporate_account": false,
+      "withdrawal_amount": 6000,
+      "account_balance": 20000,
+      "daily_withdrawal_limit": 10000
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "If (withdrawal_amount > 1000 OR aml_risk_score > 70) AND kyc_verified == false then REJECT else if kyc_verified == true AND aml_risk_score < 50 then APPROVE else ASK_FOR_APPROVAL",
+    "context_data": {
+      "withdrawal_amount": 1500,
+      "aml_risk_score": 30,
+      "kyc_verified": false
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "If aml_risk_score >= 90 OR (beneficiary_country == 'IR' OR beneficiary_country == 'KP') then REJECT else ASK_FOR_APPROVAL",
+    "context_data": {
+      "aml_risk_score": 85,
+      "beneficiary_country": "IR"
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "If (transaction_time_hour < 6 OR transaction_time_hour >= 23) AND withdrawal_amount > 1000 then ASK_FOR_APPROVAL else APPROVE",
+    "context_data": {
+      "transaction_time_hour": 1,
+      "withdrawal_amount": 2000,
+      "account_balance": 5000,
+      "daily_withdrawal_limit": 10000
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "If failed_login_attempts > 5 AND device_trust_score < 30 then REJECT else ASK_FOR_APPROVAL",
+    "context_data": {
+      "failed_login_attempts": 6,
+      "device_trust_score": 25
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "If withdrawal_amount == 0 then REJECT else APPROVE",
+    "context_data": {
+      "withdrawal_amount": 0,
+      "account_balance": 100
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "If loan_amount_requested <= account_balance * 2 AND user_credit_score >= 700 then APPROVE else ASK_FOR_APPROVAL",
+    "context_data": {
+      "loan_amount_requested": 800,
+      "account_balance": 500,
+      "user_credit_score": 720
+    },
+    "expected_outcome": "APPROVE"
+  },
+  {
+    "natural_language_rule": "If loan_amount_requested > account_balance * 5 OR user_credit_score < 550 then REJECT else ASK_FOR_APPROVAL",
+    "context_data": {
+      "loan_amount_requested": 4000,
+      "account_balance": 500,
+      "user_credit_score": 600
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "If (beneficiary_country == 'US' OR beneficiary_country == 'CA') AND aml_risk_score < 60 then APPROVE else ASK_FOR_APPROVAL",
+    "context_data": {
+      "beneficiary_country": "US",
+      "aml_risk_score": 40
+    },
+    "expected_outcome": "APPROVE"
+  },
+  {
+    "natural_language_rule": "If kyc_verified == true AND aml_risk_score <= 40 AND device_trust_score >= 70 AND withdrawal_amount <= account_balance AND withdrawal_amount <= daily_withdrawal_limit then APPROVE else ASK_FOR_APPROVAL",
+    "context_data": {
+      "kyc_verified": true,
+      "aml_risk_score": 35,
+      "device_trust_score": 80,
+      "withdrawal_amount": 300,
+      "account_balance": 1000,
+      "daily_withdrawal_limit": 500
+    },
+    "expected_outcome": "APPROVE"
+  },
+  {
+    "natural_language_rule": "If aml_risk_score >= 60 AND aml_risk_score <= 80 AND withdrawal_amount > 10000 then ASK_FOR_APPROVAL else APPROVE",
+    "context_data": {
+      "aml_risk_score": 70,
+      "withdrawal_amount": 15000,
+      "account_balance": 50000
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "If transaction_time_hour == 2 AND failed_login_attempts >= 3 then REJECT else ASK_FOR_APPROVAL",
+    "context_data": {
+      "transaction_time_hour": 2,
+      "failed_login_attempts": 3
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "If beneficiary_country == 'GB' AND is_corporate_account == true AND aml_risk_score < 50 then APPROVE else ASK_FOR_APPROVAL",
+    "context_data": {
+      "beneficiary_country": "GB",
+      "is_corporate_account": true,
+      "aml_risk_score": 45,
+      "withdrawal_amount": 8000,
+      "account_balance": 20000
+    },
+    "expected_outcome": "APPROVE"
+  },
+  {
+    "natural_language_rule": "If daily_withdrawal_limit == 0 then ASK_FOR_APPROVAL else APPROVE",
+    "context_data": {
+      "daily_withdrawal_limit": 0,
+      "withdrawal_amount": 100
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "If user_credit_score >= 800 AND loan_amount_requested <= 10000 then APPROVE else ASK_FOR_APPROVAL",
+    "context_data": {
+      "user_credit_score": 805,
+      "loan_amount_requested": 9000
+    },
+    "expected_outcome": "APPROVE"
+  },
+  {
+    "natural_language_rule": "If user_credit_score < 600 AND loan_amount_requested > 5000 then REJECT else ASK_FOR_APPROVAL",
+    "context_data": {
+      "user_credit_score": 580,
+      "loan_amount_requested": 6000
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "If withdrawal_amount > account_balance OR withdrawal_amount <= 0 then REJECT else APPROVE",
+    "context_data": {
+      "withdrawal_amount": -50,
+      "account_balance": 1000
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "If kyc_verified == false AND aml_risk_score > 50 then REJECT else ASK_FOR_APPROVAL",
+    "context_data": {
+      "kyc_verified": false,
+      "aml_risk_score": 65
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "If failed_login_attempts >= 3 AND failed_login_attempts <= 5 AND device_trust_score < 50 then ASK_FOR_APPROVAL else APPROVE",
+    "context_data": {
+      "failed_login_attempts": 4,
+      "device_trust_score": 40
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "If (beneficiary_country == 'SY' OR beneficiary_country == 'IR' OR beneficiary_country == 'KP' OR beneficiary_country == 'CU') OR aml_risk_score >= 85 then REJECT else ASK_FOR_APPROVAL",
+    "context_data": {
+      "beneficiary_country": "SY",
+      "aml_risk_score": 30
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "If is_corporate_account == true AND withdrawal_amount <= 10000 AND kyc_verified == true then APPROVE else ASK_FOR_APPROVAL",
+    "context_data": {
+      "is_corporate_account": true,
+      "withdrawal_amount": 10000,
+      "kyc_verified": true,
+      "account_balance": 20000
+    },
+    "expected_outcome": "APPROVE"
+  },
+  {
+    "natural_language_rule": "If (withdrawal_amount <= daily_withdrawal_limit AND withdrawal_amount <= account_balance) AND NOT (aml_risk_score > 80 OR failed_login_attempts > 7) then APPROVE else ASK_FOR_APPROVAL",
+    "context_data": {
+      "withdrawal_amount": 400,
+      "daily_withdrawal_limit": 1000,
+      "account_balance": 500,
+      "aml_risk_score": 50,
+      "failed_login_attempts": 1
+    },
+    "expected_outcome": "APPROVE"
+  },
+  {
+    "natural_language_rule": "If device_trust_score == 100 AND failed_login_attempts == 0 then APPROVE regardless of aml_risk_score else ASK_FOR_APPROVAL",
+    "context_data": {
+      "device_trust_score": 100,
+      "failed_login_attempts": 0,
+      "aml_risk_score": 60,
+      "withdrawal_amount": 5000,
+      "account_balance": 6000
+    },
+    "expected_outcome": "APPROVE"
+  },
+  {
+    "natural_language_rule": "If loan_amount_requested == 0 then REJECT else ASK_FOR_APPROVAL",
+    "context_data": {
+      "loan_amount_requested": 0,
+      "user_credit_score": 700
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "If (user_credit_score >= 700 AND aml_risk_score < 50) OR (user_credit_score >= 650 AND aml_risk_score < 30) then APPROVE else ASK_FOR_APPROVAL",
+    "context_data": {
+      "user_credit_score": 710,
+      "aml_risk_score": 45,
+      "loan_amount_requested": 20000,
+      "account_balance": 50000
+    },
+    "expected_outcome": "APPROVE"
+  },
+  {
+    "natural_language_rule": "If beneficiary_country == '' then ASK_FOR_APPROVAL else APPROVE",
+    "context_data": {
+      "beneficiary_country": "",
+      "aml_risk_score": 20
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "If transaction_time_hour < 0 OR transaction_time_hour > 23 then REJECT else APPROVE",
+    "context_data": {
+      "transaction_time_hour": 25,
+      "withdrawal_amount": 100
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "If aml_risk_score == 100 then REJECT else ASK_FOR_APPROVAL",
+    "context_data": {
+      "aml_risk_score": 100,
+      "withdrawal_amount": 10
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "If withdrawal_amount > daily_withdrawal_limit AND is_corporate_account == false then REJECT else if withdrawal_amount > daily_withdrawal_limit AND is_corporate_account == true then ASK_FOR_APPROVAL else APPROVE",
+    "context_data": {
+      "withdrawal_amount": 1500,
+      "daily_withdrawal_limit": 1000,
+      "is_corporate_account": false,
+      "account_balance": 5000
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "If kyc_verified == true AND failed_login_attempts == 0 AND device_trust_score >= 80 AND aml_risk_score < 40 then APPROVE else ASK_FOR_APPROVAL",
+    "context_data": {
+      "kyc_verified": true,
+      "failed_login_attempts": 0,
+      "device_trust_score": 85,
+      "aml_risk_score": 30,
+      "withdrawal_amount": 1200,
+      "account_balance": 5000
+    },
+    "expected_outcome": "APPROVE"
+  },
+  {
+    "natural_language_rule": "If loan_amount_requested > 100000 then ASK_FOR_APPROVAL else APPROVE",
+    "context_data": {
+      "loan_amount_requested": 150000,
+      "user_credit_score": 750
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "If account_balance == withdrawal_amount AND aml_risk_score < 30 then APPROVE else ASK_FOR_APPROVAL",
+    "context_data": {
+      "account_balance": 500,
+      "withdrawal_amount": 500,
+      "aml_risk_score": 20
+    },
+    "expected_outcome": "APPROVE"
+  },
+  {
+    "natural_language_rule": "If user_credit_score >= 300 AND user_credit_score <= 499 then REJECT else ASK_FOR_APPROVAL",
+    "context_data": {
+      "user_credit_score": 450,
+      "loan_amount_requested": 1000
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "If failed_login_attempts == 5 AND device_trust_score == 50 then ASK_FOR_APPROVAL else APPROVE",
+    "context_data": {
+      "failed_login_attempts": 5,
+      "device_trust_score": 50
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "If beneficiary_country == 'RU' AND aml_risk_score >= 70 then REJECT else ASK_FOR_APPROVAL",
+    "context_data": {
+      "beneficiary_country": "RU",
+      "aml_risk_score": 75
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "If withdrawal_amount < 100 AND aml_risk_score < 80 then APPROVE else ASK_FOR_APPROVAL",
+    "context_data": {
+      "withdrawal_amount": 50,
+      "aml_risk_score": 50,
+      "account_balance": 500
+    },
+    "expected_outcome": "APPROVE"
+  },
+  {
+    "natural_language_rule": "If transaction_time_hour >= 0 AND transaction_time_hour < 9 AND withdrawal_amount > 2000 then ASK_FOR_APPROVAL else APPROVE",
+    "context_data": {
+      "transaction_time_hour": 5,
+      "withdrawal_amount": 3000,
+      "account_balance": 10000
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "If kyc_verified == true AND (beneficiary_country == 'US' OR beneficiary_country == 'CA') AND aml_risk_score < 60 then APPROVE else REJECT",
+    "context_data": {
+      "kyc_verified": true,
+      "beneficiary_country": "CA",
+      "aml_risk_score": 50,
+      "withdrawal_amount": 5000,
+      "account_balance": 10000
+    },
+    "expected_outcome": "APPROVE"
+  },
+  {
+    "natural_language_rule": "If device_trust_score < 20 OR failed_login_attempts > 10 then REJECT else ASK_FOR_APPROVAL",
+    "context_data": {
+      "device_trust_score": 15,
+      "failed_login_attempts": 2
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "If (loan_amount_requested <= account_balance * 3 AND user_credit_score >= 680) AND NOT (aml_risk_score > 75) then APPROVE else ASK_FOR_APPROVAL",
+    "context_data": {
+      "loan_amount_requested": 30000,
+      "account_balance": 15000,
+      "user_credit_score": 690,
+      "aml_risk_score": 60
+    },
+    "expected_outcome": "APPROVE"
+  },
+  {
+    "natural_language_rule": "If withdrawal_amount > 10000 AND aml_risk_score < 20 AND kyc_verified == true then APPROVE else ASK_FOR_APPROVAL",
+    "context_data": {
+      "withdrawal_amount": 15000,
+      "aml_risk_score": 10,
+      "kyc_verified": true,
+      "account_balance": 20000
+    },
+    "expected_outcome": "APPROVE"
+  },
+  {
+    "natural_language_rule": "If beneficiary_country == 'IR' AND (aml_risk_score >= 50 OR failed_login_attempts > 2) then REJECT else ASK_FOR_APPROVAL",
+    "context_data": {
+      "beneficiary_country": "IR",
+      "aml_risk_score": 55,
+      "failed_login_attempts": 1
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "If daily_withdrawal_limit < withdrawal_amount AND account_balance >= withdrawal_amount AND is_corporate_account == true then ASK_FOR_APPROVAL else REJECT",
+    "context_data": {
+      "daily_withdrawal_limit": 500,
+      "withdrawal_amount": 1000,
+      "account_balance": 2000,
+      "is_corporate_account": true
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "If user_credit_score >= 720 AND loan_amount_requested <= account_balance * 1.5 AND aml_risk_score <= 40 then APPROVE else ASK_FOR_APPROVAL",
+    "context_data": {
+      "user_credit_score": 730,
+      "loan_amount_requested": 15000,
+      "account_balance": 12000,
+      "aml_risk_score": 35
+    },
+    "expected_outcome": "APPROVE"
+  },
+  {
+    "natural_language_rule": "If failed_login_attempts == 0 AND device_trust_score < 30 then ASK_FOR_APPROVAL else APPROVE",
+    "context_data": {
+      "failed_login_attempts": 0,
+      "device_trust_score": 25,
+      "withdrawal_amount": 50,
+      "account_balance": 100
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "If beneficiary_country == '' AND aml_risk_score <= 10 AND withdrawal_amount < 50 then APPROVE else ASK_FOR_APPROVAL",
+    "context_data": {
+      "beneficiary_country": "",
+      "aml_risk_score": 5,
+      "withdrawal_amount": 10,
+      "account_balance": 20
+    },
+    "expected_outcome": "APPROVE"
+  },
+  {
+    "natural_language_rule": "If withdrawal_amount is less than or equal to account_balance then APPROVE the withdrawal; otherwise REJECT.",
+    "context_data": {
+      "withdrawal_amount": 100,
+      "account_balance": 200
+    },
+    "expected_outcome": "APPROVE"
+  },
+  {
+    "natural_language_rule": "If withdrawal_amount is greater than daily_withdrawal_limit then REJECT the transaction.",
+    "context_data": {
+      "withdrawal_amount": 600,
+      "daily_withdrawal_limit": 500
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "Corporate accounts (is_corporate_account == true) are allowed an overdraft of up to 1000 beyond account_balance; if is_corporate_account is true and withdrawal_amount is less than or equal to account_balance + 1000 then APPROVE, otherwise REJECT.",
+    "context_data": {
+      "is_corporate_account": true,
+      "withdrawal_amount": 900,
+      "account_balance": 100
+    },
+    "expected_outcome": "APPROVE"
+  },
+  {
+    "natural_language_rule": "If kyc_verified is false then ASK_FOR_APPROVAL for any withdrawal_amount greater than 0.",
+    "context_data": {
+      "kyc_verified": false,
+      "withdrawal_amount": 50
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "If transaction_time_hour is less than 6 and aml_risk_score is greater than 50 then REJECT the transaction as high-risk night activity.",
+    "context_data": {
+      "transaction_time_hour": 3,
+      "aml_risk_score": 60
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "If beneficiary_country is 'IR' or 'KP' and aml_risk_score is greater than 30 then REJECT the transfer.",
+    "context_data": {
+      "beneficiary_country": "IR",
+      "aml_risk_score": 35
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "If withdrawal_amount equals account_balance and withdrawal_amount is less than or equal to daily_withdrawal_limit then APPROVE (boundary exact-balance approval).",
+    "context_data": {
+      "withdrawal_amount": 500,
+      "account_balance": 500,
+      "daily_withdrawal_limit": 500
+    },
+    "expected_outcome": "APPROVE"
+  },
+  {
+    "natural_language_rule": "If loan_amount_requested is less than or equal to user_credit_score multiplied by 10 then APPROVE the loan request.",
+    "context_data": {
+      "loan_amount_requested": 5000,
+      "user_credit_score": 700
+    },
+    "expected_outcome": "APPROVE"
+  },
+  {
+    "natural_language_rule": "If failed_login_attempts is greater than 3 and device_trust_score is less than 50 then REJECT due to suspected account takeover.",
+    "context_data": {
+      "failed_login_attempts": 4,
+      "device_trust_score": 30
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "If failed_login_attempts is greater than 5 then REJECT immediately regardless of device_trust_score.",
+    "context_data": {
+      "failed_login_attempts": 6
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "If failed_login_attempts is between 3 and 5 inclusive then ASK_FOR_APPROVAL for manual review.",
+    "context_data": {
+      "failed_login_attempts": 4
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "If aml_risk_score is greater than or equal to 90 then REJECT the transaction as ultra-high AML risk.",
+    "context_data": {
+      "aml_risk_score": 95
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "If aml_risk_score is greater than or equal to 70 and withdrawal_amount is greater than 10000 then REJECT as high AML score with large amount.",
+    "context_data": {
+      "aml_risk_score": 75,
+      "withdrawal_amount": 15000
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "If is_corporate_account is true and aml_risk_score is less than 80 and withdrawal_amount is less than or equal to 50000 then APPROVE (corporate high-limit preference).",
+    "context_data": {
+      "is_corporate_account": true,
+      "aml_risk_score": 70,
+      "withdrawal_amount": 30000
+    },
+    "expected_outcome": "APPROVE"
+  },
+  {
+    "natural_language_rule": "If is_corporate_account is false and withdrawal_amount is greater than 10000 and kyc_verified is false then REJECT (large individual withdrawal without KYC).",
+    "context_data": {
+      "is_corporate_account": false,
+      "withdrawal_amount": 15000,
+      "kyc_verified": false
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "If transaction_time_hour equals 0 and device_trust_score is less than 20 then ASK_FOR_APPROVAL (midnight low-trust device).",
+    "context_data": {
+      "transaction_time_hour": 0,
+      "device_trust_score": 10
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "If beneficiary_country is 'US' and aml_risk_score is less than 50 then APPROVE (domestic low-AML preference).",
+    "context_data": {
+      "beneficiary_country": "US",
+      "aml_risk_score": 40
+    },
+    "expected_outcome": "APPROVE"
+  },
+  {
+    "natural_language_rule": "If withdrawal_amount is greater than account_balance and is_corporate_account is false then REJECT (individual cannot overdraw).",
+    "context_data": {
+      "withdrawal_amount": 300,
+      "account_balance": 100,
+      "is_corporate_account": false
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "If withdrawal_amount is less than or equal to 100 and kyc_verified is false then APPROVE (small-value exemption for unverified users).",
+    "context_data": {
+      "withdrawal_amount": 50,
+      "kyc_verified": false
+    },
+    "expected_outcome": "APPROVE"
+  },
+  {
+    "natural_language_rule": "If failed_login_attempts is greater than 3 but device_trust_score is greater than or equal to 90 then ASK_FOR_APPROVAL instead of immediate REJECT (trusted device override to manual review).",
+    "context_data": {
+      "failed_login_attempts": 5,
+      "device_trust_score": 95
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "If loan_amount_requested is greater than user_credit_score multiplied by 50 then REJECT the loan application.",
+    "context_data": {
+      "loan_amount_requested": 30000,
+      "user_credit_score": 400
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "If withdrawal_amount equals daily_withdrawal_limit and withdrawal_amount is greater than account_balance then ASK_FOR_APPROVAL (daily limit hit but insufficient funds).",
+    "context_data": {
+      "withdrawal_amount": 500,
+      "daily_withdrawal_limit": 500,
+      "account_balance": 100
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "If aml_risk_score equals 0 then APPROVE (no AML concerns flagged).",
+    "context_data": {
+      "aml_risk_score": 0
+    },
+    "expected_outcome": "APPROVE"
+  },
+  {
+    "natural_language_rule": "If kyc_verified is true and aml_risk_score is greater than 85 then ASK_FOR_APPROVAL (KYC present but very high AML score needs review).",
+    "context_data": {
+      "kyc_verified": true,
+      "aml_risk_score": 88
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "If is_corporate_account is true and failed_login_attempts is greater than 3 then ASK_FOR_APPROVAL (corporate account manual check after multiple failures).",
+    "context_data": {
+      "is_corporate_account": true,
+      "failed_login_attempts": 4
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "If transaction_time_hour is between 9 and 17 inclusive and withdrawal_amount is less than or equal to 5000 then APPROVE (business-hours smooth processing).",
+    "context_data": {
+      "transaction_time_hour": 10,
+      "withdrawal_amount": 3000
+    },
+    "expected_outcome": "APPROVE"
+  },
+  {
+    "natural_language_rule": "If transaction_time_hour is greater than or equal to 22 or transaction_time_hour is less than 6 and withdrawal_amount is greater than 2000 then REJECT (large night-time transaction).",
+    "context_data": {
+      "transaction_time_hour": 23,
+      "withdrawal_amount": 3000
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "If beneficiary_country is one of 'DE','FR','NL' and aml_risk_score is less than 60 then APPROVE (EU low-risk corridor).",
+    "context_data": {
+      "beneficiary_country": "DE",
+      "aml_risk_score": 50
+    },
+    "expected_outcome": "APPROVE"
+  },
+  {
+    "natural_language_rule": "If withdrawal_amount equals 0 then REJECT as invalid request.",
+    "context_data": {
+      "withdrawal_amount": 0
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "If device_trust_score is less than 10 and failed_login_attempts is greater than or equal to 1 then REJECT (very low trust device with failed logins).",
+    "context_data": {
+      "device_trust_score": 5,
+      "failed_login_attempts": 1
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "If not is_corporate_account and withdrawal_amount is greater than account_balance then REJECT; if is_corporate_account and withdrawal_amount is greater than account_balance + 500 then REJECT (corporate smaller overdraft allowed up to 500).",
+    "context_data": {
+      "is_corporate_account": true,
+      "account_balance": 1000,
+      "withdrawal_amount": 1600
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "If beneficiary_country equals 'GB' and aml_risk_score is greater than 40 then ASK_FOR_APPROVAL.",
+    "context_data": {
+      "beneficiary_country": "GB",
+      "aml_risk_score": 50
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "If loan_amount_requested equals 0 then REJECT the loan application as invalid.",
+    "context_data": {
+      "loan_amount_requested": 0
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "If withdrawal_amount is greater than account_balance multiplied by 2 then REJECT to prevent extreme leverage.",
+    "context_data": {
+      "withdrawal_amount": 900,
+      "account_balance": 400
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "If kyc_verified is true and failed_login_attempts is less than or equal to 2 and device_trust_score is greater than or equal to 70 then APPROVE (trusted user/device combination).",
+    "context_data": {
+      "kyc_verified": true,
+      "failed_login_attempts": 1,
+      "device_trust_score": 75
+    },
+    "expected_outcome": "APPROVE"
+  },
+  {
+    "natural_language_rule": "If aml_risk_score is between 60 and 80 inclusive and beneficiary_country is not 'US' then ASK_FOR_APPROVAL for enhanced due diligence.",
+    "context_data": {
+      "aml_risk_score": 65,
+      "beneficiary_country": "MX"
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "If is_corporate_account is true and transaction_time_hour equals 3 and device_trust_score is greater than 80 then APPROVE (approved emergency corporate transfer overnight from trusted device).",
+    "context_data": {
+      "is_corporate_account": true,
+      "transaction_time_hour": 3,
+      "device_trust_score": 85
+    },
+    "expected_outcome": "APPROVE"
+  },
+  {
+    "natural_language_rule": "If user_credit_score is less than 600 and loan_amount_requested is greater than 10000 then ASK_FOR_APPROVAL (sub-prime larger loan requires manual review).",
+    "context_data": {
+      "user_credit_score": 580,
+      "loan_amount_requested": 15000
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "If aml_risk_score is greater than or equal to 95 then REJECT immediately (maximum AML threshold).",
+    "context_data": {
+      "aml_risk_score": 95
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "If beneficiary_country is 'KP' or 'SY' then REJECT regardless of other variables.",
+    "context_data": {
+      "beneficiary_country": "SY"
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "If withdrawal_amount is greater than 100000 and is_corporate_account is false then REJECT (very large individual withdrawal).",
+    "context_data": {
+      "withdrawal_amount": 150000,
+      "is_corporate_account": false
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "If daily_withdrawal_limit equals 0 then REJECT any withdrawal_amount greater than 0.",
+    "context_data": {
+      "daily_withdrawal_limit": 0,
+      "withdrawal_amount": 10
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "If kyc_verified is true and account_balance is greater than or equal to withdrawal_amount and aml_risk_score is less than 50 then APPROVE the withdrawal.",
+    "context_data": {
+      "kyc_verified": true,
+      "account_balance": 1000,
+      "withdrawal_amount": 500,
+      "aml_risk_score": 30
+    },
+    "expected_outcome": "APPROVE"
+  },
+  {
+    "natural_language_rule": "If device_trust_score is greater than or equal to 50 and failed_login_attempts equals 0 and kyc_verified is true then APPROVE (basic trusted user/device criteria).",
+    "context_data": {
+      "device_trust_score": 50,
+      "failed_login_attempts": 0,
+      "kyc_verified": true
+    },
+    "expected_outcome": "APPROVE"
+  },
+  {
+    "natural_language_rule": "If loan_amount_requested is greater than 0 and user_credit_score is less than 500 then ASK_FOR_APPROVAL (low credit score loan needs manual check).",
+    "context_data": {
+      "loan_amount_requested": 1000,
+      "user_credit_score": 450
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "If withdrawal_amount equals daily_withdrawal_limit and kyc_verified is false then ASK_FOR_APPROVAL (limit-exhausting unverified request requires review).",
+    "context_data": {
+      "withdrawal_amount": 1000,
+      "daily_withdrawal_limit": 1000,
+      "kyc_verified": false
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "If withdrawal_amount is less than or equal to account_balance and aml_risk_score is less than or equal to 40 and failed_login_attempts equals 0 then APPROVE immediately.",
+    "context_data": {
+      "withdrawal_amount": 200,
+      "account_balance": 1000,
+      "aml_risk_score": 40,
+      "failed_login_attempts": 0
+    },
+    "expected_outcome": "APPROVE"
+  },
+  {
+    "natural_language_rule": "If aml_risk_score is greater than or equal to 70 and beneficiary_country is not 'US' then ASK_FOR_APPROVAL (high AML score with non-US beneficiary requires review).",
+    "context_data": {
+      "aml_risk_score": 72,
+      "beneficiary_country": "CA"
+    },
+    "expected_outcome": "ASK_FOR_APPROVAL"
+  },
+  {
+    "natural_language_rule": "If withdrawal_amount is greater than 1000000000 (one billion) then REJECT as an implausibly large transaction.",
+    "context_data": {
+      "withdrawal_amount": 1000000001
+    },
+    "expected_outcome": "REJECT"
+  },
+  {
+    "natural_language_rule": "If (kyc_verified is true OR device_trust_score is greater than 80) AND aml_risk_score is less than 70 AND withdrawal_amount is less than or equal to daily_withdrawal_limit then APPROVE (trusted path with AML check and within daily limit).",
+    "context_data": {
+      "kyc_verified": false,
+      "device_trust_score": 85,
+      "aml_risk_score": 60,
+      "withdrawal_amount": 200,
+      "daily_withdrawal_limit": 500
+    },
+    "expected_outcome": "APPROVE"
+  }
+]

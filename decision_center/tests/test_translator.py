@@ -65,6 +65,61 @@ def test_translate_rule_openai(mock_openai):
     assert result["rule_logic"] == "IF billing_amount > 100 THEN ASK_FOR_APPROVAL"
     mock_client.chat.completions.create.assert_called_once()
 
+
+@patch("openai.OpenAI")
+def test_translate_rule_openai_retries_schema_shaped_response(mock_openai):
+    mock_client = MagicMock()
+    mock_openai.return_value = mock_client
+
+    schema_message = MagicMock()
+    schema_message.content = json.dumps(
+        {
+            "properties": {
+                "datapoints": {"type": "array"},
+                "rule_logic": {"type": "string"},
+            },
+            "required": ["datapoints", "rule_logic"],
+            "rule_logic_json": {},
+        }
+    )
+    valid_message = MagicMock()
+    valid_message.content = json.dumps(
+        {
+            "datapoints": ["withdrawal_amount"],
+            "edge_cases": [],
+            "edge_cases_json": [],
+            "rule_logic": "IF withdrawal_amount > 1000 THEN ASK_FOR_APPROVAL",
+            "rule_logic_json": {
+                "if": [{">": [{"var": "withdrawal_amount"}, 1000]}, "ASK_FOR_APPROVAL", None]
+            },
+        }
+    )
+
+    first_choice = MagicMock()
+    first_choice.message = schema_message
+    second_choice = MagicMock()
+    second_choice.message = valid_message
+
+    first_response = MagicMock()
+    first_response.choices = [first_choice]
+    second_response = MagicMock()
+    second_response.choices = [second_choice]
+
+    mock_client.chat.completions.create.side_effect = [first_response, second_response]
+
+    result = translate_rule(
+        "ask for approval if withdrawal_amount is > 1000",
+        "finance",
+        "Withdrawal Rule",
+        "openai",
+        "gpt-5.2",
+        "fake_key",
+    )
+
+    assert result["datapoints"] == ["withdrawal_amount"]
+    assert result["rule_logic"] == "IF withdrawal_amount > 1000 THEN ASK_FOR_APPROVAL"
+    assert mock_client.chat.completions.create.call_count == 2
+
 @patch("anthropic.Anthropic")
 def test_translate_rule_anthropic(mock_anthropic):
     mock_client = MagicMock()

@@ -1,5 +1,151 @@
 # Unreal Objects Diary
 
+## Full Removal of Legacy `scripts/stress_test`
+
+**What was built:**
+
+- Removed the remaining legacy `scripts/stress_test/` files entirely, including
+  the old quality-chaos utilities and historical dataset artifacts.
+- Left `decision_center/stress_test/` as the single supported home for all
+  current stress-test logic and workflows.
+- Tightened the README language so it no longer suggests any fallback or
+  reference stress-test directory still exists.
+
+**How it was validated:**
+
+- Re-read repository references to confirm the documentation now points only to
+  the canonical CLI/module path.
+- Ran the full Python suite after deleting the directory contents.
+
+**Key Findings:**
+
+- Once the new CLI, dataset preparation flow, and promotion workflow existed,
+  the remaining `scripts/stress_test/` files only added ambiguity. Removing the
+  directory contents makes the evaluation surface much easier to understand.
+
+## Legacy Stress-Test Wrapper Removal
+
+**What was built:**
+
+- Removed the obsolete wrapper scripts
+  `scripts/stress_test/generate_llm_dataset_sync.py`,
+  `scripts/stress_test/batch_1_create_sync.py`, and
+  `scripts/stress_test/batch_3_evaluate.py`.
+- Kept the canonical stress-test implementation solely under
+  `decision_center/stress_test/`.
+- Left historical datasets, reports, and the separate quality-chaos tooling in
+  `scripts/stress_test/` intact as reference artifacts rather than executable
+  entrypoints.
+- Updated the README so it now clearly points users to the CLI/module interface
+  instead of the removed wrapper scripts.
+
+**How it was validated:**
+
+- Re-read the remaining references to ensure the README and current CLI docs no
+  longer rely on the deleted wrapper paths.
+- Ran the full Python suite after the deletions to confirm no tests still
+  depended on those legacy entrypoints.
+
+**Key Findings:**
+
+- The wrapper scripts had served their short-term migration purpose, but keeping
+  them around would continue to suggest that two orchestration paths were
+  supported. Removing them makes the stress-test system easier to understand and
+  reduces future drift risk.
+
+## README Evaluation Refresh and Schema Trust Signal
+
+**What was built:**
+
+- Refreshed the README evaluation section so it matches the current
+  stress-test CLI, reusable baseline workflow, candidate dataset preparation,
+  promotion flow, and dataset listing command.
+- Added a schema-by-schema trust-signal graphic near the top of the README that
+  distinguishes between the strongest committed evaluation evidence
+  (`ecommerce`) and the newer CLI-ready schema paths (`finance`, `none`).
+- Added an explicit “current recorded evidence” section so readers can see the
+  difference between checked-in reports, reusable baselines, and on-demand CLI
+  support.
+- Replaced the initial mermaid trust-signal graphic with a plain markdown
+  table and ASCII-style summary after confirming the target renderer displayed
+  mermaid source text instead of rendering the diagram.
+
+**How it was validated:**
+
+- Cross-checked the README claims against the checked-in `evals/` reports and
+  the current artifact layout under `evals/artifacts/`.
+
+**Key Findings:**
+
+- The repository now has stronger operational tooling than the old README
+  implied, but the strongest committed benchmark evidence is still the
+  ecommerce V5 report. Calling that out explicitly is more trustworthy than
+  implying all schemas already have equivalent published runs.
+
+## Reusable Dataset Baselines, Candidate Generation, and Promotion
+
+**What was built:**
+
+- Extended the stress-test CLI so reusable datasets now follow a baseline plus
+  candidate model instead of a single throwaway artifact.
+- Kept the active reusable baseline at `evals/artifacts/<schema>/llm_test_dataset.json`
+  and added versioned candidate datasets under
+  `evals/artifacts/<schema>/datasets/`.
+- Added `--prepare-datasets` to generate fresh candidate datasets for one
+  schema or `all`, `--background` to launch that preparation run as a detached
+  process, and `--promote-dataset` to copy a chosen candidate into the active
+  reusable baseline.
+- Kept regular evaluation runs fast by auto-reusing the promoted baseline and
+  showing its age in the CLI phase output.
+
+**How it was validated:**
+
+- Added regression coverage for candidate dataset path generation, baseline
+  reuse, age display, prepare-only runs, background process launching, and the
+  dataset promotion workflow.
+- Ran `.venv/bin/pytest decision_center/tests/test_stress_test_cli.py -q` and
+  then `.venv/bin/pytest -q` to verify the new CLI workflow without regressing
+  the rest of the system.
+
+**Key Findings:**
+
+- Stable evaluation baselines and fresh candidate generation solve different
+  problems. Daily or repeated stress tests want comparability, while fresh
+  candidate datasets are for drift discovery and benchmark refreshes. Making
+  promotion explicit avoids silently changing the benchmark under users.
+
+## Unified Stress-Test CLI with Dynamic Schema Discovery
+
+**What was built:**
+
+- Replaced the old split stress-test workflow with a packaged `uo-stress-test`
+  CLI under `decision_center.stress_test`.
+- Added automatic schema discovery from `schemas/*.json`, so new schema files
+  become valid `--schema <slug>` targets without code changes.
+- Added `--schema none` for freeform runs and `--schema all` to execute every
+  discovered schema sequentially before running the no-schema variant.
+- Added schema-scoped artifact folders in `evals/artifacts/<schema>/` and
+  versioned markdown report generation in `evals/generative_evaluation_report_vN.md`.
+- Folded the legacy `scripts/stress_test/*.py` entrypoints into thin wrappers
+  around the new module so the repo no longer carries two separate stress-test
+  implementations.
+
+**How it was validated:**
+
+- Added regression coverage for schema discovery, `all` expansion, prompt
+  injection, artifact path resolution, report versioning, JSONL translation
+  loading, markdown report content, and CLI orchestration order.
+- Ran `.venv/bin/pytest decision_center/tests/test_stress_test_cli.py -q` and
+  then `.venv/bin/pytest -q` to keep the full Python suite green through each
+  round of the implementation.
+
+**Key Findings:**
+
+- The most important design change was making schema support data-driven instead
+  of hard-coded. Once the CLI resolved schemas from disk, `finance`,
+  `ecommerce`, future domain schemas, and the special `none`/`all` modes all
+  fit the same orchestration path cleanly.
+
 ## Saved Rules Stay Attached to the Builder
 
 **What was built:**
