@@ -20,6 +20,7 @@ pip install -e ".[dev]"
 uvicorn rule_engine.app:app --port 8001
 uvicorn decision_center.app:app --port 8002
 python mcp_server/server.py --transport sse --host 0.0.0.0 --port 8000
+uvicorn mcp_server.tool_agent:app --port 8003  # optional: Tool Creation Agent
 
 # Tests
 pytest -v                                          # all tests
@@ -52,6 +53,7 @@ Three independent Python microservices communicate via HTTP. All state is **in-m
 | Rule Engine | 8001 | `rule_engine/` | CRUD for rule groups and rules |
 | Decision Center | 8002 | `decision_center/` | Evaluates requests against rules; audit log |
 | MCP Server | 8000 | `mcp_server/` | MCP bridge for AI agents to call the above |
+| Tool Creation Agent | 8003 | `mcp_server/tool_agent.py` | LLM agent that proposes new guarded_ tools when rules require them |
 
 ### Rule Evaluation Pipeline (`decision_center/evaluator.py`)
 

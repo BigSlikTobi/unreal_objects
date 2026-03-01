@@ -109,7 +109,7 @@ function App() {
       sessionStorage.setItem('llm_model', model);
       sessionStorage.setItem('llm_api_key', apiKey);
       setLlmConfig({ provider, model, api_key: apiKey });
-      setShowSettings(false);
+        setShowSettings(false);
     } catch (err: unknown) {
       setLlmError(err instanceof Error ? err.message : 'Connection failed. Please check your API key.');
     } finally {
