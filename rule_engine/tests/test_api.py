@@ -46,6 +46,63 @@ def test_update_rule_api_success(populated_client):
     assert data["name"] == "Updated API Rule"
     assert data["id"] == rule_id
     assert len(data["datapoints"]) == 2
+    assert data["active"] is True
+
+
+def test_update_rule_api_can_deactivate(populated_client):
+    client, group_id, rule_id = populated_client
+
+    update_payload = {
+        "name": "Updated API Rule",
+        "feature": "Updated API Feature",
+        "datapoints": ["amount"],
+        "edge_cases": [],
+        "edge_cases_json": [],
+        "rule_logic": "IF amount > 100 THEN ASK_FOR_APPROVAL",
+        "rule_logic_json": {},
+        "active": False
+    }
+
+    resp = client.put(f"/v1/groups/{group_id}/rules/{rule_id}", json=update_payload)
+    assert resp.status_code == 200
+    data = resp.json()
+    assert data["active"] is False
+
+
+def test_update_rule_api_persists_deactivation_on_refetch(populated_client):
+    client, group_id, rule_id = populated_client
+
+    update_payload = {
+        "name": "Updated API Rule",
+        "feature": "Updated API Feature",
+        "datapoints": ["amount"],
+        "edge_cases": [],
+        "edge_cases_json": [],
+        "rule_logic": "IF amount > 100 THEN ASK_FOR_APPROVAL",
+        "rule_logic_json": {},
+        "active": False
+    }
+
+    update_resp = client.put(f"/v1/groups/{group_id}/rules/{rule_id}", json=update_payload)
+    assert update_resp.status_code == 200
+
+    get_resp = client.get(f"/v1/groups/{group_id}")
+    assert get_resp.status_code == 200
+    group = get_resp.json()
+    stored_rule = next(rule for rule in group["rules"] if rule["id"] == rule_id)
+    assert stored_rule["active"] is False
+
+
+def test_group_reads_disable_http_caching(populated_client):
+    client, group_id, _ = populated_client
+
+    list_resp = client.get("/v1/groups")
+    assert list_resp.status_code == 200
+    assert list_resp.headers["cache-control"] == "no-store"
+
+    group_resp = client.get(f"/v1/groups/{group_id}")
+    assert group_resp.status_code == 200
+    assert group_resp.headers["cache-control"] == "no-store"
 
 def test_update_rule_api_not_found(populated_client):
     client, group_id, rule_id = populated_client

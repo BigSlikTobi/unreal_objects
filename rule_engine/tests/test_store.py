@@ -40,6 +40,26 @@ def test_update_rule_success(populated_store):
     assert len(updated_rule.edge_cases) == 2
     assert updated_rule.id == rule_id # Ensure ID doesn't change
 
+
+def test_update_rule_can_deactivate(populated_store):
+    store, group_id, rule_id = populated_store
+
+    update_data = CreateRule(
+        name="Inactive Rule",
+        feature="Updated Feature",
+        datapoints=["dp1"],
+        edge_cases=[],
+        rule_logic="IF dp1 == 1 THEN APPROVE",
+        rule_logic_json={},
+        edge_cases_json=[],
+        active=False,
+    )
+
+    updated_rule = store.update_rule(group_id, rule_id, update_data)
+
+    assert updated_rule is not None
+    assert updated_rule.active is False
+
 def test_update_rule_not_found(populated_store):
     store, group_id, rule_id = populated_store
     

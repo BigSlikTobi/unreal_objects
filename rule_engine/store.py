@@ -31,6 +31,7 @@ class RuleStore:
         rule = BusinessRule(
             name=rule_create.name,
             feature=rule_create.feature,
+            active=rule_create.active,
             datapoints=rule_create.datapoints,
             edge_cases=rule_create.edge_cases,
             edge_cases_json=rule_create.edge_cases_json,
@@ -69,6 +70,7 @@ class RuleStore:
                 # Update attributes while preserving id and created_at
                 group.rules[i].name = rule_update.name
                 group.rules[i].feature = rule_update.feature
+                group.rules[i].active = rule_update.active
                 group.rules[i].datapoints = rule_update.datapoints
                 group.rules[i].edge_cases = rule_update.edge_cases
                 group.rules[i].edge_cases_json = rule_update.edge_cases_json

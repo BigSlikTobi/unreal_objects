@@ -97,6 +97,10 @@ pipeline safely governed by the Rule Engine's stored groups.
 - **JSON Logic Engine:** Under the hood, we compile your natural language rules
   into highly resilient, strictly auditable AST representations known as
   [JsonLogic](http://jsonlogic.com/).
+- **Rule lifecycle:** Rules are never required to be deleted to retire them.
+  Each rule can be marked active or inactive. Inactive rules remain visible for
+  documentation and audit history, but the Decision Center skips them during
+  evaluation until they are reactivated.
 
 ### 📐 Schema Blueprints — Why They Matter
 
@@ -141,7 +145,9 @@ npm run dev   # → http://localhost:5173
 ### Structured Rule Builder
 
 Instead of typing free-form text, the UI uses a **fill-in-the-blank builder**
-that eliminates ambiguity and prevents edge-case overwrites:
+in the center column and a **rule library panel** on the right. The builder
+eliminates ambiguity during creation, while the rule library keeps saved rules
+visible without pushing them into the chat transcript:
 
 ```
 IF [amount > 500 ──────────────────] THEN [ASK_FOR_APPROVAL ▼] ELSE [─── ▼]
@@ -155,9 +161,25 @@ IF [amount > 500 ──────────────────] THEN [A
   `ELSE` branch
 - **Edge case rows** — amber-bordered rows, each with their own condition +
   outcome + remove button
+- **Right-side rule library** — saved rules appear as cards in a dedicated
+  panel; selecting a card loads that rule into the builder for editing
+- **Lifecycle feedback** — deactivating or reactivating a saved rule updates the
+  card state and posts a clear confirmation message into the chat transcript so
+  the action stays visible in the working flow
 - **"Translate with AI"** — sends the complete structured state to the LLM in
   one shot; every translate is a fresh complete translation, so edge cases can
   never silently overwrite each other
+- **Theme toggle** — dark mode is a class-based theme switch, so the entire
+  shell, drawers, and form controls change together instead of only isolated
+  components
+- **Fresh rule state** — saved-rule lists are always re-fetched as live state,
+  so deactivations and reactivations stay accurate after refreshes instead of
+  showing stale cached cards
+- **Responsive layout** — on mobile, the group list and rule library collapse
+  into slide-over panels so rule review and editing still work on smaller
+  screens
+- **Motion polish** — rule drawers and the test console animate in from the
+  side/bottom to preserve spatial context on mobile and desktop
 
 ### LLM Wizard Flow
 
@@ -168,12 +190,21 @@ IF [amount > 500 ──────────────────] THEN [A
    sends it to your configured LLM (OpenAI / Anthropic / Gemini)
 4. Review the **Proposed Logic** card — inspect extracted datapoints, edge
    cases, and main rule logic
-5. Choose an action:
+5. Use the **rule library panel** to review previously saved rules. Selecting a
+   rule card pulls it into the builder for editing.
+6. Choose an action:
    - **Accept & Save** — persist the rule to the Rule Engine
    - **Save & Test** — save and open the Test Console immediately
+   - **Deactivate / Reactivate** — keep the rule for documentation while
+     removing or restoring it from live evaluation
    - **Add Edge Case** — add another row to the builder and re-translate
    - **Optimize** — update fields in the builder and re-translate
    - **Refuse** — discard and clear the builder
+7. After a save, the builder stays attached to that saved rule so you can keep
+   iterating without reselecting it from the rule library. Use **Stop Editing**
+   when you want to clear the builder and leave edit mode. Leaving edit mode
+   also clears the current rule selection, so the builder stays blank until you
+   explicitly pick another saved rule.
 
 ### Test Console
 
@@ -235,7 +266,9 @@ python decision_center/cli.py
 ```
 
 6. **Review the proposal** — the wizard shows extracted datapoints, edge cases, and the generated JSON Logic.
-7. **Accept, Edit, or fall back to Manual** — `[A]` saves the rule, `[E]` re-opens the builder for a clean re-translate, `[M]` drops to manual entry.
+7. **Accept, Edit, deactivate, or fall back to Manual** — the wizard shows the
+   current stored rule before editing, lets you update only the fields you want
+   to change, and can mark a rule inactive without deleting it.
 8. **Auto-Test** — immediately simulate an agent payload against the saved rule and see the exact decision outcome.
 
 ---

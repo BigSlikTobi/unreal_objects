@@ -1,15 +1,15 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { Bot, User, Check, Plus, FlaskConical, Code2, X, Wand2 } from 'lucide-react';
-import { translateRule, createRule, getGroup, updateDatapointDefinitions } from '../api';
+import { translateRule, createRule, getGroup, updateDatapointDefinitions, updateRule } from '../api';
 import { DatapointConfigurator } from './DatapointConfigurator';
-import type { DatapointDefinition } from './DatapointConfigurator';
+import type { DatapointDefinition, LlmConfig, Rule, RulePayload, RuleTranslation } from '../types';
 
 interface Message {
   id: string;
   role: 'assistant' | 'user';
   content: string;
   isRuleProposal?: boolean;
-  ruleData?: any;
+  ruleData?: RuleTranslation;
   isDatapointConfig?: boolean;
   newDatapoints?: string[];
 }
@@ -21,12 +21,19 @@ interface EdgeCaseRow {
 
 interface ChatInterfaceProps {
   groupId: string;
-  llmConfig: any;
-  onRuleCreated: (rule: any) => void;
-  onStartTest: (rule: any, datapointDefs: DatapointDefinition[]) => void;
+  llmConfig: LlmConfig | null;
+  selectedRule?: Rule | null;
+  selectedRuleToken?: number;
+  systemNotice?: string | null;
+  systemNoticeToken?: number;
+  onRuleCreated: (rule: Rule) => void;
+  onStartTest: (rule: Rule, datapointDefs: DatapointDefinition[]) => void;
+  onStopEditing?: () => void;
 }
 
 const OUTCOMES = ['APPROVE', 'ASK_FOR_APPROVAL', 'REJECT'] as const;
+const MAIN_RULE_PATTERN = /^\s*IF\s+(.+?)\s+THEN\s+(APPROVE|ASK_FOR_APPROVAL|REJECT)(?:\s+ELSE\s+(APPROVE|ASK_FOR_APPROVAL|REJECT))?\s*$/i;
+const EDGE_CASE_PATTERN = /^\s*IF\s+(.+?)\s+THEN\s+(APPROVE|ASK_FOR_APPROVAL|REJECT)\s*$/i;
 
 const SCHEMAS: Record<string, { label: string; schema: Record<string, string> }> = {
   ecommerce: {
@@ -95,8 +102,13 @@ const OutcomeSelect: React.FC<OutcomeSelectProps> = ({ value, onChange, includeE
 export const ChatInterface: React.FC<ChatInterfaceProps> = ({
   groupId,
   llmConfig,
+  selectedRule = null,
+  selectedRuleToken = 0,
+  systemNotice = null,
+  systemNoticeToken = 0,
   onRuleCreated,
-  onStartTest
+  onStartTest,
+  onStopEditing,
 }) => {
   const [messages, setMessages] = useState<Message[]>([{
     id: 'init',
@@ -113,6 +125,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
   const [edgeCaseRows, setEdgeCaseRows] = useState<EdgeCaseRow[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [datapointDefs, setDatapointDefs] = useState<DatapointDefinition[]>([]);
+  const [editingRule, setEditingRule] = useState<Rule | null>(null);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -124,7 +137,6 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
     scrollToBottom();
   }, [messages, isLoading]);
 
-  // Hydrate datapoint definitions when group changes
   useEffect(() => {
     getGroup(groupId)
       .then((group) => {
@@ -141,7 +153,74 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
     setThenOutcome('ASK_FOR_APPROVAL');
     setElseOutcome('');
     setEdgeCaseRows([]);
+    setEditingRule(null);
   };
+
+  const parseRuleLogic = (ruleLogic: string) => {
+    const match = ruleLogic.match(MAIN_RULE_PATTERN);
+    if (!match) {
+      return {
+        condition: '',
+        thenOutcome: 'ASK_FOR_APPROVAL',
+        elseOutcome: '',
+      };
+    }
+
+    return {
+      condition: match[1] ?? '',
+      thenOutcome: match[2] ?? 'ASK_FOR_APPROVAL',
+      elseOutcome: match[3] ?? '',
+    };
+  };
+
+  const parseEdgeCases = (edgeCases: string[]): EdgeCaseRow[] =>
+    edgeCases
+      .map((edgeCase) => {
+        const match = edgeCase.match(EDGE_CASE_PATTERN);
+        if (!match) return null;
+        return {
+          condition: match[1] ?? '',
+          outcome: match[2] ?? 'REJECT',
+        };
+      })
+      .filter((row): row is EdgeCaseRow => row !== null);
+
+  const startEditingRule = useCallback((rule: Rule) => {
+    const parsedRule = parseRuleLogic(rule.rule_logic ?? '');
+    setEditingRule(rule);
+    setRuleName(rule.name ?? '');
+    setFeature(rule.feature ?? '');
+    setSelectedSchema('');
+    setCondition(parsedRule.condition);
+    setThenOutcome(parsedRule.thenOutcome);
+    setElseOutcome(parsedRule.elseOutcome);
+    setEdgeCaseRows(parseEdgeCases(rule.edge_cases ?? []));
+    setMessages(prev => [...prev, {
+      id: Date.now().toString(),
+      role: 'assistant',
+      content: `Editing '${rule.name}'. Update the builder, then translate and save to update the existing rule.`,
+    }]);
+  }, []);
+
+  useEffect(() => {
+    if (selectedRule && selectedRule.id !== editingRule?.id) {
+      startEditingRule(selectedRule);
+    }
+  }, [selectedRule, selectedRuleToken, startEditingRule, editingRule?.id]);
+
+  useEffect(() => {
+    if (!systemNotice) {
+      return;
+    }
+    setMessages((prev) => [
+      ...prev,
+      {
+        id: `notice-${systemNoticeToken}-${Date.now()}`,
+        role: 'assistant',
+        content: systemNotice,
+      },
+    ]);
+  }, [systemNotice, systemNoticeToken]);
 
   const updateEdgeCaseRow = (i: number, field: keyof EdgeCaseRow, value: string) => {
     setEdgeCaseRows(prev => prev.map((row, idx) => idx === i ? { ...row, [field]: value } : row));
@@ -180,7 +259,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
   };
 
   const handleTranslate = async () => {
-    if (!condition.trim() || isLoading) return;
+    if (!condition.trim() || isLoading || !llmConfig) return;
 
     const displayText = buildDisplayText();
     const userMsg: Message = { id: Date.now().toString(), role: 'user', content: displayText };
@@ -234,11 +313,11 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
       }
 
       setMessages(prev => [...prev, ...newMessages]);
-    } catch (err: any) {
+    } catch (err: unknown) {
       setMessages(prev => [...prev, {
         id: (Date.now() + 1).toString(),
         role: 'assistant',
-        content: `Error translating rule: ${err.message}`
+        content: `Error translating rule: ${err instanceof Error ? err.message : 'Unknown error'}`
       }]);
     } finally {
       setIsLoading(false);
@@ -253,70 +332,86 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
         newDefs.forEach(d => existing.set(d.name, d));
         return Array.from(existing.values());
       });
-    } catch (err: any) {
+    } catch (err: unknown) {
       setMessages(prev => [...prev, {
         id: Date.now().toString(),
         role: 'assistant',
-        content: `Error saving datapoint definitions: ${err.message}`
+        content: `Error saving datapoint definitions: ${err instanceof Error ? err.message : 'Unknown error'}`
       }]);
     }
   };
 
-  const handleAcceptRule = async (ruleData: any) => {
+  const handleAcceptRule = async (ruleData: RuleTranslation) => {
     try {
       setIsLoading(true);
-      const created = await createRule(groupId, {
-          name: ruleName.trim() || ruleData.name || `Rule ${Date.now()}`,
-          feature: feature.trim() || 'General',
-          ...ruleData
-      });
+      const payload: RulePayload = {
+        name: ruleName.trim() || editingRule?.name || ruleData.name || `Rule ${Date.now()}`,
+        feature: feature.trim() || editingRule?.feature || 'General',
+        active: editingRule?.active ?? true,
+        ...ruleData
+      };
+      const saved = editingRule
+        ? await updateRule(groupId, editingRule.id, payload)
+        : await createRule(groupId, payload);
+      setEditingRule(saved);
+      setRuleName(saved.name);
+      setFeature(saved.feature);
 
       setMessages(prev => [...prev, {
         id: Date.now().toString(),
         role: 'assistant',
-        content: `✅ Rule '${created.name}' created and saved successfully!`
+        content: editingRule
+          ? `✅ Rule '${saved.name}' updated successfully! You are still editing it.`
+          : `✅ Rule '${saved.name}' created and saved successfully! You are now editing the saved rule.`
       }]);
-      clearBuilder();
-      onRuleCreated(created);
-    } catch (err: any) {
+      onRuleCreated(saved);
+    } catch (err: unknown) {
        setMessages(prev => [...prev, {
         id: Date.now().toString(),
         role: 'assistant',
-        content: `Error saving rule: ${err.message}`
+        content: `Error saving rule: ${err instanceof Error ? err.message : 'Unknown error'}`
       }]);
     } finally {
       setIsLoading(false);
     }
   };
 
-  const handleSaveAndTest = async (ruleData: any) => {
+  const handleSaveAndTest = async (ruleData: RuleTranslation) => {
     try {
       setIsLoading(true);
-      const created = await createRule(groupId, {
-        name: ruleName.trim() || ruleData.name || `Rule ${Date.now()}`,
-        feature: feature.trim() || 'General',
+      const payload: RulePayload = {
+        name: ruleName.trim() || editingRule?.name || ruleData.name || `Rule ${Date.now()}`,
+        feature: feature.trim() || editingRule?.feature || 'General',
+        active: editingRule?.active ?? true,
         ...ruleData,
-      });
+      };
+      const saved = editingRule
+        ? await updateRule(groupId, editingRule.id, payload)
+        : await createRule(groupId, payload);
+      setEditingRule(saved);
+      setRuleName(saved.name);
+      setFeature(saved.feature);
       setMessages(prev => [...prev, {
         id: Date.now().toString(),
         role: 'assistant',
-        content: `✅ Rule '${created.name}' saved. Opening test console...`,
+        content: editingRule
+          ? `✅ Rule '${saved.name}' updated. Opening test console while you stay in edit mode.`
+          : `✅ Rule '${saved.name}' saved. Opening test console while you stay in edit mode.`,
       }]);
-      clearBuilder();
-      onRuleCreated(created);
-      onStartTest(created, datapointDefs);
-    } catch (err: any) {
+      onRuleCreated(saved);
+      onStartTest(saved, datapointDefs);
+    } catch (err: unknown) {
       setMessages(prev => [...prev, {
         id: Date.now().toString(),
         role: 'assistant',
-        content: `Error saving rule: ${err.message}`,
+        content: `Error saving rule: ${err instanceof Error ? err.message : 'Unknown error'}`,
       }]);
     } finally {
       setIsLoading(false);
     }
   };
 
-  const extractStringLiterals = (ruleData: any): string[] => {
+  const extractStringLiterals = (ruleData: RuleTranslation): string[] => {
     const outcomes = new Set(['APPROVE', 'REJECT', 'ASK_FOR_APPROVAL']);
     const text = [ruleData.rule_logic || '', ...(ruleData.edge_cases || [])].join(' ');
     const regex = /"([^"]+)"|'([^']+)'/g;
@@ -350,6 +445,11 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
       role: 'assistant',
       content: "Rule discarded. Fill in the builder below to start fresh."
     }]);
+  };
+
+  const handleStopEditing = () => {
+    clearBuilder();
+    onStopEditing?.();
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -465,13 +565,13 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
                         <Wand2 size={16} /> Optimize
                       </button>
                       <button
-                        onClick={() => handleAcceptRule(msg.ruleData)}
+                        onClick={() => handleAcceptRule(msg.ruleData!)}
                         className="flex items-center gap-1.5 px-3 py-1.5 bg-green-600 hover:bg-green-700 text-white rounded-md text-sm font-medium transition-colors ml-auto"
                       >
                         <Check size={16} /> Accept & Save
                       </button>
                       <button
-                        onClick={() => handleSaveAndTest(msg.ruleData)}
+                        onClick={() => handleSaveAndTest(msg.ruleData!)}
                         className="flex items-center gap-1.5 px-3 py-1.5 bg-purple-100 hover:bg-purple-200 dark:bg-purple-900/30 dark:hover:bg-purple-800/40 text-purple-700 dark:text-purple-300 rounded-md text-sm font-medium transition-colors"
                       >
                         <FlaskConical size={16} /> Save & Test
@@ -509,6 +609,18 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
             </div>
           ) : (
             <div className="space-y-2">
+              {editingRule && (
+                <div className="flex items-center justify-between gap-3 rounded-xl border border-blue-200 bg-blue-50 px-3 py-2 text-sm text-blue-800 dark:border-blue-900/40 dark:bg-blue-900/20 dark:text-blue-200">
+                  <span>Editing stored rule: <strong>{editingRule.name}</strong></span>
+                  <button
+                    onClick={handleStopEditing}
+                    className="rounded-md px-2 py-1 text-xs font-medium text-blue-700 hover:bg-blue-100 dark:text-blue-300 dark:hover:bg-blue-900/30"
+                  >
+                    Stop Editing
+                  </button>
+                </div>
+              )}
+
               {/* Metadata row: name, feature, schema */}
               <div className="flex items-center gap-2">
                 <input

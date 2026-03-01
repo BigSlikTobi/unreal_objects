@@ -183,6 +183,9 @@ async def evaluate_request(context: Dict[str, Any], group_id: str | None) -> tup
     matched_details = []
     
     for r in rules:
+        if r.get("active", True) is False:
+            continue
+
         # Evaluate edge cases first
         edge_cases = r.get("edge_cases", [])
         edge_cases_json = r.get("edge_cases_json", [])

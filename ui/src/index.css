@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@custom-variant dark (&:where(.dark, .dark *));
 
 :root {
   --bg-primary: #ffffff;
@@ -8,22 +9,35 @@
   --border-color: #e5e7eb;
   --accent-color: #3b82f6;
   --accent-hover: #2563eb;
+  color-scheme: light;
 }
 
 .dark {
-  --bg-primary: #1f2937;
+  --bg-primary: #030712;
   --bg-secondary: #111827;
   --text-primary: #f9fafb;
   --text-secondary: #9ca3af;
   --border-color: #374151;
   --accent-color: #60a5fa;
   --accent-hover: #3b82f6;
+  color-scheme: dark;
+}
+
+html,
+body,
+#root {
+  min-height: 100%;
+}
+
+html {
+  background-color: var(--bg-primary);
 }
 
 body {
   background-color: var(--bg-primary);
   color: var(--text-primary);
   margin: 0;
+  min-height: 100vh;
   font-family:
     -apple-system,
     BlinkMacSystemFont,
@@ -38,6 +52,56 @@ body {
     sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+}
+
+#root {
+  min-height: 100vh;
+  background-color: var(--bg-primary);
+}
+
+.panel-enter-left {
+  animation: panel-enter-left 180ms ease-out;
+}
+
+.panel-enter-right {
+  animation: panel-enter-right 180ms ease-out;
+}
+
+.panel-enter-up {
+  animation: panel-enter-up 220ms ease-out;
+}
+
+@keyframes panel-enter-left {
+  from {
+    opacity: 0;
+    transform: translateX(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes panel-enter-right {
+  from {
+    opacity: 0;
+    transform: translateX(24px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes panel-enter-up {
+  from {
+    opacity: 0;
+    transform: translateY(28px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 code {

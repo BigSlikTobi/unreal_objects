@@ -5,6 +5,7 @@ import json
 import urllib.parse
 import os
 import getpass
+import re
 
 from decision_center.translator import check_llm_connection, translate_rule
 
@@ -112,16 +113,46 @@ def prompt_llm_setup() -> dict | None:
         return None
 
 OUTCOMES = ["APPROVE", "ASK_FOR_APPROVAL", "REJECT"]
+MAIN_RULE_PATTERN = re.compile(
+    r"^\s*IF\s+(?P<condition>.+?)\s+THEN\s+(?P<then>APPROVE|ASK_FOR_APPROVAL|REJECT)"
+    r"(?:\s+ELSE\s+(?P<else>APPROVE|ASK_FOR_APPROVAL|REJECT))?\s*$",
+    re.IGNORECASE,
+)
+EDGE_CASE_PATTERN = re.compile(
+    r"^\s*IF\s+(?P<condition>.+?)\s+THEN\s+(?P<outcome>APPROVE|ASK_FOR_APPROVAL|REJECT)\s*$",
+    re.IGNORECASE,
+)
 
-def _prompt_outcome(label: str, include_none: bool = False) -> str:
+def _prompt_text(label: str, default: str = "") -> str:
+    prompt = f"{label} [{default}]: " if default else f"{label}: "
+    raw = input(prompt).strip()
+    return raw or default
+
+
+def _prompt_outcome(label: str, include_none: bool = False, default_value: str = "") -> str:
     """Numbered outcome picker. Returns the selected outcome string, or '' if none chosen."""
     print(f"\n  {label}")
     for i, o in enumerate(OUTCOMES, 1):
         print(f"    {i}. {o}")
     if include_none:
         print(f"    {len(OUTCOMES) + 1}. (none — skip ELSE branch)")
+    default_index = None
+    if default_value:
+        if default_value in OUTCOMES:
+            default_index = OUTCOMES.index(default_value) + 1
+        elif include_none and default_value == "":
+            default_index = len(OUTCOMES) + 1
     while True:
-        raw = input(f"  Select [1-{len(OUTCOMES) + (1 if include_none else 0)}]: ").strip()
+        prompt = f"  Select [1-{len(OUTCOMES) + (1 if include_none else 0)}]"
+        if default_index is not None:
+            prompt += f" (Default: {default_index})"
+        prompt += ": "
+        raw = input(prompt).strip()
+        if raw == "" and default_index is not None:
+            idx = default_index - 1
+            if include_none and idx == len(OUTCOMES):
+                return ""
+            return OUTCOMES[idx]
         try:
             idx = int(raw) - 1
             if 0 <= idx < len(OUTCOMES):
@@ -133,23 +164,90 @@ def _prompt_outcome(label: str, include_none: bool = False) -> str:
         print("  Invalid choice, try again.")
 
 
+def _parse_main_rule_defaults(rule_logic: str) -> tuple[str, str, str]:
+    match = MAIN_RULE_PATTERN.match(rule_logic or "")
+    if not match:
+        return "", "ASK_FOR_APPROVAL", ""
+    return (
+        match.group("condition") or "",
+        (match.group("then") or "ASK_FOR_APPROVAL").upper(),
+        (match.group("else") or "").upper(),
+    )
+
+
+def _parse_edge_case_defaults(edge_cases: list[str]) -> list[dict]:
+    defaults = []
+    for edge_case in edge_cases:
+        match = EDGE_CASE_PATTERN.match(edge_case)
+        if match:
+            defaults.append({
+                "condition": match.group("condition") or "",
+                "outcome": (match.group("outcome") or "REJECT").upper(),
+            })
+    return defaults
+
+
+def _print_rule_summary(rule: dict):
+    status = "ACTIVE" if rule.get("active", True) else "INACTIVE"
+    print(f"\nSelected Rule: {rule.get('name', 'Unknown Rule')} [{status}]")
+    print(f"  Feature    : {rule.get('feature', '')}")
+    print(f"  Datapoints : {', '.join(rule.get('datapoints', [])) or '(none)'}")
+    print(f"  Logic      : {rule.get('rule_logic', '')}")
+    if rule.get("edge_cases"):
+        print("  Edge Cases :")
+        for edge_case in rule["edge_cases"]:
+            print(f"    - {edge_case}")
+
+
+def _save_rule(group_id: str, payload: dict, rule_id: str | None = None) -> dict:
+    with httpx.Client() as client:
+        if rule_id:
+            resp = client.put(f"http://127.0.0.1:8001/v1/groups/{group_id}/rules/{rule_id}", json=payload)
+            action = "Updated"
+        else:
+            resp = client.post(f"http://127.0.0.1:8001/v1/groups/{group_id}/rules", json=payload)
+            action = "Created"
+
+        resp.raise_for_status()
+        rule = resp.json()
+        print(f"\n✅ {action} rule '{rule['name']}' with ID: {rule['id']}")
+        print(f"      Status: {'ACTIVE' if rule.get('active', True) else 'INACTIVE'}")
+        if rule.get("edge_cases"):
+            print(f"      Edge Cases: {', '.join(rule['edge_cases'])}")
+        print(f"      Rule Logic: {rule.get('rule_logic', '')}")
+        if rule.get("rule_logic_json"):
+            print(f"      JSON Logic: {json.dumps(rule.get('rule_logic_json'))}")
+        return rule
+
+
 def _prompt_structured_builder(existing_rule: dict | None = None) -> tuple[str, str, str, list[dict]]:
     """Fill-in-the-blank rule builder. Returns (condition, then_outcome, else_outcome, edge_cases).
     If existing_rule is provided, shows the current values as context before prompting afresh.
     """
     print("\n--- Rule Builder ---")
+    current_condition = ""
+    current_then = "ASK_FOR_APPROVAL"
+    current_else = ""
+    existing_edge_cases = []
     if existing_rule:
+        current_condition, current_then, current_else = _parse_main_rule_defaults(existing_rule.get("rule_logic", ""))
+        existing_edge_cases = _parse_edge_case_defaults(existing_rule.get("edge_cases", []))
         print(f"  Current logic : {existing_rule.get('rule_logic', '')}")
         if existing_rule.get("edge_cases"):
             for ec in existing_rule["edge_cases"]:
                 print(f"  ↳ Edge case   : {ec}")
         print("")
 
-    condition = input("  IF   : ").strip()
-    then_outcome = _prompt_outcome("THEN :")
-    else_outcome = _prompt_outcome("ELSE : (optional)", include_none=True)
+    condition = _prompt_text("  IF   ", current_condition)
+    then_outcome = _prompt_outcome("THEN :", default_value=current_then)
+    else_outcome = _prompt_outcome("ELSE : (optional)", include_none=True, default_value=current_else)
 
-    edge_cases: list[dict] = []
+    edge_cases = list(existing_edge_cases)
+    if existing_edge_cases:
+        replace_existing = input("\n  Replace existing edge cases? [y/N]: ").strip().lower()
+        if replace_existing == "y":
+            edge_cases = []
+
     while True:
         add = input("\n  Add an edge case? [y/N]: ").strip().lower()
         if add != "y":
@@ -215,11 +313,13 @@ def prompt_rule_creation(group_id: str, llm_config: dict | None = None) -> dict:
     name = ""
     feature = ""
     existing_rule_obj = None
+    active = True
     
     if existing_rules:
         print("Existing Rules:")
         for idx, r in enumerate(existing_rules, 1):
-            print(f"  {idx}. {r['name']} ({r['id']})")
+            status = "active" if r.get("active", True) else "inactive"
+            print(f"  {idx}. {r['name']} [{status}] ({r['id']})")
         print("  C. Create a new rule")
         
         choice = input("Select a rule to UPDATE, or type 'CREATE': ").strip().upper()
@@ -232,6 +332,22 @@ def prompt_rule_creation(group_id: str, llm_config: dict | None = None) -> dict:
                     name = selected["name"]
                     feature = selected["feature"]
                     existing_rule_obj = selected
+                    active = selected.get("active", True)
+                    _print_rule_summary(selected)
+                    toggle_label = "Deactivate" if active else "Reactivate"
+                    action = input(f"\nSelect an action: [E]dit or [{toggle_label[0]}] {toggle_label}: ").strip().upper() or "E"
+                    if action == toggle_label[0].upper():
+                        payload = {
+                            "name": name,
+                            "feature": feature,
+                            "active": not active,
+                            "datapoints": selected.get("datapoints", []),
+                            "edge_cases": selected.get("edge_cases", []),
+                            "edge_cases_json": selected.get("edge_cases_json", []),
+                            "rule_logic": selected.get("rule_logic", ""),
+                            "rule_logic_json": selected.get("rule_logic_json", {}),
+                        }
+                        return _save_rule(group_id, payload, rule_id)
                     print(f"\nUpdating Rule: {name}")
             except ValueError:
                 pass
@@ -239,6 +355,9 @@ def prompt_rule_creation(group_id: str, llm_config: dict | None = None) -> dict:
     if not rule_id:
         name = input("Rule Name: ").strip()
         feature = input("Feature (e.g. Fraud Check): ").strip()
+    else:
+        name = _prompt_text("Rule Name", name)
+        feature = _prompt_text("Feature (e.g. Fraud Check)", feature)
     
     if llm_config:
         context_schema = None
@@ -347,19 +466,28 @@ def prompt_rule_creation(group_id: str, llm_config: dict | None = None) -> dict:
                 break
             
     if not llm_config:
-        dp_str = input("Datapoints (comma-separated): ").strip()
+        current_datapoints = existing_rule_obj.get("datapoints", []) if existing_rule_obj else []
+        current_edge_cases = existing_rule_obj.get("edge_cases", []) if existing_rule_obj else []
+        current_rule_logic = existing_rule_obj.get("rule_logic", "") if existing_rule_obj else ""
+
+        dp_str = _prompt_text("Datapoints (comma-separated)", ", ".join(current_datapoints))
         datapoints = [d.strip() for d in dp_str.split(",") if d.strip()]
-        ec_str = input("Edge Cases (comma-separated, optional): ").strip()
+        ec_str = _prompt_text("Edge Cases (comma-separated, optional)", ", ".join(current_edge_cases))
         edge_cases = [e.strip() for e in ec_str.split(",") if e.strip()]
-        rule_logic = input("Rule Logic (e.g. IF amount > 500 THEN ASK_FOR_APPROVAL): ").strip()
-        
-        # Manual flow has no json logic engine attached yet
-        rule_logic_json = {}
-        edge_cases_json = []
+        rule_logic = _prompt_text("Rule Logic (e.g. IF amount > 500 THEN ASK_FOR_APPROVAL)", current_rule_logic)
+
+        if existing_rule_obj and rule_logic == current_rule_logic and edge_cases == current_edge_cases:
+            rule_logic_json = existing_rule_obj.get("rule_logic_json", {})
+            edge_cases_json = existing_rule_obj.get("edge_cases_json", [])
+        else:
+            # Manual edits do not regenerate JSON Logic, so stale ASTs must be cleared.
+            rule_logic_json = {}
+            edge_cases_json = []
 
     payload = {
         "name": name,
         "feature": feature,
+        "active": active,
         "datapoints": datapoints,
         "edge_cases": edge_cases,
         "edge_cases_json": edge_cases_json,
@@ -367,25 +495,7 @@ def prompt_rule_creation(group_id: str, llm_config: dict | None = None) -> dict:
         "rule_logic_json": rule_logic_json
     }
 
-    with httpx.Client() as client:
-        if rule_id:
-            # Update existing
-            resp = client.put(f"http://127.0.0.1:8001/v1/groups/{group_id}/rules/{rule_id}", json=payload)
-            action = "Updated"
-        else:
-            # Create new
-            resp = client.post(f"http://127.0.0.1:8001/v1/groups/{group_id}/rules", json=payload)
-            action = "Created"
-            
-        resp.raise_for_status()
-        rule = resp.json()
-        print(f"\n✅ {action} rule '{rule['name']}' with ID: {rule['id']}")
-        if rule.get("edge_cases"):
-            print(f"      Edge Cases: {', '.join(rule['edge_cases'])}")
-        print(f"      Rule Logic: {rule.get('rule_logic', '')}")
-        if rule.get("rule_logic_json"):
-            print(f"      JSON Logic: {json.dumps(rule.get('rule_logic_json'))}")
-        return rule
+    return _save_rule(group_id, payload, rule_id)
 
 def prompt_auto_test(group_id: str, rule: dict):
     print(f"\n--- Auto-Test for Rule: {rule.get('name', 'Unknown')} ---")

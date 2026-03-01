@@ -182,3 +182,42 @@ async def test_evaluate_with_json_logic(mock_rule_engine):
         resp = await client.get(f"/v1/decide?request_description=Test&context={context_str}&group_id=g1")
         assert resp.status_code == 200
         assert resp.json()["outcome"] == "APPROVE"
+
+
+@pytest.mark.asyncio
+async def test_inactive_rules_are_not_evaluated(mock_rule_engine):
+    mock_response = MagicMock()
+    mock_response.status_code = 200
+    mock_response.json.return_value = {
+        "id": "g1",
+        "name": "Grp",
+        "rules": [
+            {
+                "id": "inactive-rule",
+                "name": "Archived Restriction",
+                "active": False,
+                "rule_logic": "IF amount > 100 THEN REJECT",
+                "rule_logic_json": {"if": [{">": [{"var": "amount"}, 100]}, "REJECT", None]},
+                "edge_cases": [],
+                "edge_cases_json": []
+            },
+            {
+                "id": "active-rule",
+                "name": "Current Restriction",
+                "active": True,
+                "rule_logic": "IF amount > 500 THEN ASK_FOR_APPROVAL",
+                "rule_logic_json": {"if": [{">": [{"var": "amount"}, 500]}, "ASK_FOR_APPROVAL", None]},
+                "edge_cases": [],
+                "edge_cases_json": []
+            }
+        ]
+    }
+    mock_rule_engine.return_value = mock_response
+
+    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
+        context_str = '{"amount": 150}'
+        resp = await client.get(f"/v1/decide?request_description=Test&context={context_str}&group_id=g1")
+        assert resp.status_code == 200
+        data = resp.json()
+        assert data["outcome"] == "APPROVE"
+        assert data["matched_rules"] == []
