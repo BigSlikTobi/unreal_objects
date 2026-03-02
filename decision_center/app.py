@@ -1,5 +1,6 @@
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 from typing import List
 import json
 
@@ -9,7 +10,7 @@ from .models import (
 )
 from .store import DecisionStore
 from .evaluator import evaluate_request
-from .translator import check_llm_connection, translate_rule
+from .translator import check_llm_connection, translate_rule, SchemaConceptMismatchError
 import uuid
 
 app = FastAPI(title="Unreal Objects Decision Center API")
@@ -36,14 +37,14 @@ async def health():
     return {"status": "ok", "service": "decision_center"}
 
 @app.get("/v1/decide", response_model=DecisionResult)
-async def evaluate(request_description: str, context: str, group_id: str = None):
+async def evaluate(request_description: str, context: str, group_id: str = None, rule_id: str = None):
     try:
         ctx_dict = json.loads(context)
     except Exception:
         raise HTTPException(status_code=400, detail="Invalid context JSON")
 
     # Evaluate
-    outcome, matched_rules, matched_details = await evaluate_request(ctx_dict, group_id)
+    outcome, matched_rules, matched_details = await evaluate_request(ctx_dict, group_id, rule_id)
     req_id = str(uuid.uuid4())
     
     # Log Atomic Decision
@@ -123,5 +124,10 @@ async def translate_rule_api(req: RuleTranslationRequest):
             datapoint_definitions=req.datapoint_definitions
         )
         return result
+    except SchemaConceptMismatchError as e:
+        content: dict = {"detail": str(e)}
+        if e.proposed_field:
+            content["proposed_field"] = e.proposed_field
+        return JSONResponse(status_code=422, content=content)
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))

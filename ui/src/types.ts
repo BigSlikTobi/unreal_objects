@@ -8,6 +8,12 @@ export interface DatapointDefinition {
   values: string[];
 }
 
+export interface ProposedField {
+  name: string;
+  description: string;
+  type: string;
+}
+
 export interface Rule {
   id: string;
   name: string;

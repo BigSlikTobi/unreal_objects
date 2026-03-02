@@ -1,73 +1,30 @@
-# React + TypeScript + Vite
+# Unreal Objects UI
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+This frontend is the rule authoring workspace for Unreal Objects.
 
-Currently, two official plugins are available:
+## Layout
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+- Left sidebar: rule groups and workspace controls.
+- Center workspace: the selected group's rule library as a grid of cards.
+- Primary action card: `Create New Rule`, which opens the rule builder chat flow.
+- Existing rule card: opens that rule in edit mode with the fillout form centered and the chat context shown below it.
 
-## React Compiler
+## Interaction Model
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+- Browsing a group should prioritize scanning saved rules over showing the chat by default.
+- Chat is contextual. It appears when a user starts creating a rule or loads an existing rule for editing.
+- Editing a saved rule must preserve the existing update flow, including translate, save, and save-and-test actions.
+- In the builder workspace, the fillout form is the primary surface and the chat transcript sits underneath it as supporting context.
 
-## Expanding the ESLint configuration
+## LLM Settings
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+- When no prior model selection is stored in `sessionStorage`, the OpenAI settings modal should prefill the model field with `gpt-5.2-2025-12-11`.
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+## Proposal Preview
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
+- Proposed logic previews should highlight quoted string literals once, without duplicating the inner text beside the highlighted token.
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
+## Test Console
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
-
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
-
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
+- `Save & Test` and the test console should evaluate only the selected rule, not every active rule in the current group.
+- The test console inputs still come from the selected rule's extracted datapoints and use the current group context definitions for typing.

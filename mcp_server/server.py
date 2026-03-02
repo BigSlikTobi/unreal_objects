@@ -146,7 +146,7 @@ async def guardrail_heartbeat(ctx: Context):
 @mcp.tool(annotations=ToolAnnotations(readOnlyHint=True, openWorldHint=True))
 @fail_closed
 async def evaluate_action(
-    request_description: str, context_json: str, ctx: Context, group_id: str = None
+    request_description: str, context_json: str, group_id: str = None, ctx: Context = None
 ):
     """Evaluate a planned action against business rules before executing it.
 

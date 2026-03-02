@@ -8,7 +8,7 @@ describe('App source imports', () => {
     expect(reactImports).toHaveLength(1);
     expect(reactImports[0]).toContain('useCallback');
     expect(reactImports[0]).toContain('useEffect');
-    expect(reactImports[0]).toContain('useRef');
     expect(reactImports[0]).toContain('useState');
+    expect(reactImports[0]).not.toContain('useRef');
   });
 });

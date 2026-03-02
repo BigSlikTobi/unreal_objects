@@ -1,6 +1,8 @@
 import pytest
 from unittest.mock import patch, MagicMock
 
+from decision_center.translator import SchemaConceptMismatchError
+
 # We will implement these in decision_center.cli shortly
 try:
     from decision_center.cli import prompt_start_servers, prompt_group_selection, prompt_llm_setup, prompt_rule_creation, prompt_auto_test
@@ -384,3 +386,125 @@ def test_prompt_auto_test_enum_aware(mock_get, mock_input):
     context = _json.loads(parsed["context"][0])
     assert context["currency"] == "EUR"
     assert isinstance(context["currency"], str)
+
+
+@patch("builtins.input", side_effect=[
+    "Delivery Rule",       # name
+    "Shipping",            # feature
+    "",                    # schema choice → 1 (None)
+    "delivery_time > 5",   # condition
+    "2",                   # then outcome → ASK_FOR_APPROVAL
+    "4",                   # else outcome → no action
+    "n",                   # edge cases? no
+    # SchemaConceptMismatchError fires → prompt to add field
+    "y",                   # add field? yes
+    "delivery_time_days",  # field name override
+    "number",              # field type confirm
+    # Second translate_rule call succeeds → accept
+    "",                    # swap datapoint prompt → skip
+    "A",                   # accept rule
+    "2",                   # datapoint type for delivery_time_days → number
+])
+@patch("decision_center.cli.translate_rule")
+@patch("httpx.Client.post")
+@patch("httpx.Client.get")
+def test_prompt_rule_creation_schema_extension_retry(mock_get, mock_post, mock_translate, mock_input):
+    """When translate_rule raises SchemaConceptMismatchError the CLI offers
+    to add the field and retries translation with the extended schema."""
+    llm_config = {"provider": "openai", "model": "gpt-5.2", "api_key": "test_key"}
+
+    mock_get_resp = MagicMock()
+    mock_get_resp.status_code = 200
+    mock_get_resp.json.return_value = {"rules": [], "datapoint_definitions": []}
+    mock_get.return_value = mock_get_resp
+
+    # First call raises, second call succeeds
+    mock_translate.side_effect = [
+        SchemaConceptMismatchError(
+            "delivery_time not in schema",
+            proposed_field={"name": "delivery_time", "description": "number", "type": "number"},
+        ),
+        {
+            "datapoints": ["delivery_time_days"],
+            "edge_cases": [],
+            "edge_cases_json": [],
+            "rule_logic": "IF delivery_time_days > 5 THEN ASK_FOR_APPROVAL",
+            "rule_logic_json": {"if": [{">": [{"var": "delivery_time_days"}, 5]}, "ASK_FOR_APPROVAL", "APPROVE"]},
+        },
+    ]
+
+    mock_resp = MagicMock()
+    mock_resp.status_code = 201
+    mock_resp.json.return_value = {
+        "id": "rule_ext_1",
+        "name": "Delivery Rule",
+        "rule_logic": "IF delivery_time_days > 5 THEN ASK_FOR_APPROVAL",
+        "rule_logic_json": {"if": [{">": [{"var": "delivery_time_days"}, 5]}, "ASK_FOR_APPROVAL", "APPROVE"]},
+        "edge_cases": [],
+        "edge_cases_json": [],
+    }
+    mock_post.return_value = mock_resp
+
+    rule = prompt_rule_creation("group_123", llm_config=llm_config)
+
+    assert rule["id"] == "rule_ext_1"
+    # translate_rule must have been called twice
+    assert mock_translate.call_count == 2
+    # Second call should include the extended schema field
+    _, second_kwargs = mock_translate.call_args_list[1]
+    assert second_kwargs["context_schema"]["delivery_time_days"] == "number"
+
+
+@patch("builtins.input", side_effect=[
+    "Delivery Rule",       # name
+    "Shipping",            # feature
+    "2",                   # schema choice → ecommerce
+    "delivery_time > 5",   # condition
+    "2",                   # then outcome → ASK_FOR_APPROVAL
+    "4",                   # else outcome → no action
+    "n",                   # edge cases? no
+    # Translation succeeds with account_age_days (wrong field)
+    "1",                   # swap datapoint #1
+    "1",                   # pick first ranked candidate (delivery_time_days)
+    "A",                   # accept rule
+    "2",                   # datapoint type → number
+])
+@patch("decision_center.cli.translate_rule")
+@patch("httpx.Client.post")
+@patch("httpx.Client.get")
+def test_prompt_rule_creation_swap_datapoint(mock_get, mock_post, mock_translate, mock_input):
+    """User can swap a mismatched datapoint via the CLI prompt."""
+    llm_config = {"provider": "openai", "model": "gpt-5.2", "api_key": "test_key"}
+
+    mock_get_resp = MagicMock()
+    mock_get_resp.status_code = 200
+    mock_get_resp.json.return_value = {"rules": [], "datapoint_definitions": []}
+    mock_get.return_value = mock_get_resp
+
+    mock_translate.return_value = {
+        "datapoints": ["account_age_days"],
+        "edge_cases": [],
+        "edge_cases_json": [],
+        "rule_logic": "IF account_age_days > 5 THEN ASK_FOR_APPROVAL",
+        "rule_logic_json": {"if": [{">": [{"var": "account_age_days"}, 5]}, "ASK_FOR_APPROVAL", "APPROVE"]},
+    }
+
+    mock_resp = MagicMock()
+    mock_resp.status_code = 201
+    mock_resp.json.return_value = {
+        "id": "rule_swap_1",
+        "name": "Delivery Rule",
+        "rule_logic": "IF delivery_time_days > 5 THEN ASK_FOR_APPROVAL",
+        "rule_logic_json": {"if": [{">": [{"var": "delivery_time_days"}, 5]}, "ASK_FOR_APPROVAL", "APPROVE"]},
+        "edge_cases": [],
+        "edge_cases_json": [],
+    }
+    mock_post.return_value = mock_resp
+
+    rule = prompt_rule_creation("group_123", llm_config=llm_config)
+
+    assert rule["id"] == "rule_swap_1"
+    # The POST should contain the swapped variable
+    _, post_kwargs = mock_post.call_args
+    assert "delivery_time_days" in post_kwargs["json"]["rule_logic"]
+    assert "account_age_days" not in post_kwargs["json"]["rule_logic"]

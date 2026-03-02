@@ -155,4 +155,35 @@ describe('ChatInterface rule management', () => {
     expect((screen.getByPlaceholderText('Feature (e.g. Fraud Check)') as HTMLInputElement).value).toBe('');
     expect((screen.getByPlaceholderText('e.g. amount > 500') as HTMLInputElement).value).toBe('');
   });
+
+  it('renders quoted literals in the proposal preview without duplicating the inner text', async () => {
+    const user = userEvent.setup();
+
+    vi.mocked(translateRule).mockResolvedValueOnce({
+      datapoints: ['transaction_amount', 'currency'],
+      edge_cases: ["IF currency != 'EUR' THEN REJECT"],
+      edge_cases_json: [{ if: [{ '!=': [{ var: 'currency' }, 'EUR'] }, 'REJECT', null] }],
+      rule_logic: 'IF transaction_amount > 700 THEN ASK_FOR_APPROVAL ELSE APPROVE',
+      rule_logic_json: { if: [{ '>': [{ var: 'transaction_amount' }, 700] }, 'ASK_FOR_APPROVAL', 'APPROVE'] },
+    });
+
+    render(
+      <ChatInterface
+        groupId="group_123"
+        llmConfig={{ provider: 'openai', model: 'gpt-5.2', api_key: 'test-key' }}
+        selectedRule={existingRule}
+        onRuleCreated={vi.fn()}
+        onStartTest={vi.fn()}
+      />
+    );
+
+    const conditionInput = screen.getByPlaceholderText('e.g. amount > 500');
+    await user.clear(conditionInput);
+    await user.type(conditionInput, 'transaction_amount > 700');
+    await user.click(screen.getByRole('button', { name: /translate with ai/i }));
+
+    await screen.findByText(/proposed logic/i);
+    expect(screen.getByText("'EUR'")).toBeTruthy();
+    expect(screen.queryByText("'EUR'EUR")).toBeNull();
+  });
 });

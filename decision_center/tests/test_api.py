@@ -221,3 +221,85 @@ async def test_inactive_rules_are_not_evaluated(mock_rule_engine):
         data = resp.json()
         assert data["outcome"] == "APPROVE"
         assert data["matched_rules"] == []
+
+
+@pytest.mark.asyncio
+async def test_evaluate_can_scope_to_a_selected_rule(mock_rule_engine):
+    mock_response = MagicMock()
+    mock_response.status_code = 200
+    mock_response.json.return_value = {
+        "id": "g1",
+        "name": "Grp",
+        "rules": [
+            {
+                "id": "rule-a",
+                "name": "Other Active Rule",
+                "active": True,
+                "rule_logic": "IF amount > 50 THEN REJECT",
+                "rule_logic_json": {"if": [{">": [{"var": "amount"}, 50]}, "REJECT", None]},
+                "edge_cases": [],
+                "edge_cases_json": []
+            },
+            {
+                "id": "rule-b",
+                "name": "Selected Rule",
+                "active": True,
+                "rule_logic": "IF amount > 500 THEN ASK_FOR_APPROVAL",
+                "rule_logic_json": {"if": [{">": [{"var": "amount"}, 500]}, "ASK_FOR_APPROVAL", None]},
+                "edge_cases": [],
+                "edge_cases_json": []
+            }
+        ]
+    }
+    mock_rule_engine.return_value = mock_response
+
+    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
+        context_str = '{"amount": 100}'
+        resp = await client.get(
+            f"/v1/decide?request_description=Test&context={context_str}&group_id=g1&rule_id=rule-b"
+        )
+        assert resp.status_code == 200
+        data = resp.json()
+        assert data["outcome"] == "APPROVE"
+        assert data["matched_rules"] == []
+
+
+@pytest.mark.asyncio
+@patch("openai.OpenAI")
+async def test_translate_api_backfills_datapoints_when_provider_omits_them(mock_openai):
+    mock_client = MagicMock()
+    mock_openai.return_value = mock_client
+
+    mock_message = MagicMock()
+    mock_message.content = (
+        '{"datapoints":[],"edge_cases":["IF currency != \\"EUR\\" THEN REJECT"],'
+        '"edge_cases_json":[{"if":[{"!=":[{"var":"currency"},"EUR"]},"REJECT",null]}],'
+        '"rule_logic":"IF withdrawal_amount > 1000 THEN ASK_FOR_APPROVAL",'
+        '"rule_logic_json":{"if":[{">":[{"var":"withdrawal_amount"},1000]},"ASK_FOR_APPROVAL",null]}}'
+    )
+
+    mock_choice = MagicMock()
+    mock_choice.message = mock_message
+
+    mock_response = MagicMock()
+    mock_response.choices = [mock_choice]
+    mock_client.chat.completions.create.return_value = mock_response
+
+    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
+        resp = await client.post(
+            "/v1/llm/translate",
+            json={
+                "natural_language": "ask for approval if withdrawal_amount is > 1000 unless currency is EUR",
+                "feature": "finance",
+                "name": "Withdrawal Rule",
+                "provider": "openai",
+                "model": "gpt-5.2",
+                "api_key": "fake_key",
+            },
+        )
+
+    assert resp.status_code == 200
+    data = resp.json()
+    assert data["datapoints"] == ["withdrawal_amount", "currency"]
+    assert data["rule_logic_json"]["if"][0][">"][0]["var"] == "withdrawal_amount"
+    assert data["edge_cases_json"][0]["if"][0]["!="][0]["var"] == "currency"

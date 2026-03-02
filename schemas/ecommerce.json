@@ -4,15 +4,27 @@
   "schema": {
     "transaction_amount": "number (the total cost of the order)",
     "currency": "string (e.g., 'USD', 'EUR')",
+    "order_status": "string (e.g., 'pending', 'paid', 'fulfilled', 'cancelled', 'returned')",
+    "payment_status": "string (e.g., 'authorized', 'captured', 'failed', 'refunded')",
+    "payment_method": "string (e.g., 'credit_card', 'paypal', 'crypto')",
     "user_risk_score": "number (0-100 risk assessment)",
     "account_age_days": "number (days since user registration)",
+    "order_age_hours": "number (hours since order creation)",
     "merchant_category": "string (e.g., 'electronics', 'apparel', 'gift_card')",
     "shipping_address_matches_billing": "boolean",
+    "shipping_country": "string (ISO country code)",
+    "billing_country": "string (ISO country code)",
+    "shipping_speed": "string (e.g., 'standard', 'express', 'overnight')",
+    "delivery_time_days": "number (actual or promised delivery duration in days)",
+    "estimated_delivery_days": "number (estimated delivery duration in days)",
+    "item_category": "string (e.g., 'electronics', 'apparel', 'digital_goods')",
     "item_count": "number (total items in cart)",
+    "cart_abandonment_count_30d": "number (shopping cart abandonments in the last 30 days)",
     "coupon_applied": "boolean",
-    "payment_method": "string (e.g., 'credit_card', 'paypal', 'crypto')",
     "user_country": "string (ISO country code)",
-    "shipping_speed": "string (e.g., 'standard', 'overnight')",
-    "is_first_time_buyer": "boolean"
+    "is_first_time_buyer": "boolean",
+    "prior_chargeback_count": "number (historical chargebacks on the account)",
+    "refund_count_90d": "number (refund requests in the last 90 days)",
+    "is_digital_goods_order": "boolean"
   }
 }

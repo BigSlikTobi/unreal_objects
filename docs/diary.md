@@ -1,5 +1,142 @@
 # Unreal Objects Diary
 
+## Schema Translation: Candidate Alignment, Extension Flow, and Variable Swapping
+
+**Date:** 2026-03-02
+
+**What was built:**
+
+Three major improvements to the schema-enforced translation workflow:
+
+1. **Deterministic candidate alignment validator** — prevents the LLM from picking semantically wrong fields when better options exist
+2. **Schema extension flow** — lets users add missing concepts inline and retry translation instantly (UI + CLI)
+3. **Variable swapping** — post-translation interactive editing to replace extracted datapoints (UI + CLI)
+
+**Changes:**
+
+### Backend (`decision_center/translator.py`)
+
+1. **`_validate_candidate_alignment(result, natural_language, context_schema)`** — new deterministic post-translation guard. Scores every variable actually used in `rule_logic_json` against the original rule text using the same word-overlap algorithm as `_find_candidate_fields`. If a variable scores below 50% of the best available score, raises `SchemaConceptMismatchError` with the better field as `proposed_field`. Example: `account_age_days` (score 3) vs `delivery_time_days` (score 8) for "delivery time > 10 days" → rejects with suggested field.
+
+2. **`_extract_proposed_field(rule_logic)`** — scans the condition text for the first variable in a comparison expression and infers its type from the operator (`>/<` → number, `==/!=` → text). Called when `_validate_rule_logic_json_populated` detects empty logic with a condition present, so the error can suggest a specific field name and type.
+
+3. **`_validate_rule_logic_json_populated` enhancement** — now calls `_extract_proposed_field` and includes the result in the raised `SchemaConceptMismatchError` when schema mode is active but the LLM returns empty JSON Logic.
+
+4. **`SchemaConceptMismatchError.proposed_field`** — the error now carries an optional `{"name": "...", "description": "...", "type": "..."}` dict that the UI/CLI can surface as a pre-filled "add this field" form.
+
+5. **`swap_variable_in_result(result, old_var, new_var)`** — new utility function that replaces a variable name throughout datapoints, rule_logic (string), rule_logic_json, edge_cases (strings), and edge_cases_json. Uses `_swap_var_in_json_logic` helper that recursively walks JSON Logic and swaps `{"var": old}` → `{"var": new}`.
+
+### API (`decision_center/app.py`)
+
+- 422 responses for `SchemaConceptMismatchError` now include a top-level `proposed_field` key (sibling to `detail`) via `JSONResponse` so clients can display structured field suggestions.
+
+### UI (`ui/src/`)
+
+1. **`DatapointChip` component** — each extracted datapoint in the proposal card is now a clickable badge with a dropdown:
+   - Shows all schema fields sorted alphabetically (current field highlighted)
+   - Each option displays field name + description
+   - "Create new field" option with inline text input
+   - Clicking a field calls `handleSwapVariable` which updates the message's `ruleData` in place using client-side `swapVariableInResult`
+
+2. **Schema extension flow enhancement** — when translation fails with a 422 containing `proposed_field`, the UI renders a `SchemaExtensionOffer` card with pre-filled field name and type. User can edit and click "Add & Retry" → merges into `schemaExtensions` state and re-runs translation with the extended schema.
+
+3. **`handleTranslate(extraSchema?: Record<string, string>)`** signature change — now accepts optional `extraSchema` parameter to avoid React async state timing issues when adding a field and immediately retrying.
+
+4. **`ChevronDown` icon import** from lucide-react for the dropdown affordance.
+
+### CLI (`decision_center/cli.py`)
+
+1. **Schema extension prompt** — when `SchemaConceptMismatchError` is caught and `proposed_field` is present:
+   - Shows suggested field name and type
+   - Prompts "Add this field to the schema and retry? [Y/n]"
+   - User can confirm or edit the field name and type
+   - Merges into `context_schema` (initializing as `{}` if needed) and continues the `while True` translation loop
+
+2. **Datapoint swap prompt** — after showing extracted datapoints (schema mode only):
+   - "To change a datapoint, enter its number. Press Enter to skip."
+   - If user picks a number → shows ranked candidates via `_find_candidate_fields(natural_language, context_schema, top_n=len(context_schema))`
+   - Current field marked with `←`
+   - Options: pick numbered field, or "N. Create a new field name"
+   - If swapped → calls `swap_variable_in_result` and updates display immediately before Accept/Edit/Manual prompt
+
+3. **Import additions** — `swap_variable_in_result`, `_find_candidate_fields`, `SchemaConceptMismatchError`
+
+**Validation:**
+
+- **Backend tests:** 5 new tests in `decision_center/tests/test_translator.py` for `_validate_candidate_alignment`, 2 for `swap_variable_in_result`. Full suite: 143/143 passing.
+- **CLI tests:** 1 new test in `decision_center/tests/test_cli.py` for datapoint swap flow. Schema extension test updated to skip swap prompt. All CLI tests passing.
+- **UI:** TypeScript compilation clean. Manual testing confirmed DatapointChip dropdown works, SchemaExtensionOffer renders, and swap updates the proposal correctly.
+
+**Key findings:**
+
+1. **Prompt-based steering is insufficient** — the LLM routinely ignored the ranked candidate list and schema descriptions. A deterministic post-translation score comparison (50% threshold) catches semantic mismatches reliably.
+
+2. **Candidate ranking must use the original rule text** — not the LLM's output. The CLI initially passed `translation.get("rule_logic")` to `_find_candidate_fields`, which ranked against the already-wrong field name. Fixed to use `natural_language` instead.
+
+3. **UI event handler pitfall** — `onClick={handleTranslate}` passed the React `MouseEvent` as `extraSchema`, causing JSON serialization circular reference errors. Fixed with `onClick={() => handleTranslate()}`.
+
+4. **Schema extension creates context for swap prompt** — when the extension flow succeeds, `context_schema` is now populated → the swap prompt appears. CLI test for schema extension needed an extra `""` (skip) input after the second translation succeeds.
+
+---
+
+## Schema Translation Hardening — Semantic Concept Guard
+
+**Date:** 2026-03-02
+
+**What was built:**
+
+The translator's schema-mode enforcement had a critical gap: when a schema was
+active the LLM could silently substitute a "closest" schema field even when the
+concept was semantically different (e.g. mapping *delivery time* to
+`account_age_days` because both are measured in days).  Two complementary
+safety nets were added.
+
+**Changes:**
+
+1. **`SchemaConceptMismatchError`** — a new `ValueError` subclass in
+   `decision_center/translator.py` that is raised whenever the guard detects a
+   concept violation.  Using a distinct type lets callers and the API layer
+   handle it explicitly.
+
+2. **`_detect_unsupported_sentinel`** — after translation the LLM response is
+   inspected for a `UNSUPPORTED:` prefix in `rule_logic`.  The system prompt
+   now instructs the model to emit this sentinel (rather than silently
+   substituting) when no schema field clearly covers the requested concept.
+   The sentinel is caught and re-raised as `SchemaConceptMismatchError`.
+
+3. **`_validate_schema_variables`** — a deterministic post-translation guard
+   that walks every `{"var": ...}` expression in `rule_logic_json` and
+   `edge_cases_json` and verifies each variable exists in the active schema.
+   This catches off-schema substitutions regardless of what the LLM said in its
+   prose.
+
+4. **Strengthened schema enforcement prompt block** — now lists schema fields
+   line-by-line with descriptions (instead of a raw JSON dump), includes an
+   explicit negative example (`account_age_days` ≠ `delivery time_days`),
+   requires a *semantic* match (not just name similarity), and states the
+   `UNSUPPORTED:` protocol.
+
+5. **API layer (`decision_center/app.py`)** — `SchemaConceptMismatchError` is
+   caught separately and returned as HTTP 422 so the UI can surface a clear
+   "concept not in schema" message rather than a generic 500.
+
+**Validation:**
+
+13 new tests were added to `decision_center/tests/test_translator.py` covering:
+prompt content assertions, standalone unit tests for both validators, and
+end-to-end `translate_rule` integration scenarios (wrong-field substitution,
+UNSUPPORTED sentinel, and a passing correct-field case).  Full suite ran
+124 tests, all green, zero regressions.
+
+**Key finding:**
+
+The two mechanisms (translation-time steering and evaluation-time fuzzy
+mapping) serve different purposes and must stay separated.  The fix belongs
+entirely in the translation layer; the evaluator's fuzzy mapper is intentionally
+left unchanged as it handles legitimate minor naming mismatches at runtime.
+
+---
+
 ## UI App Import Parse Fix
 
 **What was built:**
@@ -592,3 +729,275 @@
   was already typed correctly. That assumption was the real bug.
 - Guarding the string normalization step is sufficient here because it restores
   the intended failure mode without weakening the schema validation layer.
+
+## UI Workspace Cleanup
+
+**What was built:**
+
+- Reworked the UI so the selected group's rule library is now the default center
+  workspace instead of the chat.
+- Added a prominent `Create New Rule` card to the library view, which opens the
+  builder workspace for a fresh rule.
+- Moved the rule editing experience to a form-first layout with the builder on
+  top and chat context underneath, matching the requested "edit in center, chat
+  below" workflow.
+- Preserved saved-rule status actions by keeping deactivate/reactivate controls
+  in the library and surfacing status notices in the center workspace.
+- Replaced the stale `AppSource` import assertion so the full UI suite reflects
+  the current `App.tsx` implementation instead of forcing an unused hook import.
+
+**How it was validated:**
+
+- Added and updated UI tests in `ui/src/App.test.tsx` for the new default
+  library layout, edit-flow workspace ordering, mobile group toggle behavior,
+  and create-card entry path.
+- Kept `ui/src/components/ChatInterface.test.tsx` green while restructuring the
+  builder and chat layout, confirming edit-save behavior still works.
+- Ran `npm test` in `ui/` and confirmed all 15 Vitest tests passed.
+- Ran `npm run lint` in `ui/` and confirmed ESLint passed.
+
+**Key Findings:**
+
+- The previous layout asked users to start in the most complex surface, which
+  made browsing existing rules harder than authoring them. Making the library
+  the landing state simplifies the primary navigation path.
+- Once chat stopped being the default surface, system notices also needed a new
+  visible home; otherwise important rule-state feedback silently disappeared.
+- Small source-level tests that assert exact imports can become brittle during
+  UI cleanup unless they check intent rather than obsolete implementation
+  details.
+
+## UI Notice Scope Fix
+
+**What was built:**
+
+- Added a UI regression test to prove deactivate/reactivate notices do not leak
+  from one rule group into another after a group switch.
+- Cleared the center-workspace system notice state whenever the selected group
+  changes so each group opens with only its own relevant status context.
+
+**How it was validated:**
+
+- Ran `npm test` in `ui/` after adding the cross-group notice regression.
+- Ran `npm run lint` and `npm run build` in `ui/` to confirm the state reset
+  change did not introduce UI regressions.
+
+**Key Findings:**
+
+- Once the rule library became the default landing workspace, any stale
+  cross-group system banner became much more visible. Resetting notice state on
+  group changes is the correct boundary for that feedback.
+
+## OpenAI Default Model Refresh
+
+**What was built:**
+
+- Updated the UI settings modal so OpenAI now defaults to
+  `gpt-5.2-2025-12-11` when no prior model is stored.
+- Added a UI regression test that opens the settings modal from a clean session
+  and checks the prefilled default model value.
+- Refreshed the UI README so it documents the new default-model behavior.
+
+**How it was validated:**
+
+- Ran `npm test` in `ui/` after adding the default-model regression.
+- Ran `npm run lint` and `npm run build` in `ui/` after updating the modal
+  initializer and placeholder text.
+
+**Key Findings:**
+
+- The default model belongs in the same place users configure credentials, so a
+  stale initializer creates silent drift between the intended OpenAI default and
+  what the UI actually saves.
+
+## Proposal Literal Preview Fix
+
+**What was built:**
+
+- Fixed the proposed-logic preview so quoted literals such as `'EUR'` render
+  once instead of showing duplicated inner text beside the highlighted token.
+- Added a UI regression test that translates a rule with a quoted edge-case
+  literal and checks the preview output.
+- Updated the UI README to document the intended quoted-literal preview
+  behavior.
+
+**How it was validated:**
+
+- Ran `npm test` in `ui/` after adding the quoted-literal regression.
+- Ran `npm run lint` and `npm run build` in `ui/` after updating the preview
+  renderer.
+
+**Key Findings:**
+
+- The bug came from using `String.split()` with nested capture groups: React was
+  rendering both the full quoted token and the inner captured text. A single
+  quoted-token matcher fixes the preview without changing the underlying rule
+  data.
+
+## Selected-Rule Test Console Scope
+
+**What was built:**
+
+- Updated the decision API and UI test-console path so `Save & Test` evaluates
+  only the selected rule instead of all active rules in the current group.
+- Added API regression coverage for the optional `rule_id` filter and UI
+  regression coverage to confirm the test console passes the selected rule id.
+- Kept the group context and datapoint typing behavior unchanged while scoping
+  the actual evaluation target.
+
+**How it was validated:**
+
+- Ran the decision-center API tests covering the new selected-rule filter.
+- Ran `npm test`, `npm run lint`, and `npm run build` in `ui/` after updating
+  the test-console request path.
+
+**Key Findings:**
+
+- The old test-console flow was misleading because it displayed one rule but
+  evaluated every active rule in the group. Adding an explicit selected-rule
+  scope aligns the UI with user intent without changing the underlying
+  fail-closed evaluator semantics.
+
+## Translator Datapoint Backfill
+
+**What was built:**
+
+- Hardened `decision_center/translator.py` so `_validate_rule_payload()` now
+  backfills `datapoints` when a provider returns an empty list.
+- The fallback derives datapoints first from referenced JSON Logic variables and
+  then from the human-readable `IF ... THEN ...` rule text when JSON Logic is
+  missing.
+- Updated the architecture notes in `CLAUDE.md` to document the translator
+  guarantee for variable-based rules.
+
+**How it was validated:**
+
+- Added translator regression tests in
+  `decision_center/tests/test_translator.py` covering empty-provider datapoints
+  with JSON Logic variables and with only human-readable rule text.
+- Added an API regression in `decision_center/tests/test_api.py` that posts to
+  `/v1/llm/translate` and verifies the response backfills datapoints from a
+  mocked provider payload with an empty `datapoints` list.
+- Ran `.venv/bin/pytest decision_center/tests/test_translator.py -q` and
+  confirmed the translator module passed (`11 passed`).
+- Ran `.venv/bin/pytest decision_center/tests/test_api.py -q` and confirmed the
+  decision-center API module passed (`9 passed`).
+- Ran `.venv/bin/pytest -q`; the new translator tests stayed green, but the
+  full suite still has unrelated failures in
+  `decision_center/tests/test_stress_test_cli.py` and `tests/test_integration.py`.
+
+**Key Findings:**
+
+- The real failure mode was not translation of the rule itself; it was trusting
+  the provider-populated `datapoints` list as authoritative even when the same
+  payload already contained enough structure to recover the variables safely.
+- Recovering datapoints from JSON Logic is the least risky fallback because it
+  follows the exact logic that will be executed downstream instead of guessing
+  from free text first.
+
+## Stress-Test CLI And MCP Test Repairs
+
+**What was built:**
+
+- Updated `decision_center/stress_test/cli.py` so the pre-run service check now
+  emits a warning and continues when services are unavailable, unless
+  `--fail-on-missing-services` is explicitly set.
+- Updated `mcp_server/server.py` so `evaluate_action()` accepts `group_id` as
+  the third public argument and keeps `ctx` as the trailing context parameter,
+  matching the integration usage pattern.
+- Added regressions in `decision_center/tests/test_stress_test_cli.py` and
+  `mcp_server/tests/test_tools.py` to lock in both behaviors.
+
+**How it was validated:**
+
+- Ran `.venv/bin/pytest decision_center/tests/test_stress_test_cli.py::test_main_warns_and_continues_when_service_check_fails_without_strict_flag -q`.
+- Ran `.venv/bin/pytest mcp_server/tests/test_tools.py::test_evaluate_action_accepts_group_id_as_third_positional_argument tests/test_integration.py::test_e2e_flow -q`.
+- Ran `.venv/bin/pytest -q` and confirmed the full Python suite passed
+  (`107 passed`).
+
+**Key Findings:**
+
+- The stress-test CLI already had a flag for strict service handling, but the
+  precheck path was treating every availability issue as fatal. Respecting the
+  explicit strict flag makes the CLI more testable and preserves dataset-only or
+  mocked evaluation workflows.
+- The MCP tool failure was a plain API ergonomics bug: the function signature
+  exposed `ctx` before `group_id`, which made a natural positional call shape
+  collide with the decorator wrapper.
+
+## Schema Expansion And Translator Hallucination Guard
+
+**What was built:**
+
+- Strengthened `decision_center/translator.py` so the system prompt explicitly
+  forbids pseudo-datapoints such as `exists`, `missing`, and similar
+  explanation words when translating schema-constrained rules.
+- Added schema-aware datapoint sanitization so when a context schema is
+  provided, off-schema datapoints are removed and valid datapoints are
+  backfilled from the translated JSON Logic or rule text.
+- Expanded `schemas/ecommerce.json` with concrete delivery, shipping, payment,
+  and fraud-relevant fields including `delivery_time_days`,
+  `estimated_delivery_days`, `shipping_country`, `billing_country`,
+  `payment_status`, `prior_chargeback_count`, and `refund_count_90d`.
+- Expanded `schemas/finance.json` with generic transfer and beneficiary fields
+  including `transaction_amount`, `transaction_type`,
+  `source_of_funds_verified`, `beneficiary_account_age_days`,
+  `transfer_count_24h`, `total_transfer_amount_24h`, and `account_age_days`.
+- Updated `README.md` and `CLAUDE.md` so the documented schema behavior matches
+  the stricter translator contract and the broader blueprint coverage.
+
+**How it was validated:**
+
+- Added translator regressions in `decision_center/tests/test_translator.py`
+  covering the stronger prompt wording and schema-based removal of hallucinated
+  datapoints.
+- Added schema coverage regressions in
+  `decision_center/tests/test_stress_test_cli.py` that assert the checked-in
+  ecommerce and finance blueprint files contain the newly required fields.
+- Ran `.venv/bin/pytest decision_center/tests/test_translator.py -q` and
+  confirmed the translator module passed (`13 passed`).
+- Ran `.venv/bin/pytest decision_center/tests/test_stress_test_cli.py -q` and
+  confirmed the stress-test CLI module passed (`25 passed`).
+- Ran `.venv/bin/pytest -q` and confirmed the full Python suite passed
+  (`111 passed`).
+
+**Key Findings:**
+
+- The screenshot issue had two causes: the schema lacked a concrete
+  delivery-duration field, and the translator had no explicit guard against
+  turning its own explanation text into datapoints.
+- Prompt hardening alone is not enough here. The schema-aware sanitization step
+  is what stops an off-schema datapoint list like `["time", "exists"]` from
+  leaking into the UI even if a provider still returns it.
+
+## No-Schema Datapoint Steering
+
+**What was built:**
+
+- Extended `decision_center/translator.py` so the no-schema path now soft-steers
+  the model toward existing datapoint names when `datapoint_definitions` are
+  available, without converting no-schema mode into a fixed vocabulary.
+- Added a no-schema datapoint sanitizer that filters exact pseudo-tokens such as
+  `exists`, `missing`, `field`, `schema`, `time`, and `days` while preserving
+  legitimate business fields like `transaction_time_hour`.
+- Kept JSON-Logic-derived datapoints as the preferred fallback when a provider
+  still returns a polluted datapoint list in no-schema mode.
+
+**How it was validated:**
+
+- Added translator regressions in `decision_center/tests/test_translator.py`
+  covering the no-schema prompt wording for known datapoint reuse and the
+  filtering of pseudo-datapoints while keeping real field names.
+- Ran `.venv/bin/pytest decision_center/tests/test_translator.py -q` and
+  confirmed the translator module passed (`15 passed`).
+- Ran `.venv/bin/pytest -q` and confirmed the full Python suite passed
+  (`113 passed`).
+
+**Key Findings:**
+
+- No-schema mode benefits from steering, but it has to stay soft. Reusing known
+  datapoint names when they fit reduces naming drift without blocking genuinely
+  new concepts.
+- Exact-token filtering is the right level of strictness here. It removes
+  hallucinated helper words like `exists` while avoiding collateral damage to
+  valid names that merely contain time-oriented semantics.

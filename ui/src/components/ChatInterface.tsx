@@ -1,8 +1,8 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { Bot, User, Check, Plus, FlaskConical, Code2, X, Wand2 } from 'lucide-react';
-import { translateRule, createRule, getGroup, updateDatapointDefinitions, updateRule } from '../api';
+import { Bot, User, Check, Plus, FlaskConical, Code2, X, Wand2, ChevronDown } from 'lucide-react';
+import { translateRule, createRule, getGroup, updateDatapointDefinitions, updateRule, ConceptMismatchError } from '../api';
 import { DatapointConfigurator } from './DatapointConfigurator';
-import type { DatapointDefinition, LlmConfig, Rule, RulePayload, RuleTranslation } from '../types';
+import type { DatapointDefinition, LlmConfig, ProposedField, Rule, RulePayload, RuleTranslation } from '../types';
 
 interface Message {
   id: string;
@@ -12,6 +12,8 @@ interface Message {
   ruleData?: RuleTranslation;
   isDatapointConfig?: boolean;
   newDatapoints?: string[];
+  isSchemaExtensionOffer?: boolean;
+  proposedField?: ProposedField;
 }
 
 interface EdgeCaseRow {
@@ -34,6 +36,7 @@ interface ChatInterfaceProps {
 const OUTCOMES = ['APPROVE', 'ASK_FOR_APPROVAL', 'REJECT'] as const;
 const MAIN_RULE_PATTERN = /^\s*IF\s+(.+?)\s+THEN\s+(APPROVE|ASK_FOR_APPROVAL|REJECT)(?:\s+ELSE\s+(APPROVE|ASK_FOR_APPROVAL|REJECT))?\s*$/i;
 const EDGE_CASE_PATTERN = /^\s*IF\s+(.+?)\s+THEN\s+(APPROVE|ASK_FOR_APPROVAL|REJECT)\s*$/i;
+const QUOTED_LITERAL_PATTERN = /("[^"]+"|'[^']+')/;
 
 const SCHEMAS: Record<string, { label: string; schema: Record<string, string> }> = {
   ecommerce: {
@@ -99,6 +102,231 @@ const OutcomeSelect: React.FC<OutcomeSelectProps> = ({ value, onChange, includeE
   </select>
 );
 
+const renderQuotedLiteralPreview = (text: string) =>
+  text.split(QUOTED_LITERAL_PATTERN).map((part, index) => {
+    const isLiteral = /^["'].*["']$/.test(part);
+    return isLiteral ? (
+      <span
+        key={`${part}-${index}`}
+        className="bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300 px-0.5 rounded"
+        title="Verify this matches what your agent sends"
+      >
+        {part}
+      </span>
+    ) : (
+      part
+    );
+  });
+
+interface SchemaExtensionOfferProps {
+  proposedField: ProposedField;
+  onAddAndRetry: (name: string, description: string) => void;
+}
+
+const SchemaExtensionOffer: React.FC<SchemaExtensionOfferProps> = ({ proposedField, onAddAndRetry }) => {
+  const [fieldName, setFieldName] = useState(proposedField.name);
+  const [fieldType, setFieldType] = useState(proposedField.type || 'number');
+  const [submitted, setSubmitted] = useState(false);
+
+  const handleSubmit = () => {
+    if (!fieldName.trim() || submitted) return;
+    setSubmitted(true);
+    onAddAndRetry(fieldName.trim(), fieldType);
+  };
+
+  return (
+    <div className="mt-2 w-full max-w-2xl bg-white dark:bg-gray-800 border border-amber-200 dark:border-amber-700/50 rounded-xl overflow-hidden shadow-sm">
+      <div className="p-3 bg-amber-50 dark:bg-amber-900/20 border-b border-amber-200 dark:border-amber-700/50 flex items-center gap-2">
+        <Plus size={15} className="text-amber-600 dark:text-amber-400" />
+        <span className="text-sm font-semibold text-amber-800 dark:text-amber-300">
+          Add this concept to your schema and retry
+        </span>
+      </div>
+      <div className="p-4 space-y-3">
+        <p className="text-xs text-gray-500 dark:text-gray-400">
+          The concept wasn't found in the selected schema. Define it as a new field and the
+          translator will retry with it available.
+        </p>
+        <div className="flex gap-2 items-end">
+          <div className="flex-1">
+            <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Field name</label>
+            <input
+              type="text"
+              value={fieldName}
+              onChange={(e) => setFieldName(e.target.value)}
+              disabled={submitted}
+              className="w-full bg-gray-100 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm font-mono focus:ring-2 focus:ring-amber-400 focus:outline-none text-gray-900 dark:text-white disabled:opacity-50"
+            />
+          </div>
+          <div className="w-28">
+            <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Type</label>
+            <select
+              value={fieldType}
+              onChange={(e) => setFieldType(e.target.value)}
+              disabled={submitted}
+              className="w-full bg-gray-100 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm text-gray-700 dark:text-gray-300 focus:ring-2 focus:ring-amber-400 focus:outline-none disabled:opacity-50"
+            >
+              <option value="number">number</option>
+              <option value="text">text</option>
+              <option value="boolean">boolean</option>
+            </select>
+          </div>
+          <button
+            onClick={handleSubmit}
+            disabled={!fieldName.trim() || submitted}
+            className="flex items-center gap-1.5 px-3 py-2 bg-amber-500 hover:bg-amber-600 disabled:opacity-50 text-white text-sm font-medium rounded-lg transition-colors whitespace-nowrap"
+          >
+            <Check size={14} /> Add &amp; Retry
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+/* ── Variable swap helper (client-side mirror of backend swap_variable_in_result) ── */
+
+function swapVarInJsonLogic(logic: unknown, oldVar: string, newVar: string): unknown {
+  if (typeof logic === 'object' && logic !== null && !Array.isArray(logic)) {
+    const obj = logic as Record<string, unknown>;
+    if ('var' in obj && Object.keys(obj).length === 1 && obj['var'] === oldVar) {
+      return { var: newVar };
+    }
+    const out: Record<string, unknown> = {};
+    for (const [k, v] of Object.entries(obj)) out[k] = swapVarInJsonLogic(v, oldVar, newVar);
+    return out;
+  }
+  if (Array.isArray(logic)) return logic.map((item) => swapVarInJsonLogic(item, oldVar, newVar));
+  return logic;
+}
+
+function swapVariableInResult(data: RuleTranslation, oldVar: string, newVar: string): RuleTranslation {
+  return {
+    ...data,
+    datapoints: data.datapoints.map((dp) => (dp === oldVar ? newVar : dp)),
+    rule_logic: data.rule_logic.replaceAll(oldVar, newVar),
+    rule_logic_json: swapVarInJsonLogic(data.rule_logic_json, oldVar, newVar) as Record<string, unknown>,
+    edge_cases: data.edge_cases.map((ec) => ec.replaceAll(oldVar, newVar)),
+    edge_cases_json: (data.edge_cases_json ?? []).map((ec) => swapVarInJsonLogic(ec, oldVar, newVar) as Record<string, unknown>),
+  };
+}
+
+/* ── DatapointChip: clickable badge with schema-field dropdown ── */
+
+interface DatapointChipProps {
+  dp: string;
+  schemaFields: Record<string, string> | null; // null ⟹ no schema active
+  onSwap: (oldVar: string, newVar: string) => void;
+}
+
+const DatapointChip: React.FC<DatapointChipProps> = ({ dp, schemaFields, onSwap }) => {
+  const [open, setOpen] = useState(false);
+  const [creating, setCreating] = useState(false);
+  const [newName, setNewName] = useState('');
+  const ref = useRef<HTMLDivElement>(null);
+
+  // Close dropdown on outside click
+  useEffect(() => {
+    if (!open) return;
+    const handler = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, [open]);
+
+  // Build ranked list: schema fields sorted by name, current field on top
+  const options = schemaFields
+    ? Object.keys(schemaFields).sort((a, b) => {
+        if (a === dp) return -1;
+        if (b === dp) return 1;
+        return a.localeCompare(b);
+      })
+    : [];
+
+  const handleSelect = (field: string) => {
+    if (field !== dp) onSwap(dp, field);
+    setOpen(false);
+    setCreating(false);
+  };
+
+  const handleCreate = () => {
+    const trimmed = newName.trim().replace(/\s+/g, '_').toLowerCase();
+    if (trimmed && trimmed !== dp) onSwap(dp, trimmed);
+    setOpen(false);
+    setCreating(false);
+    setNewName('');
+  };
+
+  return (
+    <div className="relative inline-block" ref={ref}>
+      <button
+        type="button"
+        onClick={() => setOpen((o) => !o)}
+        className="flex items-center gap-1 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 px-2 py-1 rounded text-xs font-mono hover:bg-blue-200 dark:hover:bg-blue-800/40 transition-colors cursor-pointer"
+        title="Click to change this datapoint"
+      >
+        {dp}
+        <ChevronDown size={12} />
+      </button>
+
+      {open && (
+        <div className="absolute z-50 mt-1 left-0 w-64 max-h-56 overflow-y-auto bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg text-xs">
+          {options.length > 0 && options.map((field) => (
+            <button
+              key={field}
+              type="button"
+              onClick={() => handleSelect(field)}
+              className={`w-full text-left px-3 py-2 hover:bg-blue-50 dark:hover:bg-blue-900/30 transition-colors ${
+                field === dp ? 'font-bold text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20' : 'text-gray-700 dark:text-gray-300'
+              }`}
+            >
+              <span className="font-mono">{field}</span>
+              {schemaFields && (
+                <span className="ml-2 text-gray-400 dark:text-gray-500 text-[10px]">
+                  {schemaFields[field]}
+                </span>
+              )}
+            </button>
+          ))}
+
+          <div className="border-t border-gray-200 dark:border-gray-700">
+            {!creating ? (
+              <button
+                type="button"
+                onClick={() => setCreating(true)}
+                className="w-full text-left px-3 py-2 text-amber-600 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-900/20 flex items-center gap-1"
+              >
+                <Plus size={12} /> Create new field
+              </button>
+            ) : (
+              <div className="p-2 flex gap-1">
+                <input
+                  type="text"
+                  value={newName}
+                  onChange={(e) => setNewName(e.target.value)}
+                  onKeyDown={(e) => e.key === 'Enter' && handleCreate()}
+                  placeholder="new_field_name"
+                  className="flex-1 bg-gray-100 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded px-2 py-1 text-xs font-mono focus:ring-1 focus:ring-amber-400 focus:outline-none text-gray-900 dark:text-white"
+                  autoFocus
+                />
+                <button
+                  type="button"
+                  onClick={handleCreate}
+                  disabled={!newName.trim()}
+                  className="px-2 py-1 bg-amber-500 text-white rounded text-xs disabled:opacity-50"
+                >
+                  <Check size={12} />
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
 export const ChatInterface: React.FC<ChatInterfaceProps> = ({
   groupId,
   llmConfig,
@@ -113,7 +341,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
   const [messages, setMessages] = useState<Message[]>([{
     id: 'init',
     role: 'assistant',
-    content: "Fill in the builder below — set your condition and outcome, add edge cases, then click Translate.\n\n💡 About the Schema dropdown: schemas lock the AI to a pre-approved set of variable names so all your rules speak the same language. Without one, the LLM invents its own names — the same concept might become \"amount\" in one rule and \"transaction_amount\" in another, causing evaluation mismatches.\n\n• E-Commerce — for rules about orders, payments, cart, shipping, and user accounts\n• Finance — for rules about withdrawals, balances, loans, KYC, and AML risk scores\n• No schema — freeform, AI picks its own variable names\n\nPick the one that matches your domain, or start with No schema and switch later."
+    content: "Fill in the builder — set your condition and outcome, add edge cases, then click Translate.\n\n💡 About the Schema dropdown: schemas lock the AI to a pre-approved set of variable names so all your rules speak the same language. Without one, the LLM invents its own names — the same concept might become \"amount\" in one rule and \"transaction_amount\" in another, causing evaluation mismatches.\n\n• E-Commerce — for rules about orders, payments, cart, shipping, and user accounts\n• Finance — for rules about withdrawals, balances, loans, KYC, and AML risk scores\n• No schema — freeform, AI picks its own variable names\n\nPick the one that matches your domain, or start with No schema and switch later."
   }]);
 
   const [ruleName, setRuleName] = useState('');
@@ -126,6 +354,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
   const [isLoading, setIsLoading] = useState(false);
   const [datapointDefs, setDatapointDefs] = useState<DatapointDefinition[]>([]);
   const [editingRule, setEditingRule] = useState<Rule | null>(null);
+  const [schemaExtensions, setSchemaExtensions] = useState<Record<string, string>>({});
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -258,7 +487,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
     return prompt;
   };
 
-  const handleTranslate = async () => {
+  const handleTranslate = async (extraSchema?: Record<string, string>) => {
     if (!condition.trim() || isLoading || !llmConfig) return;
 
     const displayText = buildDisplayText();
@@ -274,7 +503,9 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
         provider: llmConfig.provider,
         model: llmConfig.model,
         api_key: llmConfig.api_key,
-        context_schema: selectedSchema ? SCHEMAS[selectedSchema].schema : undefined,
+        context_schema: selectedSchema
+          ? { ...SCHEMAS[selectedSchema].schema, ...schemaExtensions, ...extraSchema }
+          : undefined,
         datapoint_definitions: datapointDefs
       });
 
@@ -307,21 +538,44 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
           newMessages.push({
             id: (Date.now() + 2).toString(),
             role: 'assistant',
-            content: `⚠️ String value check: this rule compares against ${stringLiterals.map(l => `"${l}"`).join(', ')}. Make sure your agent sends these exact values. If not, describe the correction below.`,
+            content: `⚠️ String value check: this rule compares against ${stringLiterals.map(l => `"${l}"`).join(', ')}. Make sure your agent sends these exact values. If not, describe the correction.`,
           });
         }
       }
 
       setMessages(prev => [...prev, ...newMessages]);
     } catch (err: unknown) {
-      setMessages(prev => [...prev, {
-        id: (Date.now() + 1).toString(),
-        role: 'assistant',
-        content: `Error translating rule: ${err instanceof Error ? err.message : 'Unknown error'}`
-      }]);
+      if (err instanceof ConceptMismatchError && err.proposedField) {
+        setMessages(prev => [...prev, {
+          id: (Date.now() + 1).toString(),
+          role: 'assistant',
+          content: err.message,
+          isSchemaExtensionOffer: true,
+          proposedField: err.proposedField,
+        }]);
+      } else {
+        setMessages(prev => [...prev, {
+          id: (Date.now() + 1).toString(),
+          role: 'assistant',
+          content: `Error translating rule: ${err instanceof Error ? err.message : 'Unknown error'}`
+        }]);
+      }
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const handleAddFieldAndRetry = (fieldName: string, fieldDesc: string) => {
+    const extra = { [fieldName]: fieldDesc };
+    setSchemaExtensions(prev => ({ ...prev, ...extra }));
+    handleTranslate(extra);
+  };
+
+  const handleSwapVariable = (msgId: string, oldVar: string, newVar: string) => {
+    setMessages(prev => prev.map(msg => {
+      if (msg.id !== msgId || !msg.ruleData) return msg;
+      return { ...msg, ruleData: swapVariableInResult(msg.ruleData, oldVar, newVar) };
+    }));
   };
 
   const handleDatapointSave = async (newDefs: DatapointDefinition[]) => {
@@ -433,7 +687,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
     setMessages(prev => [...prev, {
       id: Date.now().toString(),
       role: 'assistant',
-      content: "Update the condition or outcome in the builder below and click Translate to regenerate."
+      content: "Update the condition or outcome in the builder and click Translate to regenerate."
     }]);
     setTimeout(scrollToBottom, 50);
   };
@@ -443,7 +697,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
     setMessages(prev => [...prev, {
       id: Date.now().toString(),
       role: 'assistant',
-      content: "Rule discarded. Fill in the builder below to start fresh."
+      content: "Rule discarded. Fill in the builder to start fresh."
     }]);
   };
 
@@ -461,148 +715,14 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
 
   return (
     <div className="flex flex-col h-full bg-white dark:bg-gray-900 transition-colors">
-      <div className="flex-1 overflow-y-auto p-4 md:p-6 space-y-6">
-        {messages.map((msg) => (
-          <div key={msg.id} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-            <div className={`flex gap-4 max-w-3xl ${msg.role === 'user' ? 'flex-row-reverse' : 'flex-row'}`}>
-
-              <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${
-                msg.role === 'user' ? 'bg-blue-600 text-white' : 'bg-emerald-500 text-white'
-              }`}>
-                {msg.role === 'user' ? <User size={18} /> : <Bot size={18} />}
-              </div>
-
-              <div className={`flex flex-col gap-2 ${msg.role === 'user' ? 'items-end' : 'items-start'}`}>
-                {msg.content && (
-                  <div className={`px-4 py-3 rounded-2xl ${
-                    msg.role === 'user'
-                      ? 'bg-blue-600 text-white rounded-tr-sm'
-                      : 'bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-200 rounded-tl-sm'
-                  }`}>
-                    <p className="whitespace-pre-wrap">{msg.content}</p>
-                  </div>
-                )}
-
-                {msg.isDatapointConfig && msg.newDatapoints && (
-                  <DatapointConfigurator
-                    newDatapoints={msg.newDatapoints}
-                    onSave={handleDatapointSave}
-                  />
-                )}
-
-                {msg.isRuleProposal && msg.ruleData && (
-                  <div className="mt-2 w-full max-w-2xl bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl overflow-hidden shadow-sm">
-                    <div className="p-4 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50 flex justify-between items-center">
-                      <h4 className="font-semibold text-gray-800 dark:text-gray-200 flex items-center gap-2">
-                        <Code2 size={16} className="text-blue-500" />
-                        Proposed Logic
-                      </h4>
-                    </div>
-                    <div className="p-4 space-y-4 text-sm text-gray-600 dark:text-gray-300">
-                      <div>
-                        <span className="font-semibold text-gray-800 dark:text-gray-200 block mb-1">Datapoints Extracted:</span>
-                        <div className="flex flex-wrap gap-2">
-                          {msg.ruleData.datapoints?.map((dp: string) => (
-                            <span key={dp} className="bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 px-2 py-1 rounded text-xs font-mono">
-                              {dp}
-                            </span>
-                          ))}
-                        </div>
-                      </div>
-
-                      {msg.ruleData.edge_cases?.length > 0 && (
-                        <div>
-                          <span className="font-semibold text-gray-800 dark:text-gray-200 block mb-1">Edge Cases:</span>
-                          <ul className="list-disc pl-4 space-y-1">
-                            {msg.ruleData.edge_cases.map((ec: string, i: number) => (
-                              <li key={i} className="font-mono text-xs">
-                                {ec.split(/("([^"]+)"|'([^']+)')/).map((part, j) => {
-                                  const isLiteral = /^["'].*["']$/.test(part);
-                                  return isLiteral ? (
-                                    <span key={j} className="bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300 px-0.5 rounded" title="Verify this matches what your agent sends">
-                                      {part}
-                                    </span>
-                                  ) : part;
-                                })}
-                              </li>
-                            ))}
-                          </ul>
-                        </div>
-                      )}
-
-                      <div>
-                        <span className="font-semibold text-gray-800 dark:text-gray-200 block mb-1">Main Rule Logic:</span>
-                        <p className="font-mono bg-gray-50 dark:bg-gray-900 p-2 rounded text-xs overflow-x-auto">
-                          {msg.ruleData.rule_logic.split(/("([^"]+)"|'([^']+)')/).map((part: string, j: number) => {
-                            const isLiteral = /^["'].*["']$/.test(part);
-                            return isLiteral ? (
-                              <span key={j} className="bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300 px-0.5 rounded" title="Verify this matches what your agent sends">
-                                {part}
-                              </span>
-                            ) : part;
-                          })}
-                        </p>
-                      </div>
-                    </div>
-
-                    <div className="p-3 bg-gray-50 dark:bg-gray-900/50 border-t border-gray-200 dark:border-gray-700 flex flex-wrap gap-2">
-                      <button
-                        onClick={handleRefuseRule}
-                        className="flex items-center gap-1.5 px-3 py-1.5 bg-red-50 hover:bg-red-100 dark:bg-red-900/20 dark:hover:bg-red-900/30 text-red-600 dark:text-red-400 rounded-md text-sm font-medium transition-colors border border-red-200 dark:border-red-800/50"
-                      >
-                        <X size={16} /> Refuse
-                      </button>
-                      <button
-                        onClick={handleAddEdgeCase}
-                        className="flex items-center gap-1.5 px-3 py-1.5 bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-800 dark:text-gray-200 rounded-md text-sm font-medium transition-colors"
-                      >
-                        <Plus size={16} /> Add Edge Case
-                      </button>
-                      <button
-                        onClick={handleOptimizeRule}
-                        className="flex items-center gap-1.5 px-3 py-1.5 bg-amber-50 hover:bg-amber-100 dark:bg-amber-900/20 dark:hover:bg-amber-900/30 text-amber-700 dark:text-amber-400 rounded-md text-sm font-medium transition-colors border border-amber-200 dark:border-amber-800/40"
-                      >
-                        <Wand2 size={16} /> Optimize
-                      </button>
-                      <button
-                        onClick={() => handleAcceptRule(msg.ruleData!)}
-                        className="flex items-center gap-1.5 px-3 py-1.5 bg-green-600 hover:bg-green-700 text-white rounded-md text-sm font-medium transition-colors ml-auto"
-                      >
-                        <Check size={16} /> Accept & Save
-                      </button>
-                      <button
-                        onClick={() => handleSaveAndTest(msg.ruleData!)}
-                        className="flex items-center gap-1.5 px-3 py-1.5 bg-purple-100 hover:bg-purple-200 dark:bg-purple-900/30 dark:hover:bg-purple-800/40 text-purple-700 dark:text-purple-300 rounded-md text-sm font-medium transition-colors"
-                      >
-                        <FlaskConical size={16} /> Save & Test
-                      </button>
-                    </div>
-                  </div>
-                )}
-              </div>
-            </div>
+      <div className="border-b border-gray-200 bg-white px-4 py-4 dark:border-gray-800 dark:bg-gray-900 md:px-6">
+        <div className="mx-auto max-w-5xl rounded-3xl border border-gray-200 bg-gray-50/70 p-5 shadow-sm dark:border-gray-800 dark:bg-gray-950/40">
+          <div className="mb-4">
+            <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Rule Builder</h2>
+            <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+              Define the rule structure here, then use the chat to review translations and save updates.
+            </p>
           </div>
-        ))}
-
-        {isLoading && (
-          <div className="flex justify-start">
-            <div className="flex gap-4 max-w-3xl flex-row">
-              <div className="w-8 h-8 rounded-full bg-emerald-500 text-white flex items-center justify-center flex-shrink-0">
-                <Bot size={18} />
-              </div>
-              <div className="px-4 py-3 rounded-2xl bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-200 rounded-tl-sm flex gap-2 items-center">
-                <div className="w-2 h-2 bg-gray-400 dark:bg-gray-500 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
-                <div className="w-2 h-2 bg-gray-400 dark:bg-gray-500 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
-                <div className="w-2 h-2 bg-gray-400 dark:bg-gray-500 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
-              </div>
-            </div>
-          </div>
-        )}
-        <div ref={messagesEndRef} />
-      </div>
-
-      <div className="p-4 border-t border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900">
-        <div className="max-w-4xl mx-auto">
           {!llmConfig ? (
             <div className="w-full p-3 text-center text-sm text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/20 rounded-xl border border-amber-200 dark:border-amber-800/50">
               Please configure LLM Provider settings in the sidebar to start creating rules.
@@ -701,7 +821,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
                   <Plus size={15} /> Add Edge Case
                 </button>
                 <button
-                  onClick={handleTranslate}
+                  onClick={() => handleTranslate()}
                   disabled={!condition.trim() || isLoading}
                   className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:hover:bg-blue-600 text-white text-sm font-medium rounded-lg transition-colors"
                 >
@@ -710,9 +830,157 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
               </div>
             </div>
           )}
+          <div className="text-center mt-2 text-xs text-gray-400 dark:text-gray-500">
+            Unreal Objects Rule Maker can make mistakes. Verify before applying.
+          </div>
         </div>
-        <div className="text-center mt-2 text-xs text-gray-400 dark:text-gray-500">
-          Unreal Objects Rule Maker can make mistakes. Verify before applying.
+      </div>
+
+      <div className="min-h-0 flex-1 overflow-y-auto p-4 md:p-6">
+        <div className="mx-auto max-w-5xl space-y-4">
+          <div>
+            <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Chat Context</h2>
+            <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+              Review assistant guidance, translated rule output, and save or test actions for the active rule.
+            </p>
+          </div>
+
+          {messages.map((msg) => (
+            <div key={msg.id} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+              <div className={`flex gap-4 max-w-3xl ${msg.role === 'user' ? 'flex-row-reverse' : 'flex-row'}`}>
+                <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${
+                  msg.role === 'user' ? 'bg-blue-600 text-white' : 'bg-emerald-500 text-white'
+                }`}>
+                  {msg.role === 'user' ? <User size={18} /> : <Bot size={18} />}
+                </div>
+
+                <div className={`flex flex-col gap-2 ${msg.role === 'user' ? 'items-end' : 'items-start'}`}>
+                  {msg.content && (
+                    <div className={`px-4 py-3 rounded-2xl ${
+                      msg.role === 'user'
+                        ? 'bg-blue-600 text-white rounded-tr-sm'
+                        : 'bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-200 rounded-tl-sm'
+                    }`}>
+                      <p className="whitespace-pre-wrap">{msg.content}</p>
+                    </div>
+                  )}
+
+                  {msg.isDatapointConfig && msg.newDatapoints && (
+                    <DatapointConfigurator
+                      newDatapoints={msg.newDatapoints}
+                      onSave={handleDatapointSave}
+                    />
+                  )}
+
+                  {msg.isSchemaExtensionOffer && msg.proposedField && (
+                    <SchemaExtensionOffer
+                      proposedField={msg.proposedField}
+                      onAddAndRetry={handleAddFieldAndRetry}
+                    />
+                  )}
+
+                  {msg.isRuleProposal && msg.ruleData && (
+                    <div className="mt-2 w-full max-w-2xl bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl overflow-hidden shadow-sm">
+                      <div className="p-4 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50 flex justify-between items-center">
+                        <h4 className="font-semibold text-gray-800 dark:text-gray-200 flex items-center gap-2">
+                          <Code2 size={16} className="text-blue-500" />
+                          Proposed Logic
+                        </h4>
+                      </div>
+                      <div className="p-4 space-y-4 text-sm text-gray-600 dark:text-gray-300">
+                        <div>
+                          <span className="font-semibold text-gray-800 dark:text-gray-200 block mb-1">Datapoints Extracted:</span>
+                          <div className="flex flex-wrap gap-2">
+                            {msg.ruleData.datapoints?.map((dp: string) => (
+                              <DatapointChip
+                                key={dp}
+                                dp={dp}
+                                schemaFields={
+                                  selectedSchema
+                                    ? { ...SCHEMAS[selectedSchema].schema, ...schemaExtensions }
+                                    : null
+                                }
+                                onSwap={(oldVar, newVar) => handleSwapVariable(msg.id, oldVar, newVar)}
+                              />
+                            ))}
+                          </div>
+                        </div>
+
+                        {msg.ruleData.edge_cases?.length > 0 && (
+                          <div>
+                            <span className="font-semibold text-gray-800 dark:text-gray-200 block mb-1">Edge Cases:</span>
+                            <ul className="list-disc pl-4 space-y-1">
+                              {msg.ruleData.edge_cases.map((ec: string, i: number) => (
+                                <li key={i} className="font-mono text-xs">
+                                  {renderQuotedLiteralPreview(ec)}
+                                </li>
+                              ))}
+                            </ul>
+                          </div>
+                        )}
+
+                        <div>
+                          <span className="font-semibold text-gray-800 dark:text-gray-200 block mb-1">Main Rule Logic:</span>
+                          <p className="font-mono bg-gray-50 dark:bg-gray-900 p-2 rounded text-xs overflow-x-auto">
+                            {renderQuotedLiteralPreview(msg.ruleData.rule_logic)}
+                          </p>
+                        </div>
+                      </div>
+
+                      <div className="p-3 bg-gray-50 dark:bg-gray-900/50 border-t border-gray-200 dark:border-gray-700 flex flex-wrap gap-2">
+                        <button
+                          onClick={handleRefuseRule}
+                          className="flex items-center gap-1.5 px-3 py-1.5 bg-red-50 hover:bg-red-100 dark:bg-red-900/20 dark:hover:bg-red-900/30 text-red-600 dark:text-red-400 rounded-md text-sm font-medium transition-colors border border-red-200 dark:border-red-800/50"
+                        >
+                          <X size={16} /> Refuse
+                        </button>
+                        <button
+                          onClick={handleAddEdgeCase}
+                          className="flex items-center gap-1.5 px-3 py-1.5 bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-800 dark:text-gray-200 rounded-md text-sm font-medium transition-colors"
+                        >
+                          <Plus size={16} /> Add Edge Case
+                        </button>
+                        <button
+                          onClick={handleOptimizeRule}
+                          className="flex items-center gap-1.5 px-3 py-1.5 bg-amber-50 hover:bg-amber-100 dark:bg-amber-900/20 dark:hover:bg-amber-900/30 text-amber-700 dark:text-amber-400 rounded-md text-sm font-medium transition-colors border border-amber-200 dark:border-amber-800/40"
+                        >
+                          <Wand2 size={16} /> Optimize
+                        </button>
+                        <button
+                          onClick={() => handleAcceptRule(msg.ruleData!)}
+                          className="flex items-center gap-1.5 px-3 py-1.5 bg-green-600 hover:bg-green-700 text-white rounded-md text-sm font-medium transition-colors ml-auto"
+                        >
+                          <Check size={16} /> Accept & Save
+                        </button>
+                        <button
+                          onClick={() => handleSaveAndTest(msg.ruleData!)}
+                          className="flex items-center gap-1.5 px-3 py-1.5 bg-purple-100 hover:bg-purple-200 dark:bg-purple-900/30 dark:hover:bg-purple-800/40 text-purple-700 dark:text-purple-300 rounded-md text-sm font-medium transition-colors"
+                        >
+                          <FlaskConical size={16} /> Save & Test
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          ))}
+
+          {isLoading && (
+            <div className="flex justify-start">
+              <div className="flex gap-4 max-w-3xl flex-row">
+                <div className="w-8 h-8 rounded-full bg-emerald-500 text-white flex items-center justify-center flex-shrink-0">
+                  <Bot size={18} />
+                </div>
+                <div className="px-4 py-3 rounded-2xl bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-200 rounded-tl-sm flex gap-2 items-center">
+                  <div className="w-2 h-2 bg-gray-400 dark:bg-gray-500 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
+                  <div className="w-2 h-2 bg-gray-400 dark:bg-gray-500 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
+                  <div className="w-2 h-2 bg-gray-400 dark:bg-gray-500 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+                </div>
+              </div>
+            </div>
+          )}
+          <div ref={messagesEndRef} />
         </div>
       </div>
     </div>

@@ -245,7 +245,12 @@ def main(argv: list[str] | None = None) -> int:
 
         try:
             print_phase("Checking services", run_target.slug)
-            asyncio.run(ensure_services_available(args.rule_engine_url, args.decision_center_url))
+            try:
+                asyncio.run(ensure_services_available(args.rule_engine_url, args.decision_center_url))
+            except Exception as exc:
+                if args.fail_on_missing_services:
+                    raise
+                print(f"Service check warning for schema '{run_target.slug}': {exc}")
 
             should_reuse_dataset = not args.refresh_dataset and artifacts.dataset_path.exists()
             if args.reuse_dataset or should_reuse_dataset:
