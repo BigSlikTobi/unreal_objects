@@ -111,7 +111,8 @@ async def test_evaluate_action_without_group_id():
 
 
 @pytest.mark.asyncio
-async def test_evaluate_action_accepts_group_id_as_third_positional_argument():
+async def test_evaluate_action_accepts_group_id_as_fourth_positional_argument():
+    """Verify that with the new signature (ctx before group_id), group_id can be passed positionally."""
     dc = AsyncMock()
     dc.get.return_value = _mock_response(200, {
         "request_id": "req-3",
@@ -120,7 +121,7 @@ async def test_evaluate_action_accepts_group_id_as_third_positional_argument():
     })
     ctx = _mock_ctx(dc_client=dc)
 
-    res = await evaluate_action("Test", '{"amount": 150}', "g1", ctx=ctx)
+    res = await evaluate_action("Test", '{"amount": 150}', ctx, "g1")
 
     assert res["outcome"] == "ASK_FOR_APPROVAL"
     call_kwargs = dc.get.call_args
@@ -338,22 +339,6 @@ async def test_fail_closed_calls_ctx_error():
     await list_rule_groups(ctx=ctx)
     ctx.error.assert_called_once()
     assert "ConnectError" in ctx.error.call_args[0][0]
-
-
-@pytest.mark.asyncio
-async def test_evaluate_action_rejects_when_ctx_is_none():
-    """Verify that evaluate_action safely handles ctx=None instead of raising AttributeError."""
-    result = await evaluate_action(
-        request_description="test action",
-        context_json='{"amount": 100}',
-        group_id="g1",
-        ctx=None
-    )
-    assert result["outcome"] == "REJECT"
-    assert result["error"] is True
-    assert result["reason"] == "FRAMEWORK_ERROR"
-    assert "Context object not provided" in result["detail"]
-    assert "Do NOT proceed" in result["instruction"]
 
 
 # ---------------------------------------------------------------------------

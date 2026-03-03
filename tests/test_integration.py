@@ -79,7 +79,7 @@ async def test_e2e_flow():
         assert any(g["id"] == group_id for g in groups)
 
         # 3. Evaluate an action that triggers the rule (amount=150) via MCP
-        res = await evaluate_action("Buy Server", '{"amount": 150}', group_id, ctx=ctx)
+        res = await evaluate_action("Buy Server", '{"amount": 150}', ctx, group_id)
         assert res["outcome"] == "ASK_FOR_APPROVAL"
         req_id = res["request_id"]
 

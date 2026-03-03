@@ -72,8 +72,7 @@ async def add_rule(group_id: str, rule: CreateRule, background_tasks: Background
     if not created:
         raise HTTPException(status_code=404, detail="Group not found")
     group = store.get_group(group_id)
-    if group is not None:
-        background_tasks.add_task(_notify_tool_agent, group_id, created, group.name)
+    background_tasks.add_task(_notify_tool_agent, group_id, created, group.name)
     return created
 
 @app.get("/v1/groups/{group_id}/rules/{rule_id}", response_model=BusinessRule)

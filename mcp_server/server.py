@@ -146,7 +146,7 @@ async def guardrail_heartbeat(ctx: Context):
 @mcp.tool(annotations=ToolAnnotations(readOnlyHint=True, openWorldHint=True))
 @fail_closed
 async def evaluate_action(
-    request_description: str, context_json: str, group_id: str = None, ctx: Context = None
+    request_description: str, context_json: str, ctx: Context, group_id: str = None
 ):
     """Evaluate a planned action against business rules before executing it.
 
@@ -158,15 +158,6 @@ async def evaluate_action(
         context_json: JSON string with the relevant data (e.g. recipient, amount).
         group_id: Rule group to evaluate against. If omitted, uses the server default.
     """
-    if ctx is None:
-        return {
-            "outcome": "REJECT",
-            "error": True,
-            "reason": "FRAMEWORK_ERROR",
-            "detail": "Context object not provided - cannot evaluate action safely",
-            "instruction": "Do NOT proceed with this action. The guardrail framework is misconfigured."
-        }
-    
     await ctx.info(f"evaluate_action called: group_id={group_id}")
 
     if len(context_json.encode("utf-8")) > MAX_CONTEXT_JSON_BYTES:

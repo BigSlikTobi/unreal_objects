@@ -192,12 +192,9 @@ def _strip_code_fences(text: str) -> str:
     text = text.strip()
     if text.startswith("```"):
         lines = text.split("\n")
-        # Drop first line (``` or ```json) and, if present, the last closing fence (```).
-        if lines[-1].strip() == "```":
-            inner = lines[1:-1]
-        else:
-            inner = lines[1:]
-        text = "\n".join(inner).strip()
+        # Drop first line (``` or ```json) and last line (```)
+        inner = lines[1:] if lines[-1].strip() == "```" else lines[1:]
+        text = "\n".join(inner).rstrip("`").strip()
     return text
 
 
