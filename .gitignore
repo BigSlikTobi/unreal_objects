@@ -10,3 +10,4 @@ make_transparent.py
 ui/node_modules
 ui/.vite/deps/_metadata.json
 ui/.vite/deps/package.json
+.vscode/settings.json

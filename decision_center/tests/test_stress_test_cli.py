@@ -2,6 +2,7 @@ from pathlib import Path
 import os
 import subprocess
 import time
+import json
 
 import pytest
 
@@ -127,6 +128,36 @@ def test_build_translation_system_prompt_without_schema_skips_enforcement_block(
     prompt = build_translation_system_prompt(None)
 
     assert "CRITICAL SCHEMA ENFORCEMENT" not in prompt
+
+
+def test_checked_in_ecommerce_schema_covers_delivery_and_fraud_relevant_fields():
+    schema = json.loads(Path("schemas/ecommerce.json").read_text())["schema"]
+
+    for key in [
+        "delivery_time_days",
+        "estimated_delivery_days",
+        "shipping_country",
+        "billing_country",
+        "payment_status",
+        "prior_chargeback_count",
+        "refund_count_90d",
+    ]:
+        assert key in schema
+
+
+def test_checked_in_finance_schema_covers_transfer_and_beneficiary_relevant_fields():
+    schema = json.loads(Path("schemas/finance.json").read_text())["schema"]
+
+    for key in [
+        "transaction_amount",
+        "transaction_type",
+        "source_of_funds_verified",
+        "beneficiary_account_age_days",
+        "transfer_count_24h",
+        "total_transfer_amount_24h",
+        "account_age_days",
+    ]:
+        assert key in schema
 
 
 def test_artifact_paths_for_slug_are_schema_scoped(tmp_path: Path):
@@ -633,6 +664,75 @@ def test_main_loads_dotenv_before_running(tmp_path: Path, monkeypatch):
 
     assert exit_code == 0
     assert loaded == [True]
+
+
+def test_main_warns_and_continues_when_service_check_fails_without_strict_flag(tmp_path: Path, monkeypatch, capsys):
+    schemas_dir = tmp_path / "schemas"
+    report_dir = tmp_path / "evals"
+    artifacts_dir = report_dir / "artifacts"
+    schemas_dir.mkdir()
+    report_dir.mkdir()
+    (schemas_dir / "finance.json").write_text('{"schema":{"withdrawal_amount":"number"}}')
+
+    async def fake_ensure_services_available(*args, **kwargs):
+        raise RuntimeError("services unavailable")
+
+    async def fake_generate_dataset(output_path, schema_dict, **kwargs):
+        output_path.parent.mkdir(parents=True, exist_ok=True)
+        output_path.write_text("[]")
+        return []
+
+    def fake_translate_cases(test_cases, output_path, **kwargs):
+        output_path.parent.mkdir(parents=True, exist_ok=True)
+        output_path.write_text("")
+        return []
+
+    async def fake_evaluate_schema_run(*, run_target, artifacts, report_path, **kwargs):
+        return EvaluationStats(
+            schema_slug=run_target.slug,
+            schema_mode=run_target.mode,
+            provider="openai",
+            model="gpt-5-mini-2025-08-07",
+            total_cases=0,
+            processed_cases=0,
+            passed=0,
+            failed=0,
+            translation_errors=0,
+            rule_upload_errors=0,
+            decision_errors=0,
+            pass_rate=0.0,
+            dataset_path=str(artifacts.dataset_path),
+            translations_path=str(artifacts.translations_path),
+            raw_eval_log_path=str(artifacts.raw_eval_log_path),
+            report_path=str(report_path),
+        ), []
+
+    def fake_write_report(report_path, stats, **kwargs):
+        report_path.write_text("# report")
+
+    monkeypatch.setattr("decision_center.stress_test.cli.ensure_services_available", fake_ensure_services_available)
+    monkeypatch.setattr("decision_center.stress_test.cli.generate_dataset", fake_generate_dataset)
+    monkeypatch.setattr("decision_center.stress_test.cli.translate_cases", fake_translate_cases)
+    monkeypatch.setattr("decision_center.stress_test.cli.evaluate_schema_run", fake_evaluate_schema_run)
+    monkeypatch.setattr("decision_center.stress_test.cli.write_markdown_report", fake_write_report)
+
+    exit_code = main(
+        [
+            "--schema",
+            "finance",
+            "--schemas-dir",
+            str(schemas_dir),
+            "--report-dir",
+            str(report_dir),
+            "--artifacts-dir",
+            str(artifacts_dir),
+        ]
+    )
+
+    output = capsys.readouterr().out
+
+    assert exit_code == 0
+    assert "Service check warning for schema 'finance': services unavailable" in output
 
 
 def test_main_prints_banner_and_phase_markers(tmp_path: Path, monkeypatch, capsys):

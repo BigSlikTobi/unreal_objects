@@ -1,4 +1,4 @@
-import type { DatapointDefinition, DecisionResult, LlmConfig, Rule, RuleGroup, RulePayload, RuleTranslation } from './types';
+import type { DatapointDefinition, DecisionResult, LlmConfig, ProposedField, Rule, RuleGroup, RulePayload, RuleTranslation } from './types';
 
 export interface TranslateRuleRequest extends LlmConfig {
   natural_language: string;
@@ -6,6 +6,15 @@ export interface TranslateRuleRequest extends LlmConfig {
   name: string;
   context_schema?: Record<string, string>;
   datapoint_definitions?: DatapointDefinition[];
+}
+
+export class ConceptMismatchError extends Error {
+  proposedField?: ProposedField;
+  constructor(message: string, proposedField?: ProposedField) {
+    super(message);
+    this.name = 'ConceptMismatchError';
+    this.proposedField = proposedField;
+  }
 }
 
 const API_BASE = 'http://127.0.0.1:8001/v1';
@@ -53,7 +62,17 @@ export const translateRule = async (data: TranslateRuleRequest): Promise<RuleTra
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(data),
   });
-  if (!res.ok) throw new Error('Translation failed');
+  if (!res.ok) {
+    let body: Record<string, unknown> | null = null;
+    try { body = await res.json(); } catch { /* ignore */ }
+    if (res.status === 422) {
+      throw new ConceptMismatchError(
+        (body?.detail as string) || 'Concept not in schema',
+        body?.proposed_field as ProposedField | undefined,
+      );
+    }
+    throw new Error((body?.detail as string) || 'Translation failed');
+  }
   return res.json();
 };
 
@@ -87,10 +106,18 @@ export const updateRule = async (groupId: string, ruleId: string, data: RulePayl
   return res.json();
 };
 
-export const executeTest = async (groupId: string, description: string, context: Record<string, string | number | boolean>): Promise<DecisionResult> => {
+export const executeTest = async (
+  groupId: string,
+  description: string,
+  context: Record<string, string | number | boolean>,
+  ruleId?: string
+): Promise<DecisionResult> => {
   const ctxStr = encodeURIComponent(JSON.stringify(context));
   const descStr = encodeURIComponent(description);
-  const res = await fetch(`${DECISION_BASE}/decide?request_description=${descStr}&context=${ctxStr}&group_id=${groupId}`);
+  const ruleStr = ruleId ? `&rule_id=${encodeURIComponent(ruleId)}` : '';
+  const res = await fetch(
+    `${DECISION_BASE}/decide?request_description=${descStr}&context=${ctxStr}&group_id=${groupId}${ruleStr}`
+  );
   if (!res.ok) throw new Error('Test evaluation failed');
   return res.json();
 };

@@ -231,13 +231,64 @@ rules stay consistent and your agent only needs to send one predictable payload.
 | Schema         | Use when your rules are about…                                  |
 | -------------- | --------------------------------------------------------------- |
 | **No schema**  | Custom domains, or when your variable names are already decided |
-| **E-Commerce** | Orders, payments, cart contents, shipping, user accounts        |
-| **Finance**    | Withdrawals, balances, loans, KYC verification, AML risk scores |
+| **E-Commerce** | Orders, payments, cart contents, shipping, delivery timing, user accounts |
+| **Finance**    | Withdrawals, transfers, balances, loans, KYC verification, AML risk scores |
 
-> **Note:** Schemas are a strong nudge, not a hard validator. They work best
-> when your rules genuinely belong to the domain the blueprint covers. For
-> concepts outside the schema the LLM may still invent a name — if that happens,
-> switch to No schema and name the variable explicitly in your condition.
+> **Note:** Schemas are a strong nudge, not a perfect hard validator. The
+> translator explicitly avoids pseudo-variables such as `exists`, `missing`, or
+> `field_present`, and the built-in blueprints include common shipping,
+> delivery, transfer, and beneficiary datapoints. In **No schema** mode, the
+> translator still applies that hallucination guard and softly prefers existing
+> group datapoint names when they are provided, while remaining free to create a
+> new concrete snake_case field when the concept is genuinely new.
+
+#### Schema Safety — Semantic Concept Validation
+
+The translator enforces **three layers of protection** to prevent the LLM from
+mapping concepts to semantically wrong fields:
+
+1. **Pre-translation candidate ranking** — before calling the LLM, the system
+   scores every schema field against the rule text using word-overlap (field
+   name tokens count double). The top 3 best-matching fields are injected into
+   the prompt as a ranked hint list.
+
+2. **Post-translation candidate alignment check** — after translation, every
+   variable the LLM actually used in `rule_logic_json` is scored against the
+   original rule text. If a variable scores below **50%** of the best available
+   field's score, the translation is rejected. Example: `account_age_days`
+   (score 3: only "days" overlaps) vs `delivery_time_days` (score 8: "delivery"
+   + "time" + "days" overlap) for a "delivery time > 10 days" rule →
+   **rejected** because 3 < 8 × 0.5.
+
+3. **Schema variable validation** — every `{"var": ...}` reference in the JSON
+   Logic AST is verified to exist in the active schema. Off-schema variables are
+   rejected regardless of score.
+
+When a concept mismatch is detected, both the UI and CLI offer an **inline
+schema extension flow**: add the missing field with a suggested name and type,
+then retry translation immediately with the extended schema. The extension is
+stored in session state (UI) or merged into `context_schema` (CLI) so future
+translations in that session can use it.
+
+#### Interactive Datapoint Editing
+
+After translation, **both UI and CLI let you swap extracted datapoints
+interactively**:
+
+- **UI:** Click any datapoint badge in the proposal card → dropdown shows all
+  schema fields ranked by name (current field highlighted) + "Create new field"
+  option with inline text input. Selecting a field instantly updates the
+  proposal's rule logic, JSON Logic AST, and edge cases.
+
+- **CLI:** After showing extracted datapoints, prompts "To change a datapoint,
+  enter its number. Press Enter to skip." → shows schema fields ranked by
+  **relevance to your original rule text** (not the LLM's output) with the
+  current field marked `←`. Option `N` creates a custom field name.
+
+The swap utility (`swap_variable_in_result`) recursively replaces the old
+variable throughout `datapoints`, `rule_logic` (string), `rule_logic_json`,
+`edge_cases`, and `edge_cases_json` so the entire translation remains
+internally consistent.
 
 ---
 

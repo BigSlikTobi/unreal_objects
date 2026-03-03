@@ -4,8 +4,10 @@ import { ChatInterface } from './components/ChatInterface';
 import { RuleLibrary } from './components/RuleLibrary';
 import { TestConsole } from './components/TestConsole';
 import { fetchGroups, createGroup, checkLLMConnection } from './api';
-import { Bot, Settings, X, Save, Plus, PanelLeftOpen, PanelRightOpen } from 'lucide-react';
+import { Bot, Settings, X, Save, Plus, PanelLeftOpen } from 'lucide-react';
 import type { DatapointDefinition, LlmConfig, Rule, RuleGroup } from './types';
+
+type WorkspaceView = 'library' | 'builder';
 
 function App() {
   const [groups, setGroups] = useState<RuleGroup[]>([]);
@@ -15,7 +17,7 @@ function App() {
 
   // LLM Config — seeded from sessionStorage so values survive page refresh
   const [provider, setProvider] = useState(() => sessionStorage.getItem('llm_provider') || 'openai');
-  const [model, setModel] = useState(() => sessionStorage.getItem('llm_model') || 'gpt-4o');
+  const [model, setModel] = useState(() => sessionStorage.getItem('llm_model') || 'gpt-5.2-2025-12-11');
   const [apiKey, setApiKey] = useState(() => sessionStorage.getItem('llm_api_key') || '');
   const [llmConfig, setLlmConfig] = useState<LlmConfig | null>(() => {
     const key = sessionStorage.getItem('llm_api_key');
@@ -33,9 +35,9 @@ function App() {
   const [selectedRuleToken, setSelectedRuleToken] = useState(0);
   const [rulePanelRefreshKey, setRulePanelRefreshKey] = useState(0);
   const [showGroupPanel, setShowGroupPanel] = useState(false);
-  const [showRulePanel, setShowRulePanel] = useState(false);
   const [systemNotice, setSystemNotice] = useState<string | null>(null);
   const [systemNoticeToken, setSystemNoticeToken] = useState(0);
+  const [workspaceView, setWorkspaceView] = useState<WorkspaceView>('library');
 
   useEffect(() => {
     if (isDarkMode) {
@@ -65,7 +67,9 @@ function App() {
     setSelectedRule(null);
     setSelectedRuleToken(0);
     setShowGroupPanel(false);
-    setShowRulePanel(false);
+    setSystemNotice(null);
+    setSystemNoticeToken(0);
+    setWorkspaceView('library');
   }, [selectedGroupId]);
 
   const handleCreateGroup = async (name: string, description: string) => {
@@ -77,7 +81,13 @@ function App() {
   const handleSelectRuleForBuilder = (rule: Rule) => {
     setSelectedRule(rule);
     setSelectedRuleToken(Date.now());
-    setShowRulePanel(false);
+    setWorkspaceView('builder');
+  };
+
+  const handleCreateRule = () => {
+    setSelectedRule(null);
+    setSelectedRuleToken(Date.now());
+    setWorkspaceView('builder');
   };
 
   const handleRuleSaved = (rule: Rule) => {
@@ -155,22 +165,6 @@ function App() {
         </div>
       )}
 
-      {showRulePanel && selectedGroupId && (
-        <div className="fixed inset-0 z-40 bg-black/50 backdrop-blur-sm lg:hidden" onClick={() => setShowRulePanel(false)}>
-          <div className="panel-enter-right ml-auto h-full w-96 max-w-[92vw] shadow-2xl" onClick={(e) => e.stopPropagation()}>
-            <RuleLibrary
-              groupId={selectedGroupId}
-              selectedRuleId={selectedRule?.id ?? null}
-              onSelectRule={handleSelectRuleForBuilder}
-              onRuleUpdated={handleRuleUpdated}
-              onRuleStatusChanged={handleRuleStatusChanged}
-              refreshKey={rulePanelRefreshKey}
-              className="w-full"
-            />
-          </div>
-        </div>
-      )}
-
       <main className="flex min-w-0 flex-1 bg-white transition-colors dark:bg-gray-900">
         <div className="flex min-w-0 flex-1 flex-col">
           {selectedGroupId && (
@@ -187,35 +181,49 @@ function App() {
                 <div className="min-w-0 flex-1 text-center text-sm font-semibold text-gray-800 dark:text-gray-100">
                   <span className="truncate">{groups.find((group) => group.id === selectedGroupId)?.name ?? 'Rule Group'}</span>
                 </div>
-                <button
-                  onClick={() => setShowRulePanel(true)}
-                  className="inline-flex items-center gap-2 rounded-lg border border-gray-300 px-3 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-100 dark:border-gray-700 dark:text-gray-200 dark:hover:bg-gray-800"
-                  aria-label="Open rules"
-                >
-                  <PanelRightOpen size={16} />
-                  Rules
-                </button>
+                <div className="w-[76px]" aria-hidden="true" />
               </div>
             </div>
           )}
 
           <div className="min-h-0 flex-1">
             {selectedGroupId ? (
-              <ChatInterface
-                key={selectedGroupId}
-                groupId={selectedGroupId}
-                llmConfig={llmConfig}
-                selectedRule={selectedRule}
-                selectedRuleToken={selectedRuleToken}
-                systemNotice={systemNotice}
-                systemNoticeToken={systemNoticeToken}
-                onRuleCreated={handleRuleSaved}
-                onStartTest={(rule, defs) => { setRuleToTest(rule); setTestDatapointDefs(defs); }}
-                onStopEditing={() => {
-                  setSelectedRule(null);
-                  setSelectedRuleToken(0);
-                }}
-              />
+              workspaceView === 'library' ? (
+                <div className="flex h-full min-h-0 flex-col">
+                  {systemNotice && (
+                    <div className="border-b border-amber-200 bg-amber-50 px-6 py-3 text-sm text-amber-800 dark:border-amber-900/40 dark:bg-amber-950/20 dark:text-amber-200">
+                      {systemNotice}
+                    </div>
+                  )}
+                  <RuleLibrary
+                    groupId={selectedGroupId}
+                    selectedRuleId={selectedRule?.id ?? null}
+                    onCreateRule={handleCreateRule}
+                    onSelectRule={handleSelectRuleForBuilder}
+                    onRuleUpdated={handleRuleUpdated}
+                    onRuleStatusChanged={handleRuleStatusChanged}
+                    refreshKey={rulePanelRefreshKey}
+                    className="w-full"
+                  />
+                </div>
+              ) : (
+                <ChatInterface
+                  key={selectedGroupId}
+                  groupId={selectedGroupId}
+                  llmConfig={llmConfig}
+                  selectedRule={selectedRule}
+                  selectedRuleToken={selectedRuleToken}
+                  systemNotice={systemNotice}
+                  systemNoticeToken={systemNoticeToken}
+                  onRuleCreated={handleRuleSaved}
+                  onStartTest={(rule, defs) => { setRuleToTest(rule); setTestDatapointDefs(defs); }}
+                  onStopEditing={() => {
+                    setSelectedRule(null);
+                    setSelectedRuleToken(0);
+                    setWorkspaceView('library');
+                  }}
+                />
+              )
             ) : (
               <EmptyState
                 hasGroups={groups.length > 0}
@@ -225,18 +233,6 @@ function App() {
             )}
           </div>
         </div>
-
-        {selectedGroupId && (
-          <RuleLibrary
-            groupId={selectedGroupId}
-            selectedRuleId={selectedRule?.id ?? null}
-            onSelectRule={handleSelectRuleForBuilder}
-            onRuleUpdated={handleRuleUpdated}
-            onRuleStatusChanged={handleRuleStatusChanged}
-            refreshKey={rulePanelRefreshKey}
-            className="hidden w-[24rem] flex-shrink-0 lg:flex"
-          />
-        )}
       </main>
 
       {ruleToTest && selectedGroupId && (
@@ -283,7 +279,7 @@ function App() {
                   type="text"
                   value={model}
                   onChange={(e) => setModel(e.target.value)}
-                  placeholder="e.g. gpt-4o, claude-sonnet-4-6"
+                  placeholder="e.g. gpt-5.2-2025-12-11, claude-sonnet-4-6"
                   className="w-full bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-lg px-3 py-2 text-sm text-gray-900 dark:text-gray-100 placeholder-gray-400"
                 />
               </div>

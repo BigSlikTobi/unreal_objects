@@ -1,5 +1,204 @@
 # Unreal Objects Diary
 
+## Variable Swap: Token-Aware Replacement
+
+**Date:** 2026-03-03
+
+**What was built:**
+
+Fixed a critical bug in `swap_variable_in_result()` where string replacement used naive `.replace()` / `.replaceAll()`, which could incorrectly replace substrings inside other variable names (e.g., swapping "amount" would also change "transaction_amount" to "transaction_new_var").
+
+**Changes:**
+
+### Backend (`decision_center/translator.py`)
+
+1. **`_replace_variable_token(text, old_var, new_var)`** — new helper function that uses regex word boundaries (`\b`) to ensure only complete variable tokens are replaced, not substrings. Example: replacing "amount" in "transaction_amount > 100" leaves it unchanged, but "amount > 100 AND amount < 500" correctly becomes "price > 100 AND price < 500".
+
+2. **`swap_variable_in_result()` updated** — now calls `_replace_variable_token()` for `rule_logic` and `edge_cases` string replacements instead of using `.replace()`.
+
+### Frontend (`ui/src/components/ChatInterface.tsx`)
+
+1. **`replaceVariableToken(text, oldVar, newVar)`** — new exported utility function mirroring the backend implementation using JavaScript regex with word boundaries.
+
+2. **`swapVariableInResult()` updated** — now calls `replaceVariableToken()` for `rule_logic` and `edge_cases` string replacements instead of using `.replaceAll()`.
+
+3. **Exported for testing** — both `replaceVariableToken` and `swapVariableInResult` are now exported so they can be unit tested.
+
+### Tests
+
+**Backend (`decision_center/tests/test_translator.py`):**
+- `test_swap_variable_replaces_repeated_occurrences()` — verifies multiple occurrences of the same variable in rule_logic and edge_cases are all replaced
+- `test_swap_variable_does_not_replace_substrings()` — verifies that swapping "amount" does not affect "transaction_amount" or "total_amount"
+
+**Frontend (`ui/src/components/ChatInterface.test.tsx`):**
+- `replaceVariableToken` suite (3 tests):
+  - Replaces all occurrences of a variable
+  - Does not replace substrings inside other variable names
+  - Replaces standalone variable but leaves compound variables unchanged
+- `swapVariableInResult` suite (3 tests):
+  - Replaces variable in all parts of translation result
+  - Replaces multiple occurrences in rule_logic
+  - Does not replace substrings in compound variable names
+
+**Result:** All 147 Python tests + 11 UI tests passing. The swap utility now correctly handles:
+1. Multiple occurrences of the same variable (all replaced)
+2. Variables that are substrings of other variables (left unchanged)
+3. Edge cases in both string and JSON Logic forms
+
+**How it was validated:**
+
+```bash
+# Backend tests
+pytest decision_center/tests/test_translator.py -v  # 47 passed
+
+# Frontend tests
+cd ui && npm test -- ChatInterface.test.tsx  # 11 passed
+
+# Full suite
+pytest -v  # 147 passed
+```
+
+The fix ensures internal consistency when users swap datapoints via the UI dropdown or CLI prompt — no more accidental partial replacements that would break rule evaluation.
+
+---
+
+## Schema Translation: Candidate Alignment, Extension Flow, and Variable Swapping
+
+**Date:** 2026-03-02
+
+**What was built:**
+
+Three major improvements to the schema-enforced translation workflow:
+
+1. **Deterministic candidate alignment validator** — prevents the LLM from picking semantically wrong fields when better options exist
+2. **Schema extension flow** — lets users add missing concepts inline and retry translation instantly (UI + CLI)
+3. **Variable swapping** — post-translation interactive editing to replace extracted datapoints (UI + CLI)
+
+**Changes:**
+
+### Backend (`decision_center/translator.py`)
+
+1. **`_validate_candidate_alignment(result, natural_language, context_schema)`** — new deterministic post-translation guard. Scores every variable actually used in `rule_logic_json` against the original rule text using the same word-overlap algorithm as `_find_candidate_fields`. If a variable scores below 50% of the best available score, raises `SchemaConceptMismatchError` with the better field as `proposed_field`. Example: `account_age_days` (score 3) vs `delivery_time_days` (score 8) for "delivery time > 10 days" → rejects with suggested field.
+
+2. **`_extract_proposed_field(rule_logic)`** — scans the condition text for the first variable in a comparison expression and infers its type from the operator (`>/<` → number, `==/!=` → text). Called when `_validate_rule_logic_json_populated` detects empty logic with a condition present, so the error can suggest a specific field name and type.
+
+3. **`_validate_rule_logic_json_populated` enhancement** — now calls `_extract_proposed_field` and includes the result in the raised `SchemaConceptMismatchError` when schema mode is active but the LLM returns empty JSON Logic.
+
+4. **`SchemaConceptMismatchError.proposed_field`** — the error now carries an optional `{"name": "...", "description": "...", "type": "..."}` dict that the UI/CLI can surface as a pre-filled "add this field" form.
+
+5. **`swap_variable_in_result(result, old_var, new_var)`** — new utility function that replaces a variable name throughout datapoints, rule_logic (string), rule_logic_json, edge_cases (strings), and edge_cases_json. Uses `_swap_var_in_json_logic` helper that recursively walks JSON Logic and swaps `{"var": old}` → `{"var": new}`.
+
+### API (`decision_center/app.py`)
+
+- 422 responses for `SchemaConceptMismatchError` now include a top-level `proposed_field` key (sibling to `detail`) via `JSONResponse` so clients can display structured field suggestions.
+
+### UI (`ui/src/`)
+
+1. **`DatapointChip` component** — each extracted datapoint in the proposal card is now a clickable badge with a dropdown:
+   - Shows all schema fields sorted alphabetically (current field highlighted)
+   - Each option displays field name + description
+   - "Create new field" option with inline text input
+   - Clicking a field calls `handleSwapVariable` which updates the message's `ruleData` in place using client-side `swapVariableInResult`
+
+2. **Schema extension flow enhancement** — when translation fails with a 422 containing `proposed_field`, the UI renders a `SchemaExtensionOffer` card with pre-filled field name and type. User can edit and click "Add & Retry" → merges into `schemaExtensions` state and re-runs translation with the extended schema.
+
+3. **`handleTranslate(extraSchema?: Record<string, string>)`** signature change — now accepts optional `extraSchema` parameter to avoid React async state timing issues when adding a field and immediately retrying.
+
+4. **`ChevronDown` icon import** from lucide-react for the dropdown affordance.
+
+### CLI (`decision_center/cli.py`)
+
+1. **Schema extension prompt** — when `SchemaConceptMismatchError` is caught and `proposed_field` is present:
+   - Shows suggested field name and type
+   - Prompts "Add this field to the schema and retry? [Y/n]"
+   - User can confirm or edit the field name and type
+   - Merges into `context_schema` (initializing as `{}` if needed) and continues the `while True` translation loop
+
+2. **Datapoint swap prompt** — after showing extracted datapoints (schema mode only):
+   - "To change a datapoint, enter its number. Press Enter to skip."
+   - If user picks a number → shows ranked candidates via `_find_candidate_fields(natural_language, context_schema, top_n=len(context_schema))`
+   - Current field marked with `←`
+   - Options: pick numbered field, or "N. Create a new field name"
+   - If swapped → calls `swap_variable_in_result` and updates display immediately before Accept/Edit/Manual prompt
+
+3. **Import additions** — `swap_variable_in_result`, `_find_candidate_fields`, `SchemaConceptMismatchError`
+
+**Validation:**
+
+- **Backend tests:** 5 new tests in `decision_center/tests/test_translator.py` for `_validate_candidate_alignment`, 2 for `swap_variable_in_result`. Full suite: 143/143 passing.
+- **CLI tests:** 1 new test in `decision_center/tests/test_cli.py` for datapoint swap flow. Schema extension test updated to skip swap prompt. All CLI tests passing.
+- **UI:** TypeScript compilation clean. Manual testing confirmed DatapointChip dropdown works, SchemaExtensionOffer renders, and swap updates the proposal correctly.
+
+**Key findings:**
+
+1. **Prompt-based steering is insufficient** — the LLM routinely ignored the ranked candidate list and schema descriptions. A deterministic post-translation score comparison (50% threshold) catches semantic mismatches reliably.
+
+2. **Candidate ranking must use the original rule text** — not the LLM's output. The CLI initially passed `translation.get("rule_logic")` to `_find_candidate_fields`, which ranked against the already-wrong field name. Fixed to use `natural_language` instead.
+
+3. **UI event handler pitfall** — `onClick={handleTranslate}` passed the React `MouseEvent` as `extraSchema`, causing JSON serialization circular reference errors. Fixed with `onClick={() => handleTranslate()}`.
+
+4. **Schema extension creates context for swap prompt** — when the extension flow succeeds, `context_schema` is now populated → the swap prompt appears. CLI test for schema extension needed an extra `""` (skip) input after the second translation succeeds.
+
+---
+
+## Schema Translation Hardening — Semantic Concept Guard
+
+**Date:** 2026-03-02
+
+**What was built:**
+
+The translator's schema-mode enforcement had a critical gap: when a schema was
+active the LLM could silently substitute a "closest" schema field even when the
+concept was semantically different (e.g. mapping *delivery time* to
+`account_age_days` because both are measured in days).  Two complementary
+safety nets were added.
+
+**Changes:**
+
+1. **`SchemaConceptMismatchError`** — a new `ValueError` subclass in
+   `decision_center/translator.py` that is raised whenever the guard detects a
+   concept violation.  Using a distinct type lets callers and the API layer
+   handle it explicitly.
+
+2. **`_detect_unsupported_sentinel`** — after translation the LLM response is
+   inspected for a `UNSUPPORTED:` prefix in `rule_logic`.  The system prompt
+   now instructs the model to emit this sentinel (rather than silently
+   substituting) when no schema field clearly covers the requested concept.
+   The sentinel is caught and re-raised as `SchemaConceptMismatchError`.
+
+3. **`_validate_schema_variables`** — a deterministic post-translation guard
+   that walks every `{"var": ...}` expression in `rule_logic_json` and
+   `edge_cases_json` and verifies each variable exists in the active schema.
+   This catches off-schema substitutions regardless of what the LLM said in its
+   prose.
+
+4. **Strengthened schema enforcement prompt block** — now lists schema fields
+   line-by-line with descriptions (instead of a raw JSON dump), includes an
+   explicit negative example (`account_age_days` ≠ `delivery time_days`),
+   requires a *semantic* match (not just name similarity), and states the
+   `UNSUPPORTED:` protocol.
+
+5. **API layer (`decision_center/app.py`)** — `SchemaConceptMismatchError` is
+   caught separately and returned as HTTP 422 so the UI can surface a clear
+   "concept not in schema" message rather than a generic 500.
+
+**Validation:**
+
+13 new tests were added to `decision_center/tests/test_translator.py` covering:
+prompt content assertions, standalone unit tests for both validators, and
+end-to-end `translate_rule` integration scenarios (wrong-field substitution,
+UNSUPPORTED sentinel, and a passing correct-field case).  Full suite ran
+124 tests, all green, zero regressions.
+
+**Key finding:**
+
+The two mechanisms (translation-time steering and evaluation-time fuzzy
+mapping) serve different purposes and must stay separated.  The fix belongs
+entirely in the translation layer; the evaluator's fuzzy mapper is intentionally
+left unchanged as it handles legitimate minor naming mismatches at runtime.
+
+---
+
 ## UI App Import Parse Fix
 
 **What was built:**

@@ -7,7 +7,13 @@ import os
 import getpass
 import re
 
-from decision_center.translator import check_llm_connection, translate_rule
+from decision_center.translator import (
+    check_llm_connection,
+    translate_rule,
+    swap_variable_in_result,
+    _find_candidate_fields,
+    SchemaConceptMismatchError,
+)
 
 def prompt_start_servers():
     choice = input("Start Rule Engine (8001) and Decision Center (8002) locally? [y/N] ").strip().lower()
@@ -423,6 +429,46 @@ def prompt_rule_creation(group_id: str, llm_config: dict | None = None) -> dict:
                 if rule_logic_json:
                     print(f"✨ JSON Logic: {json.dumps(rule_logic_json)}")
 
+                # --- Datapoint change prompt (schema mode) ---
+                if context_schema and datapoints:
+                    print("\n  To change a datapoint, enter its number. Press Enter to skip.")
+                    for idx, dp in enumerate(datapoints, 1):
+                        print(f"    {idx}. {dp}")
+                    swap_choice = input("  Change datapoint [number/Enter]: ").strip()
+                    if swap_choice.isdigit():
+                        dp_idx = int(swap_choice) - 1
+                        if 0 <= dp_idx < len(datapoints):
+                            old_var = datapoints[dp_idx]
+                            candidates = _find_candidate_fields(
+                                natural_language, context_schema,
+                                top_n=len(context_schema),
+                            )
+                            print(f"\n  Schema fields (ranked by relevance):")
+                            for ci, (field, desc) in enumerate(candidates, 1):
+                                marker = " ←" if field == old_var else ""
+                                print(f"    {ci}. {field} — {desc}{marker}")
+                            print(f"    N. Create a new field name")
+                            field_choice = input("  Pick a number or N: ").strip().upper()
+                            if field_choice == "N":
+                                new_var = input("  New field name: ").strip()
+                            elif field_choice.isdigit():
+                                fi = int(field_choice) - 1
+                                if 0 <= fi < len(candidates):
+                                    new_var = candidates[fi][0]
+                                else:
+                                    new_var = None
+                            else:
+                                new_var = None
+                            if new_var and new_var != old_var:
+                                translation = swap_variable_in_result(translation, old_var, new_var)
+                                datapoints = translation["datapoints"]
+                                rule_logic = translation["rule_logic"]
+                                rule_logic_json = translation.get("rule_logic_json", {})
+                                edge_cases = translation.get("edge_cases", [])
+                                edge_cases_json = translation.get("edge_cases_json", [])
+                                print(f"  ✅ Swapped '{old_var}' → '{new_var}'")
+                                print(f"  Updated logic: {rule_logic}")
+
                 print("\nOptions:")
                 print("  [A]ccept this rule")
                 print("  [E]dit — update the builder and re-translate")
@@ -459,6 +505,24 @@ def prompt_rule_creation(group_id: str, llm_config: dict | None = None) -> dict:
                             else:
                                 print(f"⚠️  Could not save datapoint definitions: {patch_resp.status_code}")
                     break
+            except SchemaConceptMismatchError as e:
+                print(f"\n⚠️  {e}")
+                if e.proposed_field:
+                    pf = e.proposed_field
+                    print(f"\n--- Add Missing Field to Schema ---")
+                    print(f"  Suggested field: {pf['name']}  (type: {pf['type']})")
+                    add_choice = input("Add this field to the schema and retry? [Y/n]: ").strip().lower() or 'y'
+                    if add_choice == 'y':
+                        field_name = input(f"  Field name [{pf['name']}]: ").strip() or pf['name']
+                        field_type = input(f"  Field type [{pf['type']}]: ").strip() or pf['type']
+                        if context_schema is None:
+                            context_schema = {}
+                        context_schema[field_name] = field_type
+                        print(f"  ✅ Added '{field_name}' ({field_type}) to schema. Retrying...")
+                        continue
+                print("Falling back to manual creation.")
+                llm_config = None
+                break
             except Exception as e:
                 print(f"❌ Translation failed: {e}")
                 print("Falling back to manual creation.")

@@ -77,6 +77,7 @@ Natural language rules are translated to `RuleLogicDefinition` (Pydantic) via th
 - **Gemini**: Structured output with `response_schema`
 
 The system prompt instructs the LLM to emit both human-readable and JSON Logic formats. Translation is called either from the CLI (`decision_center/cli.py`) or via `POST /v1/llm/translate` on the Decision Center API.
+If a provider omits `datapoints` but still returns usable JSON Logic, the translator derives datapoints from referenced `{"var": ...}` expressions so the downstream configuration flow never receives an empty extracted-datapoints list for variable-based rules.
 
 ### MCP Server (`mcp_server/server.py`)
 
@@ -92,3 +93,8 @@ Vite + React + TypeScript + Tailwind CSS. Talks directly to Rule Engine (`:8001`
 - **Fail-closed**: All evaluation errors (type mismatch, unreachable Rule Engine, missing data) produce a restrictive outcome, never a silent `APPROVE`.
 - **Dual rule format**: Every rule stores both a human-readable string and a JSON Logic AST. The string is used for CLI display and legacy fallback; the AST is authoritative for evaluation.
 - **Schema enforcement**: The CLI and UI both support optionally loading a JSON schema from `schemas/` (ecommerce or finance blueprints) to constrain variable names the LLM may use when generating rules.
+- **Schema-constrained translation**: When a schema is provided, translator prompts explicitly forbid pseudo-datapoints such as `exists`, `missing`, or helper field-presence flags. Built-in blueprints should cover common delivery/shipping and transfer/beneficiary concepts so the model can stay inside the approved vocabulary.
+- **No-schema translation steering**: Even without a schema, translator prompts still forbid pseudo-datapoints and should prefer reusing known group datapoint names when they fit the rule. No-schema mode stays flexible, but it should not surface explanation words as business fields.
+- **Semantic concept validation** (`_validate_candidate_alignment`): Post-translation guard that scores every LLM-chosen variable against the original rule text using word-overlap heuristics. If a variable scores below 50% of the best available field's score, the translation is rejected with a `SchemaConceptMismatchError` carrying a `proposed_field` suggestion. Prevents semantically wrong mappings like `account_age_days` when `delivery_time_days` is the correct match.
+- **Schema extension flow**: When translation fails due to missing schema concepts, both UI and CLI offer an inline escape hatch: add the missing field with a suggested name (from `proposed_field`) and type, then retry immediately. The UI stores extensions in `schemaExtensions` state; the CLI merges them into `context_schema`. Extensions persist for the session so future translations can reference them.
+- **Interactive datapoint swapping** (`swap_variable_in_result`): After translation, users can replace any extracted datapoint via UI dropdown (clickable badges with ranked schema fields) or CLI prompt (numbered datapoint list → ranked candidates). The swap utility recursively updates `datapoints`, `rule_logic`, `rule_logic_json`, `edge_cases`, and `edge_cases_json` to keep the translation internally consistent.

@@ -162,7 +162,11 @@ async def _fetch_group(group_id: str):
     async with httpx.AsyncClient() as client:
         return await client.get(f"http://127.0.0.1:8001/v1/groups/{group_id}")
 
-async def evaluate_request(context: Dict[str, Any], group_id: str | None) -> tuple[DecisionOutcome, list[str], list[dict]]:
+async def evaluate_request(
+    context: Dict[str, Any],
+    group_id: str | None,
+    rule_id: str | None = None,
+) -> tuple[DecisionOutcome, list[str], list[dict]]:
     if not group_id:
         # Default behavior: execute without rules
         return DecisionOutcome.APPROVE, [], []
@@ -176,6 +180,11 @@ async def evaluate_request(context: Dict[str, Any], group_id: str | None) -> tup
         rules = group_data.get("rules", [])
     except httpx.RequestError:
         return DecisionOutcome.ASK_FOR_APPROVAL, ["rule_engine_unreachable"], []
+
+    if rule_id:
+        rules = [rule for rule in rules if rule.get("id") == rule_id]
+        if not rules:
+            return DecisionOutcome.ASK_FOR_APPROVAL, ["rule_not_found"], []
 
     # Evaluate rules
     outcomes = []

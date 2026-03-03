@@ -21,6 +21,7 @@ class EvaluateRequest(BaseModel):
     request_description: str
     context: Dict[str, Any]
     group_id: Optional[str] = None
+    rule_id: Optional[str] = None
 
 class MatchedRuleInfo(BaseModel):
     rule_id: str

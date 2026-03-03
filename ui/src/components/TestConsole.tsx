@@ -39,7 +39,7 @@ export const TestConsole: React.FC<TestConsoleProps> = ({ groupId, ruleToTest, d
     }
 
     try {
-      const res = await executeTest(groupId, description, parsedContext);
+      const res = await executeTest(groupId, description, parsedContext, ruleToTest.id);
       setResult(res);
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Test evaluation failed');
