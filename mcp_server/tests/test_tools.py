@@ -340,6 +340,22 @@ async def test_fail_closed_calls_ctx_error():
     assert "ConnectError" in ctx.error.call_args[0][0]
 
 
+@pytest.mark.asyncio
+async def test_evaluate_action_rejects_when_ctx_is_none():
+    """Verify that evaluate_action safely handles ctx=None instead of raising AttributeError."""
+    result = await evaluate_action(
+        request_description="test action",
+        context_json='{"amount": 100}',
+        group_id="g1",
+        ctx=None
+    )
+    assert result["outcome"] == "REJECT"
+    assert result["error"] is True
+    assert result["reason"] == "FRAMEWORK_ERROR"
+    assert "Context object not provided" in result["detail"]
+    assert "Do NOT proceed" in result["instruction"]
+
+
 # ---------------------------------------------------------------------------
 # guardrail_heartbeat
 # ---------------------------------------------------------------------------

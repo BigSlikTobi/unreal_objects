@@ -1,5 +1,36 @@
 # Unreal Objects Diary
 
+## MCP Server: Guard evaluate_action Against Missing Context
+
+**Date:** 2026-03-03
+
+**What was built:**
+
+Fixed a safety issue in `evaluate_action()` where `ctx: Context = None` allowed the function to be called without a context object, but the function immediately tried to use `ctx.info(...)` and `_clients(ctx)` without checking. This would raise `AttributeError`, which bypasses the `fail_closed` decorator (which only catches httpx errors), potentially causing unhandled exceptions instead of graceful fail-closed responses.
+
+**Changes:**
+
+### MCP Server (`mcp_server/server.py`)
+
+1. **`evaluate_action()` guard** — added early return check: if `ctx is None`, immediately return a structured REJECT response with `reason: "FRAMEWORK_ERROR"` and explicit instruction "Do NOT proceed with this action. The guardrail framework is misconfigured." This ensures any misconfiguration or direct invocation without ctx fails closed rather than raising an AttributeError.
+
+### Tests (`mcp_server/tests/test_tools.py`)
+
+1. **`test_evaluate_action_rejects_when_ctx_is_none()`** — verifies that calling `evaluate_action()` with `ctx=None` returns a structured REJECT response with FRAMEWORK_ERROR reason instead of raising an AttributeError. Confirms the guard works as intended.
+
+**Result:** All 148 tests passing. The function now safely handles the edge case where the MCP framework fails to inject the context object or the function is called directly without it.
+
+**How it was validated:**
+
+```bash
+pytest mcp_server/tests/test_tools.py::test_evaluate_action_rejects_when_ctx_is_none -v  # new test passes
+pytest -v  # 148 passed
+```
+
+The fix ensures that even if the framework fails to inject `ctx` or the function is called incorrectly, the system fails closed with a clear error message rather than crashing with an AttributeError.
+
+---
+
 ## Variable Swap: Token-Aware Replacement
 
 **Date:** 2026-03-03
