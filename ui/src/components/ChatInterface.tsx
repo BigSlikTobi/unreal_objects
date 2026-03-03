@@ -200,13 +200,29 @@ function swapVarInJsonLogic(logic: unknown, oldVar: string, newVar: string): unk
   return logic;
 }
 
-function swapVariableInResult(data: RuleTranslation, oldVar: string, newVar: string): RuleTranslation {
+/**
+ * Replace all occurrences of *oldVar* with *newVar* in *text* using
+ * word-boundary matching to avoid replacing substrings inside other variable
+ * names.
+ *
+ * Example: replacing "amount" in "transaction_amount > 100" leaves it unchanged,
+ * but "amount > 100 AND amount < 500" becomes "price > 100 AND price < 500".
+ */
+export function replaceVariableToken(text: string, oldVar: string, newVar: string): string {
+  // Escape special regex chars in variable names
+  const escapedOld = oldVar.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  // Use word boundaries (\b) to match only complete tokens
+  const pattern = new RegExp(`\\b${escapedOld}\\b`, 'g');
+  return text.replace(pattern, newVar);
+}
+
+export function swapVariableInResult(data: RuleTranslation, oldVar: string, newVar: string): RuleTranslation {
   return {
     ...data,
     datapoints: data.datapoints.map((dp) => (dp === oldVar ? newVar : dp)),
-    rule_logic: data.rule_logic.replaceAll(oldVar, newVar),
+    rule_logic: replaceVariableToken(data.rule_logic, oldVar, newVar),
     rule_logic_json: swapVarInJsonLogic(data.rule_logic_json, oldVar, newVar) as Record<string, unknown>,
-    edge_cases: data.edge_cases.map((ec) => ec.replaceAll(oldVar, newVar)),
+    edge_cases: data.edge_cases.map((ec) => replaceVariableToken(ec, oldVar, newVar)),
     edge_cases_json: (data.edge_cases_json ?? []).map((ec) => swapVarInJsonLogic(ec, oldVar, newVar) as Record<string, unknown>),
   };
 }

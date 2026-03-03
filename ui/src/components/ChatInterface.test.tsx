@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event';
 import { useState } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { ChatInterface } from './ChatInterface';
+import { ChatInterface, replaceVariableToken, swapVariableInResult } from './ChatInterface';
 import { createRule, getGroup, translateRule, updateDatapointDefinitions, updateRule } from '../api';
 import type { Rule, RuleGroup } from '../types';
 
@@ -185,5 +185,98 @@ describe('ChatInterface rule management', () => {
     await screen.findByText(/proposed logic/i);
     expect(screen.getByText("'EUR'")).toBeTruthy();
     expect(screen.queryByText("'EUR'EUR")).toBeNull();
+  });
+});
+
+describe('ChatInterface utility functions', () => {
+  describe('replaceVariableToken', () => {
+    it('replaces all occurrences of a variable', () => {
+      const result = replaceVariableToken('amount > 100 AND amount < 500', 'amount', 'price');
+      expect(result).toBe('price > 100 AND price < 500');
+    });
+
+    it('does not replace substrings inside other variable names', () => {
+      const result = replaceVariableToken('transaction_amount > 100', 'amount', 'price');
+      expect(result).toBe('transaction_amount > 100');
+    });
+
+    it('replaces standalone variable but leaves compound variables unchanged', () => {
+      const result = replaceVariableToken(
+        'amount > 100 AND transaction_amount < 500',
+        'amount',
+        'price'
+      );
+      expect(result).toBe('price > 100 AND transaction_amount < 500');
+    });
+  });
+
+  describe('swapVariableInResult', () => {
+    it('replaces variable in all parts of translation result', () => {
+      const input = {
+        datapoints: ['account_age_days', 'currency'],
+        rule_logic: 'IF account_age_days > 10 THEN REJECT',
+        rule_logic_json: { if: [{ '>': [{ var: 'account_age_days' }, 10] }, 'REJECT', null] },
+        edge_cases: ['IF account_age_days < 0 THEN REJECT'],
+        edge_cases_json: [{ if: [{ '<': [{ var: 'account_age_days' }, 0] }, 'REJECT', null] }],
+      };
+
+      const result = swapVariableInResult(input, 'account_age_days', 'delivery_time_days');
+
+      expect(result.datapoints).toEqual(['delivery_time_days', 'currency']);
+      expect(result.rule_logic).toBe('IF delivery_time_days > 10 THEN REJECT');
+      expect(result.rule_logic_json.if[0]['>']).toEqual([{ var: 'delivery_time_days' }, 10]);
+      expect(result.edge_cases[0]).toBe('IF delivery_time_days < 0 THEN REJECT');
+      expect(result.edge_cases_json[0].if[0]['<']).toEqual([{ var: 'delivery_time_days' }, 0]);
+    });
+
+    it('replaces multiple occurrences in rule_logic', () => {
+      const input = {
+        datapoints: ['amount'],
+        rule_logic: 'IF amount > 100 AND amount < 500 THEN ASK_FOR_APPROVAL',
+        rule_logic_json: {
+          if: [
+            { and: [{ '>': [{ var: 'amount' }, 100] }, { '<': [{ var: 'amount' }, 500] }] },
+            'ASK_FOR_APPROVAL',
+            null,
+          ],
+        },
+        edge_cases: [],
+        edge_cases_json: [],
+      };
+
+      const result = swapVariableInResult(input, 'amount', 'price');
+
+      expect(result.rule_logic).toBe('IF price > 100 AND price < 500 THEN ASK_FOR_APPROVAL');
+    });
+
+    it('does not replace substrings in compound variable names', () => {
+      const input = {
+        datapoints: ['amount', 'transaction_amount'],
+        rule_logic: 'IF amount > 100 AND transaction_amount < 500 THEN ASK_FOR_APPROVAL',
+        rule_logic_json: {
+          if: [
+            { and: [{ '>': [{ var: 'amount' }, 100] }, { '<': [{ var: 'transaction_amount' }, 500] }] },
+            'ASK_FOR_APPROVAL',
+            null,
+          ],
+        },
+        edge_cases: ['IF transaction_amount < 0 OR amount > 1000 THEN REJECT'],
+        edge_cases_json: [
+          {
+            if: [
+              { or: [{ '<': [{ var: 'transaction_amount' }, 0] }, { '>': [{ var: 'amount' }, 1000] }] },
+              'REJECT',
+              null,
+            ],
+          },
+        ],
+      };
+
+      const result = swapVariableInResult(input, 'amount', 'price');
+
+      expect(result.datapoints).toEqual(['price', 'transaction_amount']);
+      expect(result.rule_logic).toBe('IF price > 100 AND transaction_amount < 500 THEN ASK_FOR_APPROVAL');
+      expect(result.edge_cases[0]).toBe('IF transaction_amount < 0 OR price > 1000 THEN REJECT');
+    });
   });
 });

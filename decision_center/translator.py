@@ -214,12 +214,30 @@ def _swap_var_in_json_logic(logic, old_var: str, new_var: str):
     return logic
 
 
+def _replace_variable_token(text: str, old_var: str, new_var: str) -> str:
+    """Replace all occurrences of *old_var* with *new_var* in *text* using
+    word-boundary matching to avoid replacing substrings inside other variable
+    names.
+
+    Example: replacing "amount" in "transaction_amount > 100" leaves it unchanged,
+    but "amount > 100 AND amount < 500" becomes "price > 100 AND price < 500".
+    """
+    # Escape special regex chars in variable names
+    escaped_old = re.escape(old_var)
+    # Use word boundaries (\b) to match only complete tokens
+    pattern = r'\b' + escaped_old + r'\b'
+    return re.sub(pattern, new_var, text)
+
+
 def swap_variable_in_result(result: dict, old_var: str, new_var: str) -> dict:
     """Replace every occurrence of *old_var* with *new_var* throughout a
     translation result dict.
 
     Updates ``datapoints``, ``rule_logic`` (string), ``rule_logic_json``,
     ``edge_cases`` (strings) and ``edge_cases_json``.
+
+    Uses token-aware replacement for strings to avoid replacing substrings
+    inside other variable names (e.g., "amount" won't match "transaction_amount").
 
     Returns the mutated *result* for convenience.
     """
@@ -229,14 +247,16 @@ def swap_variable_in_result(result: dict, old_var: str, new_var: str) -> dict:
     ]
 
     if isinstance(result.get("rule_logic"), str):
-        result["rule_logic"] = result["rule_logic"].replace(old_var, new_var)
+        result["rule_logic"] = _replace_variable_token(
+            result["rule_logic"], old_var, new_var
+        )
 
     result["rule_logic_json"] = _swap_var_in_json_logic(
         result.get("rule_logic_json", {}), old_var, new_var,
     )
 
     result["edge_cases"] = [
-        ec.replace(old_var, new_var) if isinstance(ec, str) else ec
+        _replace_variable_token(ec, old_var, new_var) if isinstance(ec, str) else ec
         for ec in result.get("edge_cases", [])
     ]
 

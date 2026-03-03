@@ -930,3 +930,104 @@ def test_swap_variable_in_result_leaves_unrelated_vars_alone():
     assert swapped["rule_logic_json"]["if"][0][">"][0] == {"var": "transaction_amount"}
     # currency must be unchanged — it wasn't swapped
     assert "currency" in swapped["datapoints"]
+
+def test_swap_variable_replaces_repeated_occurrences():
+    """Verify that multiple occurrences of the same variable in rule_logic
+    and edge_cases are all replaced."""
+    result = {
+        "datapoints": ["amount", "currency"],
+        "rule_logic": "IF amount > 100 AND amount < 500 THEN ASK_FOR_APPROVAL",
+        "rule_logic_json": {
+            "if": [
+                {"and": [
+                    {">": [{"var": "amount"}, 100]},
+                    {"<": [{"var": "amount"}, 500]},
+                ]},
+                "ASK_FOR_APPROVAL",
+                None,
+            ]
+        },
+        "edge_cases": ["IF amount < 0 OR amount > 1000 THEN REJECT"],
+        "edge_cases_json": [{
+            "if": [
+                {"or": [
+                    {"<": [{"var": "amount"}, 0]},
+                    {">": [{"var": "amount"}, 1000]},
+                ]},
+                "REJECT",
+                None,
+            ]
+        }],
+    }
+    swapped = swap_variable_in_result(result, "amount", "price")
+    
+    # Check datapoints
+    assert swapped["datapoints"] == ["price", "currency"]
+    
+    # Check rule_logic string has both occurrences replaced
+    assert swapped["rule_logic"] == "IF price > 100 AND price < 500 THEN ASK_FOR_APPROVAL"
+    assert "amount" not in swapped["rule_logic"]
+    
+    # Check rule_logic_json has both occurrences replaced
+    assert swapped["rule_logic_json"]["if"][0]["and"][0][">"][0] == {"var": "price"}
+    assert swapped["rule_logic_json"]["if"][0]["and"][1]["<"][0] == {"var": "price"}
+    
+    # Check edge_cases string has both occurrences replaced
+    assert swapped["edge_cases"][0] == "IF price < 0 OR price > 1000 THEN REJECT"
+    assert "amount" not in swapped["edge_cases"][0]
+    
+    # Check edge_cases_json has both occurrences replaced
+    assert swapped["edge_cases_json"][0]["if"][0]["or"][0]["<"][0] == {"var": "price"}
+    assert swapped["edge_cases_json"][0]["if"][0]["or"][1][">"][0] == {"var": "price"}
+
+
+def test_swap_variable_does_not_replace_substrings():
+    """Verify that swapping 'amount' does not replace it inside
+    'transaction_amount' or other variables containing 'amount' as a substring."""
+    result = {
+        "datapoints": ["amount", "transaction_amount", "total_amount"],
+        "rule_logic": "IF amount > 100 AND transaction_amount < 500 THEN ASK_FOR_APPROVAL",
+        "rule_logic_json": {
+            "if": [
+                {"and": [
+                    {">": [{"var": "amount"}, 100]},
+                    {"<": [{"var": "transaction_amount"}, 500]},
+                ]},
+                "ASK_FOR_APPROVAL",
+                None,
+            ]
+        },
+        "edge_cases": ["IF total_amount > 1000 OR amount < 0 THEN REJECT"],
+        "edge_cases_json": [{
+            "if": [
+                {"or": [
+                    {">": [{"var": "total_amount"}, 1000]},
+                    {"<": [{"var": "amount"}, 0]},
+                ]},
+                "REJECT",
+                None,
+            ]
+        }],
+    }
+    swapped = swap_variable_in_result(result, "amount", "price")
+    
+    # Check datapoints: only "amount" should be swapped to "price"
+    assert swapped["datapoints"] == ["price", "transaction_amount", "total_amount"]
+    
+    # Check rule_logic string: "amount" → "price", but "transaction_amount" unchanged
+    assert "price > 100" in swapped["rule_logic"]
+    assert "transaction_amount < 500" in swapped["rule_logic"]
+    assert swapped["rule_logic"] == "IF price > 100 AND transaction_amount < 500 THEN ASK_FOR_APPROVAL"
+    
+    # Check rule_logic_json: only the standalone "amount" was replaced
+    assert swapped["rule_logic_json"]["if"][0]["and"][0][">"][0] == {"var": "price"}
+    assert swapped["rule_logic_json"]["if"][0]["and"][1]["<"][0] == {"var": "transaction_amount"}
+    
+    # Check edge_cases string: "amount" → "price", but "total_amount" unchanged
+    assert "total_amount > 1000" in swapped["edge_cases"][0]
+    assert "price < 0" in swapped["edge_cases"][0]
+    assert swapped["edge_cases"][0] == "IF total_amount > 1000 OR price < 0 THEN REJECT"
+    
+    # Check edge_cases_json: only the standalone "amount" was replaced
+    assert swapped["edge_cases_json"][0]["if"][0]["or"][0][">"][0] == {"var": "total_amount"}
+    assert swapped["edge_cases_json"][0]["if"][0]["or"][1]["<"][0] == {"var": "price"}

@@ -1,5 +1,67 @@
 # Unreal Objects Diary
 
+## Variable Swap: Token-Aware Replacement
+
+**Date:** 2026-03-03
+
+**What was built:**
+
+Fixed a critical bug in `swap_variable_in_result()` where string replacement used naive `.replace()` / `.replaceAll()`, which could incorrectly replace substrings inside other variable names (e.g., swapping "amount" would also change "transaction_amount" to "transaction_new_var").
+
+**Changes:**
+
+### Backend (`decision_center/translator.py`)
+
+1. **`_replace_variable_token(text, old_var, new_var)`** — new helper function that uses regex word boundaries (`\b`) to ensure only complete variable tokens are replaced, not substrings. Example: replacing "amount" in "transaction_amount > 100" leaves it unchanged, but "amount > 100 AND amount < 500" correctly becomes "price > 100 AND price < 500".
+
+2. **`swap_variable_in_result()` updated** — now calls `_replace_variable_token()` for `rule_logic` and `edge_cases` string replacements instead of using `.replace()`.
+
+### Frontend (`ui/src/components/ChatInterface.tsx`)
+
+1. **`replaceVariableToken(text, oldVar, newVar)`** — new exported utility function mirroring the backend implementation using JavaScript regex with word boundaries.
+
+2. **`swapVariableInResult()` updated** — now calls `replaceVariableToken()` for `rule_logic` and `edge_cases` string replacements instead of using `.replaceAll()`.
+
+3. **Exported for testing** — both `replaceVariableToken` and `swapVariableInResult` are now exported so they can be unit tested.
+
+### Tests
+
+**Backend (`decision_center/tests/test_translator.py`):**
+- `test_swap_variable_replaces_repeated_occurrences()` — verifies multiple occurrences of the same variable in rule_logic and edge_cases are all replaced
+- `test_swap_variable_does_not_replace_substrings()` — verifies that swapping "amount" does not affect "transaction_amount" or "total_amount"
+
+**Frontend (`ui/src/components/ChatInterface.test.tsx`):**
+- `replaceVariableToken` suite (3 tests):
+  - Replaces all occurrences of a variable
+  - Does not replace substrings inside other variable names
+  - Replaces standalone variable but leaves compound variables unchanged
+- `swapVariableInResult` suite (3 tests):
+  - Replaces variable in all parts of translation result
+  - Replaces multiple occurrences in rule_logic
+  - Does not replace substrings in compound variable names
+
+**Result:** All 147 Python tests + 11 UI tests passing. The swap utility now correctly handles:
+1. Multiple occurrences of the same variable (all replaced)
+2. Variables that are substrings of other variables (left unchanged)
+3. Edge cases in both string and JSON Logic forms
+
+**How it was validated:**
+
+```bash
+# Backend tests
+pytest decision_center/tests/test_translator.py -v  # 47 passed
+
+# Frontend tests
+cd ui && npm test -- ChatInterface.test.tsx  # 11 passed
+
+# Full suite
+pytest -v  # 147 passed
+```
+
+The fix ensures internal consistency when users swap datapoints via the UI dropdown or CLI prompt — no more accidental partial replacements that would break rule evaluation.
+
+---
+
 ## Schema Translation: Candidate Alignment, Extension Flow, and Variable Swapping
 
 **Date:** 2026-03-02
