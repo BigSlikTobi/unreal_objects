@@ -183,6 +183,8 @@ async def evaluate_request(
 
     if rule_id:
         rules = [rule for rule in rules if rule.get("id") == rule_id]
+        if not rules:
+            return DecisionOutcome.ASK_FOR_APPROVAL, ["rule_not_found"], []
 
     # Evaluate rules
     outcomes = []
