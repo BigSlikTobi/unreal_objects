@@ -198,6 +198,11 @@ def build_http_app(
     auth_service: AuthService | None,
     admin_api_key: str | None,
 ):
+    if auth_enabled and auth_service is None:
+        raise ValueError("auth_service is required when auth is enabled")
+
+    auth_routes_enabled = auth_enabled and auth_service is not None
+
     @asynccontextmanager
     async def lifespan(_app: FastAPI):
         lifespan_context = getattr(getattr(base_app, "router", None), "lifespan_context", None)
@@ -228,84 +233,85 @@ def build_http_app(
         with principal_context(principal):
             return await call_next(request)
 
-    @app.post("/v1/admin/agents", status_code=201)
-    async def create_agent(request: Request, payload: CreateAgentRequest):
-        _require_admin(request, admin_api_key)
-        agent = auth_service.create_agent(
-            name=payload.name,
-            description=payload.description,
-            metadata=payload.metadata,
-        )
-        return agent.model_dump()
-
-    @app.get("/instructions")
-    async def bootstrap_instructions(request: Request):
-        return _bootstrap_instructions(request)
-
-    @app.get("/v1/admin/agents")
-    async def list_agents(request: Request):
-        _require_admin(request, admin_api_key)
-        return [agent.model_dump() for agent in auth_service.list_agents()]
-
-    @app.get("/v1/admin/credentials")
-    async def list_credentials(request: Request):
-        _require_admin(request, admin_api_key)
-        return [credential.model_dump(exclude={"client_secret_hash"}) for credential in auth_service.list_credentials()]
-
-    @app.post("/v1/admin/agents/{agent_id}/enrollment-tokens", status_code=201)
-    async def create_enrollment_token(request: Request, agent_id: str, payload: CreateEnrollmentTokenRequest):
-        _require_admin(request, admin_api_key)
-        try:
-            return auth_service.create_enrollment_token(
-                agent_id=agent_id,
-                credential_name=payload.credential_name,
-                scopes=payload.scopes,
-                default_group_id=payload.default_group_id,
-                allowed_group_ids=payload.allowed_group_ids,
-                ttl_seconds=payload.ttl_seconds,
+    if auth_routes_enabled:
+        @app.post("/v1/admin/agents", status_code=201)
+        async def create_agent(request: Request, payload: CreateAgentRequest):
+            _require_admin(request, admin_api_key)
+            agent = auth_service.create_agent(
+                name=payload.name,
+                description=payload.description,
+                metadata=payload.metadata,
             )
-        except ValueError as exc:
-            raise HTTPException(status_code=400, detail=str(exc)) from exc
+            return agent.model_dump()
 
-    @app.post("/v1/admin/credentials/{credential_id}/revoke")
-    async def revoke_credential(request: Request, credential_id: str):
-        _require_admin(request, admin_api_key)
-        try:
-            credential = auth_service.revoke_credential(credential_id)
-        except ValueError as exc:
-            raise HTTPException(status_code=404, detail=str(exc)) from exc
-        return credential.model_dump(exclude={"client_secret_hash"})
+        @app.get("/instructions")
+        async def bootstrap_instructions(request: Request):
+            return _bootstrap_instructions(request)
 
-    @app.post("/v1/admin/agents/{agent_id}/revoke")
-    async def revoke_agent(request: Request, agent_id: str):
-        _require_admin(request, admin_api_key)
-        try:
-            agent = auth_service.revoke_agent(agent_id)
-        except ValueError as exc:
-            raise HTTPException(status_code=404, detail=str(exc)) from exc
-        return agent.model_dump()
+        @app.get("/v1/admin/agents")
+        async def list_agents(request: Request):
+            _require_admin(request, admin_api_key)
+            return [agent.model_dump() for agent in auth_service.list_agents()]
 
-    @app.post("/v1/agents/enroll")
-    async def enroll_agent(payload: EnrollAgentRequest):
-        try:
-            bootstrap = auth_service.exchange_enrollment_token(payload.enrollment_token)
-        except ValueError as exc:
-            raise HTTPException(status_code=400, detail=str(exc)) from exc
-        return bootstrap.model_dump()
+        @app.get("/v1/admin/credentials")
+        async def list_credentials(request: Request):
+            _require_admin(request, admin_api_key)
+            return [credential.model_dump(exclude={"client_secret_hash"}) for credential in auth_service.list_credentials()]
 
-    @app.post("/oauth/token")
-    async def issue_oauth_token(payload: OAuthTokenRequest):
-        if payload.grant_type != "client_credentials":
-            raise HTTPException(status_code=400, detail="Unsupported grant_type")
-        try:
-            token = auth_service.issue_access_token(
-                client_id=payload.client_id,
-                client_secret=payload.client_secret,
-                requested_scope=payload.scope,
-            )
-        except ValueError as exc:
-            raise HTTPException(status_code=401, detail=str(exc)) from exc
-        return token.model_dump()
+        @app.post("/v1/admin/agents/{agent_id}/enrollment-tokens", status_code=201)
+        async def create_enrollment_token(request: Request, agent_id: str, payload: CreateEnrollmentTokenRequest):
+            _require_admin(request, admin_api_key)
+            try:
+                return auth_service.create_enrollment_token(
+                    agent_id=agent_id,
+                    credential_name=payload.credential_name,
+                    scopes=payload.scopes,
+                    default_group_id=payload.default_group_id,
+                    allowed_group_ids=payload.allowed_group_ids,
+                    ttl_seconds=payload.ttl_seconds,
+                )
+            except ValueError as exc:
+                raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+        @app.post("/v1/admin/credentials/{credential_id}/revoke")
+        async def revoke_credential(request: Request, credential_id: str):
+            _require_admin(request, admin_api_key)
+            try:
+                credential = auth_service.revoke_credential(credential_id)
+            except ValueError as exc:
+                raise HTTPException(status_code=404, detail=str(exc)) from exc
+            return credential.model_dump(exclude={"client_secret_hash"})
+
+        @app.post("/v1/admin/agents/{agent_id}/revoke")
+        async def revoke_agent(request: Request, agent_id: str):
+            _require_admin(request, admin_api_key)
+            try:
+                agent = auth_service.revoke_agent(agent_id)
+            except ValueError as exc:
+                raise HTTPException(status_code=404, detail=str(exc)) from exc
+            return agent.model_dump()
+
+        @app.post("/v1/agents/enroll")
+        async def enroll_agent(payload: EnrollAgentRequest):
+            try:
+                bootstrap = auth_service.exchange_enrollment_token(payload.enrollment_token)
+            except ValueError as exc:
+                raise HTTPException(status_code=400, detail=str(exc)) from exc
+            return bootstrap.model_dump()
+
+        @app.post("/oauth/token")
+        async def issue_oauth_token(payload: OAuthTokenRequest):
+            if payload.grant_type != "client_credentials":
+                raise HTTPException(status_code=400, detail="Unsupported grant_type")
+            try:
+                token = auth_service.issue_access_token(
+                    client_id=payload.client_id,
+                    client_secret=payload.client_secret,
+                    requested_scope=payload.scope,
+                )
+            except ValueError as exc:
+                raise HTTPException(status_code=401, detail=str(exc)) from exc
+            return token.model_dump()
 
     app.mount("/", base_app)
     return app
@@ -545,8 +551,11 @@ def main():
     _DEFAULT_GROUP_ID = args.group_id
     _AUTH_ENABLED = args.auth_enabled
     _ADMIN_API_KEY = args.admin_api_key
+    _AUTH_SERVICE = None
     if _DEFAULT_GROUP_ID:
         print(f"Default rule group: {_DEFAULT_GROUP_ID}")
+    if _ADMIN_API_KEY and not _AUTH_ENABLED:
+        raise SystemExit("--admin-api-key requires --auth-enabled")
     if _AUTH_ENABLED:
         _AUTH_SERVICE = AuthService(
             store=AuthStore(),

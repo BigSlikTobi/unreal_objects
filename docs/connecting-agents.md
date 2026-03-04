@@ -156,6 +156,11 @@ collapsing them into one broad trust domain.
 Authenticated MCP is supported for HTTP transports only (`streamable-http`,
 `sse`). `stdio` remains available for local development without auth.
 
+The admin bootstrap surface (`/v1/admin/*`, `/v1/agents/enroll`,
+`/oauth/token`, and `/instructions`) is only exposed when the MCP server starts
+with `--auth-enabled`. Supplying `--admin-api-key` without `--auth-enabled`
+does not turn those routes on.
+
 ### Auth Flow
 
 1. An operator creates an agent and a one-time enrollment token through the

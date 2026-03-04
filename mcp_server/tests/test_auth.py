@@ -1,8 +1,10 @@
 from fastapi import FastAPI
 from httpx import ASGITransport, AsyncClient
 import pytest
+import sys
 
 from mcp_server.auth import AuthService, AuthStore, get_current_principal
+from mcp_server import server as server_module
 from mcp_server.server import build_http_app, mcp
 
 
@@ -60,6 +62,33 @@ def test_enrollment_token_can_only_be_used_once(auth_service):
         auth_service.exchange_enrollment_token(issued["enrollment_token"])
 
 
+def test_build_http_app_requires_auth_service_when_auth_is_enabled():
+    with pytest.raises(ValueError, match="auth_service is required when auth is enabled"):
+        build_http_app(
+            base_app=_dummy_base_app(),
+            auth_enabled=True,
+            auth_service=None,
+            admin_api_key="admin-secret",
+        )
+
+
+def test_main_requires_auth_enabled_when_admin_api_key_is_set(monkeypatch):
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        [
+            "server.py",
+            "--transport",
+            "streamable-http",
+            "--admin-api-key",
+            "admin-secret",
+        ],
+    )
+
+    with pytest.raises(SystemExit, match="--admin-api-key requires --auth-enabled"):
+        server_module.main()
+
+
 @pytest.mark.asyncio
 async def test_http_app_requires_bearer_token_when_auth_enabled(auth_service):
     app = build_http_app(
@@ -74,6 +103,41 @@ async def test_http_app_requires_bearer_token_when_auth_enabled(auth_service):
 
     assert response.status_code == 401
     assert response.json()["detail"] == "Missing bearer token"
+
+
+@pytest.mark.asyncio
+async def test_http_app_does_not_expose_auth_routes_when_auth_is_disabled():
+    app = build_http_app(
+        base_app=_dummy_base_app(),
+        auth_enabled=False,
+        auth_service=None,
+        admin_api_key="admin-secret",
+    )
+
+    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
+        admin_response = await client.post(
+            "/v1/admin/agents",
+            headers={"X-Admin-Key": "admin-secret"},
+            json={"name": "Ops Agent"},
+        )
+        enroll_response = await client.post(
+            "/v1/agents/enroll",
+            json={"enrollment_token": "enroll_123"},
+        )
+        token_response = await client.post(
+            "/oauth/token",
+            json={
+                "grant_type": "client_credentials",
+                "client_id": "uo_client_finance_a",
+                "client_secret": "uo_secret_once_only",
+            },
+        )
+        instructions_response = await client.get("/instructions")
+
+    assert admin_response.status_code == 404
+    assert enroll_response.status_code == 404
+    assert token_response.status_code == 404
+    assert instructions_response.status_code == 404
 
 
 @pytest.mark.asyncio

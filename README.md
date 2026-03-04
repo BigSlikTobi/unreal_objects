@@ -65,7 +65,8 @@ uvicorn rule_engine.app:app --port 8001 &
 uvicorn decision_center.app:app --port 8002 &
 
 # 3. MCP Server (for AI agents)
-python mcp_server/server.py --transport streamable-http --host 0.0.0.0 --port 8000 --group-id <your-group-id> &
+# Add --auth-enabled and --admin-api-key when you need the agent bootstrap/admin surface.
+python mcp_server/server.py --transport streamable-http --host 0.0.0.0 --port 8000 --group-id <your-group-id> --auth-enabled --admin-api-key admin-secret &
 
 # Or restart all backend services together (kills old backend processes first)
 ./scripts/start_backend_stack.sh
