@@ -11,3 +11,10 @@ ui/node_modules
 ui/.vite/deps/_metadata.json
 ui/.vite/deps/package.json
 .vscode/settings.json
+
+# data files 
+data/agent_auth.json
+# test files
+data/test_agent_auth_tmp.json
+data/test_agent_auth_tmp2.json
+data/test_agent_auth_tmp3.json
