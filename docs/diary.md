@@ -1250,3 +1250,66 @@ left unchanged as it handles legitimate minor naming mismatches at runtime.
 - The freeze was a client-side rerender loop, not a backend issue.
 - Persisting draft state is still useful, but the component must treat the
   live form fields as the source of truth while the overlay is open.
+
+## HTTP Auth Bootstrap Routes Fail Closed
+
+**What was built:**
+
+- Updated `mcp_server/server.py` so the auth bootstrap surface
+  (`/v1/admin/*`, `/v1/agents/enroll`, `/oauth/token`, `/instructions`) is
+  only registered when authenticated HTTP mode is actually enabled and backed
+  by an `AuthService`.
+- Added a construction-time guard so `build_http_app(...)` now raises
+  immediately if `auth_enabled=True` is paired with `auth_service=None`.
+- Tightened `main()` so starting the server with `--admin-api-key` but without
+  `--auth-enabled` exits early instead of serving a misleading partial config.
+- Updated `docs/connecting-agents.md` and `README.md` so the documented startup
+  path matches the enforced contract.
+
+**How it was validated:**
+
+- Added coverage in `mcp_server/tests/test_auth.py` for:
+  auth-disabled apps returning `404` for the auth bootstrap surface,
+  `build_http_app(...)` rejecting `auth_enabled=True` without an auth service,
+  and `main()` rejecting `--admin-api-key` without `--auth-enabled`.
+- Ran `.venv/bin/pytest mcp_server/tests/test_auth.py -k "main_requires_auth_enabled_when_admin_api_key_is_set or does_not_expose_auth_routes_when_auth_is_disabled or requires_auth_service_when_auth_is_enabled"`.
+- Ran `.venv/bin/pytest tests/test_dev_scripts.py`.
+
+**Key Findings:**
+
+- The original crash was caused by route registration, not the auth middleware:
+  handlers were present even when the auth backend was absent.
+- Failing closed at route registration plus startup validation is safer than
+  letting the server boot into a partially configured auth surface.
+
+## CLI Datapoint Sync Failures No Longer Abort Rule Creation
+
+**What was built:**
+
+- Updated `decision_center/cli.py` so the LLM rule wizard treats datapoint
+  definition sync as best-effort after translation succeeds.
+- A failed `PATCH /v1/groups/{group_id}/datapoints` request now prints a
+  warning and still proceeds to save the translated rule instead of dropping
+  into manual fallback.
+- Added explicit regression coverage in
+  `decision_center/tests/test_cli.py` for the request-error case.
+- Updated `docs/cli-wizard.md` to document that datapoint-definition sync is
+  attempted automatically but does not block rule creation if the Rule Engine
+  is temporarily unavailable.
+
+**How it was validated:**
+
+- Ran `.venv/bin/pytest decision_center/tests/test_cli.py -k "schema_extension_retry or swap_datapoint or saves_new_datapoints"`.
+- Ran `.venv/bin/pytest decision_center/tests/test_cli.py -k "keeps_rule_when_datapoint_sync_fails or schema_extension_retry or swap_datapoint or saves_new_datapoints"`.
+- Ran `.venv/bin/pytest decision_center/tests/test_cli.py`.
+- Ran `.venv/bin/pytest decision_center/tests -q`.
+- Ran `.venv/bin/pytest -q`.
+
+**Key Findings:**
+
+- The failing tests were not caused by translation logic. The translated rule
+  was correct; the bug was that a later datapoint-definition sync error was
+  caught by the broad translation fallback path.
+- Treating datapoint sync as best-effort is the safer operator workflow:
+  translated rules should not be discarded just because metadata persistence is
+  temporarily unavailable.
