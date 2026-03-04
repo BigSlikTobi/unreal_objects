@@ -22,6 +22,18 @@ class EvaluateRequest(BaseModel):
     context: Dict[str, Any]
     group_id: Optional[str] = None
     rule_id: Optional[str] = None
+    agent_id: Optional[str] = None
+    credential_id: Optional[str] = None
+    user_id: Optional[str] = None
+
+    def identity_dict(self) -> Dict[str, Any]:
+        """Return a dict of identity fields for logging, suitable for ** unpacking."""
+        return {
+            "agent_id": self.agent_id,
+            "credential_id": self.credential_id,
+            "user_id": self.user_id,
+            "effective_group_id": self.group_id,
+        }
 
 class MatchedRuleInfo(BaseModel):
     rule_id: str
@@ -35,16 +47,25 @@ class DecisionResult(BaseModel):
     matched_rules: List[str]
     matched_details: List[MatchedRuleInfo] = Field(default_factory=list)
     timestamp: datetime = Field(default_factory=datetime.now)
+    agent_id: Optional[str] = None
+    credential_id: Optional[str] = None
+    user_id: Optional[str] = None
+    effective_group_id: Optional[str] = None
 
 class ApprovalSubmission(BaseModel):
     approved: bool
     approver: str
 
 class AtomicLogEntry(BaseModel):
+    request_id: str = Field(default_factory=generate_id)
     timestamp: datetime = Field(default_factory=datetime.now)
     request_description: str
     context: Dict[str, Any]
     decision: DecisionState
+    agent_id: Optional[str] = None
+    credential_id: Optional[str] = None
+    user_id: Optional[str] = None
+    effective_group_id: Optional[str] = None
 
 class ChainEvent(BaseModel):
     timestamp: datetime = Field(default_factory=datetime.now)

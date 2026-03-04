@@ -6,10 +6,15 @@ import App from './App';
 import {
   checkLLMConnection,
   createGroup,
+  createAgentRecord,
   createRule,
   executeTest,
   fetchGroups,
   getGroup,
+  issueEnrollmentToken,
+  listAgents,
+  listCredentials,
+  revokeCredential,
   translateRule,
   updateDatapointDefinitions,
   updateRule,
@@ -21,6 +26,11 @@ vi.mock('./api', () => ({
   createGroup: vi.fn(),
   getGroup: vi.fn(),
   checkLLMConnection: vi.fn(),
+  listAgents: vi.fn(),
+  createAgentRecord: vi.fn(),
+  listCredentials: vi.fn(),
+  issueEnrollmentToken: vi.fn(),
+  revokeCredential: vi.fn(),
   translateRule: vi.fn(),
   updateDatapointDefinitions: vi.fn(),
   createRule: vi.fn(),
@@ -61,6 +71,34 @@ describe('App rule library layout', () => {
     vi.mocked(fetchGroups).mockResolvedValue([baseGroup]);
     vi.mocked(getGroup).mockResolvedValue(baseGroup);
     vi.mocked(checkLLMConnection).mockResolvedValue({ ok: true });
+    vi.mocked(listAgents).mockResolvedValue([]);
+    vi.mocked(createAgentRecord).mockResolvedValue({
+      agent_id: 'agt_ops_01',
+      name: 'Ops Agent',
+      description: 'Shared runtime',
+      status: 'active',
+    });
+    vi.mocked(listCredentials).mockResolvedValue([]);
+    vi.mocked(issueEnrollmentToken).mockResolvedValue({
+      enrollment_token: 'enroll_123',
+      enrollment_token_id: 'enrollment_row_1',
+      agent_id: 'agt_ops_01',
+      credential_name: 'finance',
+      scopes: ['finance:execute'],
+      default_group_id: 'grp_finance',
+      allowed_group_ids: ['grp_finance'],
+      expires_at: '2026-03-03T12:00:00Z',
+    });
+    vi.mocked(revokeCredential).mockResolvedValue({
+      credential_id: 'cred_finance_a',
+      agent_id: 'agt_ops_01',
+      name: 'finance',
+      client_id: 'uo_client_finance_a',
+      scopes: ['finance:execute'],
+      default_group_id: 'grp_finance',
+      allowed_group_ids: ['grp_finance'],
+      status: 'revoked',
+    });
     vi.mocked(createGroup).mockResolvedValue({
       id: 'group_999',
       name: 'New Group',
@@ -174,6 +212,31 @@ describe('App rule library layout', () => {
     await user.click(screen.getByRole('button', { name: /configure llm/i }));
 
     expect(await screen.findByDisplayValue('gpt-5.2-2025-12-11')).toBeTruthy();
+  });
+
+  it('shows the agent admin section inside the settings modal', async () => {
+    const user = userEvent.setup();
+
+    render(<App />);
+
+    await screen.findByText('High Value Review');
+    await user.click(screen.getByRole('button', { name: /llm settings/i }));
+
+    expect(await screen.findByDisplayValue('gpt-5.2')).toBeTruthy();
+    expect(screen.queryByRole('heading', { name: /agent admin/i })).toBeNull();
+  });
+
+  it('opens the agent admin workspace from the sidebar', async () => {
+    const user = userEvent.setup();
+
+    render(<App />);
+
+    await screen.findByText('High Value Review');
+    await user.click(screen.getByRole('button', { name: /agent admin/i }));
+
+    await screen.findByRole('heading', { name: /agent admin/i });
+    expect(screen.getByLabelText(/mcp base url/i)).toBeTruthy();
+    expect(screen.getByLabelText(/admin api key/i)).toBeTruthy();
   });
 
   it('shows a clear chat message when a rule is deactivated from the rule panel', async () => {

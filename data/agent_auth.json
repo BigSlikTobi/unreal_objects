@@ -1,0 +1,202 @@
+{
+  "agents": {
+    "agt_pzeisSgTp6U": {
+      "agent_id": "agt_pzeisSgTp6U",
+      "name": "Test Agent",
+      "description": "test",
+      "status": "active",
+      "created_at": "2026-03-03T07:44:01.843634Z",
+      "metadata": {}
+    },
+    "agt_e-GunLgRg9A": {
+      "agent_id": "agt_e-GunLgRg9A",
+      "name": "test agent",
+      "description": "",
+      "status": "active",
+      "created_at": "2026-03-03T07:55:07.711965Z",
+      "metadata": {}
+    },
+    "agt_hDsf1E1qMi0": {
+      "agent_id": "agt_hDsf1E1qMi0",
+      "name": "test_agent02",
+      "description": "",
+      "status": "active",
+      "created_at": "2026-03-03T08:15:33.160515Z",
+      "metadata": {}
+    },
+    "agt_99D5KzE4mzE": {
+      "agent_id": "agt_99D5KzE4mzE",
+      "name": "test_03",
+      "description": "",
+      "status": "active",
+      "created_at": "2026-03-03T09:15:49.900160Z",
+      "metadata": {}
+    },
+    "agt_Sk72nrYWU9M": {
+      "agent_id": "agt_Sk72nrYWU9M",
+      "name": "test_04",
+      "description": "",
+      "status": "active",
+      "created_at": "2026-03-03T09:32:56.161227Z",
+      "metadata": {}
+    }
+  },
+  "credentials": {
+    "cred_sm6xW9cJcoI": {
+      "credential_id": "cred_sm6xW9cJcoI",
+      "agent_id": "agt_e-GunLgRg9A",
+      "name": "Tobi",
+      "client_id": "uo_client_72qMclqirCo",
+      "client_secret_hash": "236e2f228c6e6367c394a96fa0549b82:d3a8ebc29f0d5d44f7e335bfa6a67b76a2fe1f7b47ecc7794889209e71b30fa1",
+      "scopes": [],
+      "default_group_id": "65904b50-6cb2-447b-a7b7-2d7c0ea8c853",
+      "allowed_group_ids": [
+        "65904b50-6cb2-447b-a7b7-2d7c0ea8c853"
+      ],
+      "status": "active",
+      "created_at": "2026-03-03T09:03:25.863924Z",
+      "revoked_at": null
+    },
+    "cred_3u2VClPrThE": {
+      "credential_id": "cred_3u2VClPrThE",
+      "agent_id": "agt_99D5KzE4mzE",
+      "name": "Tobi",
+      "client_id": "uo_client_1KZu9k8NyVk",
+      "client_secret_hash": "f13c516a5743ca4e7e7ff4bcd62c7e5f:c8ae622d74fe66e86e6d2c08f0229aed94a4eb5fbc93111f93f50ea48574b9ef",
+      "scopes": [],
+      "default_group_id": "1c4b0a2b-4617-49be-afed-a1b7971310b7",
+      "allowed_group_ids": [
+        "1c4b0a2b-4617-49be-afed-a1b7971310b7"
+      ],
+      "status": "active",
+      "created_at": "2026-03-03T09:17:20.185473Z",
+      "revoked_at": null
+    },
+    "cred_TFpBItMYj3U": {
+      "credential_id": "cred_TFpBItMYj3U",
+      "agent_id": "agt_pzeisSgTp6U",
+      "name": "Tobi",
+      "client_id": "uo_client_Zjgv3r2Ba1c",
+      "client_secret_hash": "d775abcd349a614fd4c379d7def0f756:d3da0ca3a93581c943489c8263ef25dd752364bf8a2ac40e7ddc74ebef65dd10",
+      "scopes": [],
+      "default_group_id": null,
+      "allowed_group_ids": [],
+      "status": "active",
+      "created_at": "2026-03-03T09:29:42.567190Z",
+      "revoked_at": null
+    },
+    "cred_DrtNrMi1448": {
+      "credential_id": "cred_DrtNrMi1448",
+      "agent_id": "agt_Sk72nrYWU9M",
+      "name": "Tobi",
+      "client_id": "uo_client_5vp4pntB5Xk",
+      "client_secret_hash": "dd4247b92a4b1da623d0393be8d7e725:ef52acb4cd52bc8040f7a4bf7aab3290872199d4c87955effb4861f36d6937a1",
+      "scopes": [],
+      "default_group_id": "0d0d2bf5-311a-4d7f-8521-6d2f4595a708",
+      "allowed_group_ids": [
+        "0d0d2bf5-311a-4d7f-8521-6d2f4595a708"
+      ],
+      "status": "active",
+      "created_at": "2026-03-03T09:33:44.853646Z",
+      "revoked_at": null
+    }
+  },
+  "enrollment_tokens": {
+    "enroll_KSS0bU-3Kkg": {
+      "enrollment_token_id": "enroll_KSS0bU-3Kkg",
+      "agent_id": "agt_pzeisSgTp6U",
+      "credential_name": "Tobi",
+      "token_hash": "2fb793c3998531d5263d852a4d0b23e4:c7b8b1b5463b487e73ade517e5d15e40aa237995ae1e2088b65c9a45218a9a0f",
+      "scopes": [
+        "finance_execute"
+      ],
+      "default_group_id": "6a4a4b38-4be9-493a-9a7b-6227e9c8a621",
+      "allowed_group_ids": [
+        "6a4a4b38-4be9-493a-9a7b-6227e9c8a621"
+      ],
+      "expires_at": "2026-03-03T09:06:13.370596Z",
+      "used_at": null,
+      "status": "active"
+    },
+    "enroll_eRM5jpit75Q": {
+      "enrollment_token_id": "enroll_eRM5jpit75Q",
+      "agent_id": "agt_pzeisSgTp6U",
+      "credential_name": "Tobi",
+      "token_hash": "b3549132d05b0b4b5bb5fbbb7db480ee:b9ad0cf36d65d497ce882be8a57686d7d988da9d981ecb5beb9062b94682ad31",
+      "scopes": [],
+      "default_group_id": "6a4a4b38-4be9-493a-9a7b-6227e9c8a621",
+      "allowed_group_ids": [
+        "6a4a4b38-4be9-493a-9a7b-6227e9c8a621"
+      ],
+      "expires_at": "2026-03-03T09:14:58.968176Z",
+      "used_at": null,
+      "status": "active"
+    },
+    "enroll_olRMSnsvyVs": {
+      "enrollment_token_id": "enroll_olRMSnsvyVs",
+      "agent_id": "agt_pzeisSgTp6U",
+      "credential_name": "Tobi",
+      "token_hash": "cf6ac4702040159d92912f95e2a2a129:fd0cfc5e79aaa407b503233ecee5775a825cc9f45a9c6c857aa7c819ab8a5960",
+      "scopes": [],
+      "default_group_id": null,
+      "allowed_group_ids": [],
+      "expires_at": "2026-03-03T09:20:15.585421Z",
+      "used_at": null,
+      "status": "active"
+    },
+    "enroll_Iz3aVcKNx-4": {
+      "enrollment_token_id": "enroll_Iz3aVcKNx-4",
+      "agent_id": "agt_e-GunLgRg9A",
+      "credential_name": "Tobi",
+      "token_hash": "2be8c7b450a078aa1a436914a02242d2:23b877520f6009b5bb194b4898af82e1c42217a7df4619213ac6af95e3a3314c",
+      "scopes": [],
+      "default_group_id": "65904b50-6cb2-447b-a7b7-2d7c0ea8c853",
+      "allowed_group_ids": [
+        "65904b50-6cb2-447b-a7b7-2d7c0ea8c853"
+      ],
+      "expires_at": "2026-03-03T09:57:17.080702Z",
+      "used_at": "2026-03-03T09:03:25.737814Z",
+      "status": "used"
+    },
+    "enroll_itrkKdHkQPc": {
+      "enrollment_token_id": "enroll_itrkKdHkQPc",
+      "agent_id": "agt_99D5KzE4mzE",
+      "credential_name": "Tobi",
+      "token_hash": "e5be44463eeb2d11ccfdd9f3e34754d5:fe300bba8a55aa02ddd830e071aafd2e3fc3874c20353fd6bb217273c864aec1",
+      "scopes": [],
+      "default_group_id": "1c4b0a2b-4617-49be-afed-a1b7971310b7",
+      "allowed_group_ids": [
+        "1c4b0a2b-4617-49be-afed-a1b7971310b7"
+      ],
+      "expires_at": "2026-03-03T10:15:56.460969Z",
+      "used_at": "2026-03-03T09:17:20.089913Z",
+      "status": "used"
+    },
+    "enroll_yJJhs1s70pI": {
+      "enrollment_token_id": "enroll_yJJhs1s70pI",
+      "agent_id": "agt_pzeisSgTp6U",
+      "credential_name": "Tobi",
+      "token_hash": "c9bd591742b63d32558d1ac6646cf98d:eba3cad4f85a42d928f9d5100df8e3318f0bb6e93d9e680200aca061016a2d90",
+      "scopes": [],
+      "default_group_id": null,
+      "allowed_group_ids": [],
+      "expires_at": "2026-03-03T10:28:32.257680Z",
+      "used_at": "2026-03-03T09:29:42.489443Z",
+      "status": "used"
+    },
+    "enroll_igmNxjz_3P8": {
+      "enrollment_token_id": "enroll_igmNxjz_3P8",
+      "agent_id": "agt_Sk72nrYWU9M",
+      "credential_name": "Tobi",
+      "token_hash": "81625f69b0f2cec43ce508edf63fbb1e:28634e783d39655986caaba0e47846310dbaa670890832e381a4dfed27178c2d",
+      "scopes": [],
+      "default_group_id": "0d0d2bf5-311a-4d7f-8521-6d2f4595a708",
+      "allowed_group_ids": [
+        "0d0d2bf5-311a-4d7f-8521-6d2f4595a708"
+      ],
+      "expires_at": "2026-03-03T10:33:06.805860Z",
+      "used_at": "2026-03-03T09:33:44.775537Z",
+      "status": "used"
+    }
+  }
+}

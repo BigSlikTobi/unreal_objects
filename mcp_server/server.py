@@ -4,9 +4,15 @@ from dataclasses import dataclass
 from functools import wraps
 
 import httpx
+from fastapi import FastAPI, HTTPException, Request
+from fastapi.responses import JSONResponse
 from mcp.server.fastmcp import Context, FastMCP
 from mcp.server.transport_security import TransportSecuritySettings
 from mcp.types import ToolAnnotations
+from pydantic import BaseModel, Field
+from starlette.middleware.cors import CORSMiddleware
+
+from mcp_server.auth import AuthService, AuthStore, get_current_principal, principal_context
 
 # ---------------------------------------------------------------------------
 # Configuration
@@ -21,6 +27,9 @@ MAX_CONTEXT_JSON_BYTES = 100 * 1024  # 100 KB
 # Set by main() via --group-id. When set, all evaluate_action calls use this
 # group without the agent needing to know or specify it.
 _DEFAULT_GROUP_ID: str | None = None
+_AUTH_ENABLED = False
+_AUTH_SERVICE: AuthService | None = None
+_ADMIN_API_KEY: str | None = None
 
 # ---------------------------------------------------------------------------
 # Server instructions — injected into the agent's context on every connection
@@ -108,6 +117,206 @@ def _invalid_input(message: str) -> dict:
     return {"error": True, "reason": "INVALID_INPUT", "detail": message}
 
 
+def _effective_group_id(group_id: str | None, principal) -> str | None:
+    if principal is None:
+        return group_id or _DEFAULT_GROUP_ID
+
+    if group_id:
+        if group_id not in principal.allowed_group_ids:
+            raise ValueError("group_id is not allowed for this credential")
+        return group_id
+
+    if principal.default_group_id:
+        return principal.default_group_id
+
+    raise ValueError("no default group is configured for this credential")
+
+
+class CreateAgentRequest(BaseModel):
+    name: str
+    description: str = ""
+    metadata: dict = Field(default_factory=dict)
+
+
+class CreateEnrollmentTokenRequest(BaseModel):
+    credential_name: str
+    scopes: list[str] = Field(default_factory=list)
+    default_group_id: str | None = None
+    allowed_group_ids: list[str] = Field(default_factory=list)
+    ttl_seconds: int = 3600
+
+
+class EnrollAgentRequest(BaseModel):
+    enrollment_token: str
+
+
+class OAuthTokenRequest(BaseModel):
+    grant_type: str
+    client_id: str
+    client_secret: str
+    scope: str | None = None
+
+
+def _require_admin(request: Request, admin_api_key: str | None):
+    if not admin_api_key or request.headers.get("X-Admin-Key") != admin_api_key:
+        raise HTTPException(status_code=401, detail="Invalid admin API key")
+
+
+def _bootstrap_instructions(request: Request) -> dict:
+    same_host_as = str(request.base_url).rstrip("/")
+    return {
+        "version": 1,
+        "name": "Unreal Objects Bootstrap",
+        "bootstrap_prompt": "If you have already enrolled before, do not enroll again. Reuse your stored client_id and client_secret and request a fresh access token. Otherwise, ask the user for the one-time enrollment token, then follow the steps below on this same host.",
+        "same_host_as": same_host_as,
+        "mcp_http_path": "/mcp",
+        "enroll_path": "/v1/agents/enroll",
+        "token_path": "/oauth/token",
+        "mcp_headers": {
+            "Accept": "application/json, text/event-stream",
+        },
+        "steps": [
+            "POST your one-time enrollment token to /v1/agents/enroll as JSON.",
+            "Store agent_id, credential_id, client_id, and client_secret from the response.",
+            "POST client_credentials to /oauth/token.",
+            "Use the returned access_token as Bearer auth for POST /mcp requests.",
+            "Include Accept: application/json, text/event-stream on MCP HTTP requests.",
+            "Report back when MCP access is working.",
+        ],
+        "notes": [
+            "Use the same host you called for /instructions; the paths above are relative.",
+            "If you have already enrolled before, do not enroll again. Reuse stored client credentials and request a fresh access token.",
+            "Do not send the enrollment token as a Bearer token.",
+            "The enrollment token can only be used once.",
+        ],
+    }
+
+
+def build_http_app(
+    base_app,
+    auth_enabled: bool,
+    auth_service: AuthService | None,
+    admin_api_key: str | None,
+):
+    if auth_enabled and auth_service is None:
+        raise ValueError("auth_service is required when auth is enabled")
+
+    auth_routes_enabled = auth_enabled and auth_service is not None
+
+    @asynccontextmanager
+    async def lifespan(_app: FastAPI):
+        lifespan_context = getattr(getattr(base_app, "router", None), "lifespan_context", None)
+        if lifespan_context is None:
+            yield
+            return
+
+        async with lifespan_context(base_app):
+            yield
+
+    app = FastAPI(lifespan=lifespan)
+
+    @app.middleware("http")
+    async def bearer_auth_middleware(request: Request, call_next):
+        exempt_prefixes = ("/v1/admin", "/v1/agents/enroll", "/oauth/token", "/instructions")
+        if not auth_enabled or request.url.path.startswith(exempt_prefixes):
+            return await call_next(request)
+
+        authorization = request.headers.get("Authorization", "")
+        if not authorization.startswith("Bearer "):
+            return JSONResponse(status_code=401, content={"detail": "Missing bearer token"})
+
+        token = authorization.split(" ", 1)[1].strip()
+        principal = auth_service.authenticate_bearer(token) if auth_service else None
+        if not principal:
+            return JSONResponse(status_code=401, content={"detail": "Invalid or expired bearer token"})
+
+        with principal_context(principal):
+            return await call_next(request)
+
+    if auth_routes_enabled:
+        @app.post("/v1/admin/agents", status_code=201)
+        async def create_agent(request: Request, payload: CreateAgentRequest):
+            _require_admin(request, admin_api_key)
+            agent = auth_service.create_agent(
+                name=payload.name,
+                description=payload.description,
+                metadata=payload.metadata,
+            )
+            return agent.model_dump()
+
+        @app.get("/instructions")
+        async def bootstrap_instructions(request: Request):
+            return _bootstrap_instructions(request)
+
+        @app.get("/v1/admin/agents")
+        async def list_agents(request: Request):
+            _require_admin(request, admin_api_key)
+            return [agent.model_dump() for agent in auth_service.list_agents()]
+
+        @app.get("/v1/admin/credentials")
+        async def list_credentials(request: Request):
+            _require_admin(request, admin_api_key)
+            return [credential.model_dump(exclude={"client_secret_hash"}) for credential in auth_service.list_credentials()]
+
+        @app.post("/v1/admin/agents/{agent_id}/enrollment-tokens", status_code=201)
+        async def create_enrollment_token(request: Request, agent_id: str, payload: CreateEnrollmentTokenRequest):
+            _require_admin(request, admin_api_key)
+            try:
+                return auth_service.create_enrollment_token(
+                    agent_id=agent_id,
+                    credential_name=payload.credential_name,
+                    scopes=payload.scopes,
+                    default_group_id=payload.default_group_id,
+                    allowed_group_ids=payload.allowed_group_ids,
+                    ttl_seconds=payload.ttl_seconds,
+                )
+            except ValueError as exc:
+                raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+        @app.post("/v1/admin/credentials/{credential_id}/revoke")
+        async def revoke_credential(request: Request, credential_id: str):
+            _require_admin(request, admin_api_key)
+            try:
+                credential = auth_service.revoke_credential(credential_id)
+            except ValueError as exc:
+                raise HTTPException(status_code=404, detail=str(exc)) from exc
+            return credential.model_dump(exclude={"client_secret_hash"})
+
+        @app.post("/v1/admin/agents/{agent_id}/revoke")
+        async def revoke_agent(request: Request, agent_id: str):
+            _require_admin(request, admin_api_key)
+            try:
+                agent = auth_service.revoke_agent(agent_id)
+            except ValueError as exc:
+                raise HTTPException(status_code=404, detail=str(exc)) from exc
+            return agent.model_dump()
+
+        @app.post("/v1/agents/enroll")
+        async def enroll_agent(payload: EnrollAgentRequest):
+            try:
+                bootstrap = auth_service.exchange_enrollment_token(payload.enrollment_token)
+            except ValueError as exc:
+                raise HTTPException(status_code=400, detail=str(exc)) from exc
+            return bootstrap.model_dump()
+
+        @app.post("/oauth/token")
+        async def issue_oauth_token(payload: OAuthTokenRequest):
+            if payload.grant_type != "client_credentials":
+                raise HTTPException(status_code=400, detail="Unsupported grant_type")
+            try:
+                token = auth_service.issue_access_token(
+                    client_id=payload.client_id,
+                    client_secret=payload.client_secret,
+                    requested_scope=payload.scope,
+                )
+            except ValueError as exc:
+                raise HTTPException(status_code=401, detail=str(exc)) from exc
+            return token.model_dump()
+
+    app.mount("/", base_app)
+    return app
+
+
 # ---------------------------------------------------------------------------
 # Tools
 # ---------------------------------------------------------------------------
@@ -146,7 +355,11 @@ async def guardrail_heartbeat(ctx: Context):
 @mcp.tool(annotations=ToolAnnotations(readOnlyHint=True, openWorldHint=True))
 @fail_closed
 async def evaluate_action(
-    request_description: str, context_json: str, ctx: Context, group_id: str = None
+    request_description: str,
+    context_json: str,
+    ctx: Context,
+    group_id: str = None,
+    user_id: str = None,
 ):
     """Evaluate a planned action against business rules before executing it.
 
@@ -165,20 +378,42 @@ async def evaluate_action(
             f"context_json exceeds maximum size of {MAX_CONTEXT_JSON_BYTES} bytes"
         )
     try:
-        json.loads(context_json)
+        parsed_context = json.loads(context_json)
     except (json.JSONDecodeError, TypeError) as exc:
         return _invalid_input(f"context_json is not valid JSON: {exc}")
 
     clients = _clients(ctx)
-    params = {
-        "request_description": request_description,
-        "context": context_json,
-    }
-    effective_group_id = group_id or _DEFAULT_GROUP_ID
-    if effective_group_id:
-        params["group_id"] = effective_group_id
+    principal = get_current_principal() if _AUTH_ENABLED else None
 
-    resp = await clients.decision_center.get("/v1/decide", params=params)
+    if _AUTH_ENABLED:
+        if not principal:
+            return _invalid_input("authenticated principal missing for protected request")
+        if not user_id:
+            return _invalid_input("user_id is required when agent auth is enabled")
+        try:
+            effective_group = _effective_group_id(group_id, principal)
+        except ValueError as exc:
+            return _invalid_input(str(exc))
+        payload = {
+            "request_description": request_description,
+            "context": parsed_context,
+            "group_id": effective_group,
+            "agent_id": principal.agent_id,
+            "credential_id": principal.credential_id,
+            "user_id": user_id,
+            "scope": " ".join(principal.scopes),
+        }
+        resp = await clients.decision_center.post("/v1/decide", json=payload)
+    else:
+        params = {
+            "request_description": request_description,
+            "context": context_json,
+        }
+        effective_group = _effective_group_id(group_id, None)
+        if effective_group:
+            params["group_id"] = effective_group
+        resp = await clients.decision_center.get("/v1/decide", params=params)
+
     resp.raise_for_status()
     await ctx.debug("evaluate_action success")
     return resp.json()
@@ -293,17 +528,42 @@ def main():
         default=None,
         help="Default rule group applied to all evaluate_action calls. Agent cannot override this.",
     )
+    parser.add_argument(
+        "--auth-enabled",
+        action="store_true",
+        help="Require authenticated HTTP MCP access using agent credentials.",
+    )
+    parser.add_argument(
+        "--admin-api-key",
+        default=None,
+        help="Admin API key required for agent registration and credential management routes.",
+    )
+    parser.add_argument(
+        "--token-ttl-seconds",
+        type=int,
+        default=900,
+        help="Lifetime for issued bearer access tokens.",
+    )
 
     args = parser.parse_args()
 
-    global _DEFAULT_GROUP_ID
+    global _DEFAULT_GROUP_ID, _AUTH_ENABLED, _AUTH_SERVICE, _ADMIN_API_KEY
     _DEFAULT_GROUP_ID = args.group_id
+    _AUTH_ENABLED = args.auth_enabled
+    _ADMIN_API_KEY = args.admin_api_key
+    _AUTH_SERVICE = None
     if _DEFAULT_GROUP_ID:
         print(f"Default rule group: {_DEFAULT_GROUP_ID}")
+    if _ADMIN_API_KEY and not _AUTH_ENABLED:
+        raise SystemExit("--admin-api-key requires --auth-enabled")
+    if _AUTH_ENABLED:
+        _AUTH_SERVICE = AuthService(
+            store=AuthStore(),
+            token_ttl_seconds=args.token_ttl_seconds,
+        )
 
     if args.transport in ("sse", "streamable-http"):
         import uvicorn
-        from starlette.middleware.cors import CORSMiddleware
 
         if args.allowed_hosts is not None:
             allowed_hosts = [h.strip() for h in args.allowed_hosts.split(",")]
@@ -327,8 +587,14 @@ def main():
             print(f"Starting Unreal Objects MCP Server (SSE) on http://{args.host}:{args.port}")
             base_app = mcp.sse_app()
 
+        wrapped_app = build_http_app(
+            base_app=base_app,
+            auth_enabled=_AUTH_ENABLED,
+            auth_service=_AUTH_SERVICE,
+            admin_api_key=_ADMIN_API_KEY,
+        )
         app = CORSMiddleware(
-            base_app,
+            wrapped_app,
             allow_origins=["*"],
             allow_credentials=False,
             allow_methods=["*"],
@@ -336,6 +602,8 @@ def main():
         )
         uvicorn.run(app, host=args.host, port=args.port)
     else:
+        if _AUTH_ENABLED:
+            raise SystemExit("Authenticated MCP is only supported for HTTP transports")
         mcp.run()
 
 

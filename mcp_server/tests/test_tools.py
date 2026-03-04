@@ -5,6 +5,7 @@ import httpx
 from unittest.mock import MagicMock, AsyncMock
 
 import mcp_server.server as server_module
+from mcp_server.auth import AuthenticatedPrincipal, principal_context
 from mcp_server.server import (
     Clients,
     list_rule_groups,
@@ -108,6 +109,71 @@ async def test_evaluate_action_without_group_id():
     call_kwargs = dc.get.call_args
     params = call_kwargs.kwargs.get("params") or call_kwargs[1].get("params")
     assert "group_id" not in params
+
+
+@pytest.mark.asyncio
+async def test_evaluate_action_requires_user_id_when_authenticated(monkeypatch):
+    ctx = _mock_ctx()
+    monkeypatch.setattr(server_module, "_AUTH_ENABLED", True)
+
+    with principal_context(
+        AuthenticatedPrincipal(
+            agent_id="agt_ops_01",
+            credential_id="cred_finance_a",
+            scopes=["finance:execute"],
+            default_group_id="grp_finance",
+            allowed_group_ids=["grp_finance"],
+        )
+    ):
+        res = await evaluate_action(
+            request_description="Test",
+            context_json='{"amount": 50}',
+            ctx=ctx,
+        )
+
+    assert res["error"] is True
+    assert res["reason"] == "INVALID_INPUT"
+    assert "user_id is required" in res["detail"]
+
+
+@pytest.mark.asyncio
+async def test_evaluate_action_uses_authenticated_principal_and_posts_identity(monkeypatch):
+    dc = AsyncMock()
+    dc.post.return_value = _mock_response(200, {
+        "request_id": "req-auth-1",
+        "outcome": "APPROVE",
+        "matched_rules": [],
+        "agent_id": "agt_ops_01",
+        "credential_id": "cred_finance_a",
+        "user_id": "user_4821",
+        "effective_group_id": "grp_finance",
+    })
+    ctx = _mock_ctx(dc_client=dc)
+    monkeypatch.setattr(server_module, "_AUTH_ENABLED", True)
+
+    with principal_context(
+        AuthenticatedPrincipal(
+            agent_id="agt_ops_01",
+            credential_id="cred_finance_a",
+            scopes=["finance:execute"],
+            default_group_id="grp_finance",
+            allowed_group_ids=["grp_finance"],
+        )
+    ):
+        res = await evaluate_action(
+            request_description="Pay vendor",
+            context_json='{"amount": 50}',
+            user_id="user_4821",
+            ctx=ctx,
+        )
+
+    assert res["outcome"] == "APPROVE"
+    dc.post.assert_called_once()
+    payload = dc.post.call_args.kwargs["json"]
+    assert payload["agent_id"] == "agt_ops_01"
+    assert payload["credential_id"] == "cred_finance_a"
+    assert payload["user_id"] == "user_4821"
+    assert payload["group_id"] == "grp_finance"
 
 
 @pytest.mark.asyncio

@@ -72,3 +72,33 @@ export interface DecisionResult {
   matched_details?: MatchedDetail[];
   request_id: string;
 }
+
+export interface AgentRecord {
+  agent_id: string;
+  name: string;
+  description: string;
+  status: string;
+  metadata?: Record<string, unknown>;
+}
+
+export interface CredentialRecord {
+  credential_id: string;
+  agent_id: string;
+  name: string;
+  client_id: string;
+  scopes: string[];
+  default_group_id?: string | null;
+  allowed_group_ids: string[];
+  status: string;
+}
+
+export interface EnrollmentTokenIssue {
+  enrollment_token: string;
+  enrollment_token_id: string;
+  agent_id: string;
+  credential_name: string;
+  scopes: string[];
+  default_group_id?: string | null;
+  allowed_group_ids: string[];
+  expires_at: string;
+}

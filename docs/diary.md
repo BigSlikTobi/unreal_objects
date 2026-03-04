@@ -791,3 +791,525 @@ left unchanged as it handles legitimate minor naming mismatches at runtime.
   was already typed correctly. That assumption was the real bug.
 - Guarding the string normalization step is sufficient here because it restores
   the intended failure mode without weakening the schema validation layer.
+
+## Agent Permissions For HTTP MCP
+
+**What was built:**
+
+- Added a new auth domain in `mcp_server/auth.py` with:
+  `agent_id` records, one-time enrollment tokens, scoped credentials,
+  short-lived bearer tokens, and JSON-file persistence for registrations.
+- Extended the HTTP MCP server in `mcp_server/server.py` to expose:
+  admin routes for agent and credential management, an enrollment exchange
+  route, an OAuth-style `/oauth/token` route, and bearer-token middleware for
+  authenticated HTTP MCP traffic.
+- Updated `evaluate_action` so authenticated requests carry `agent_id`,
+  `credential_id`, `user_id`, and credential-bound rule-group selection into
+  the Decision Center.
+- Added `POST /v1/decide` to `decision_center/app.py` and expanded decision
+  models and logs so atomic logs, chain events, and pending approvals now
+  record identity metadata end to end.
+- Wrote the missing schema contract in `spec/EVENT_SCHEMA.md` and updated
+  `README.md` to document enrollment, token issuance, multi-credential agents,
+  and the HTTP-only auth boundary.
+
+**How it was validated:**
+
+- Added `mcp_server/tests/test_auth.py` to cover persistent agent/credential
+  state, one-time enrollment semantics, bearer-token protection, and principal
+  propagation through the wrapped HTTP app.
+- Added MCP tool regression coverage in `mcp_server/tests/test_tools.py` for
+  authenticated `evaluate_action`, including `user_id` enforcement and identity
+  propagation to the Decision Center payload.
+- Added Decision Center API coverage in `decision_center/tests/test_api.py` to
+  verify that authenticated identity fields land in atomic logs, chain events,
+  and pending approvals.
+- Ran `.venv/bin/pytest -q` and confirmed the full suite passed
+  (`154 passed`).
+
+**Key Findings:**
+
+- The cleanest fit for this repo was not a full external identity provider but
+  a lightweight split: durable client registrations on disk, short-lived access
+  tokens in memory, and explicit HTTP middleware around the MCP transport.
+- `agent_id`, `credential_id`, and `user_id` must remain separate fields.
+  Collapsing them would destroy the audit value of scoped credentials and
+  acting-on-behalf-of attribution.
+- Authenticated MCP is materially cleaner on HTTP than on `stdio`. Treating
+  `stdio` as dev-only when auth is enabled avoids inventing a second,
+  incompatible credential story.
+
+## Agent Admin UI And CLI
+
+**What was built:**
+
+- Added a new operator-facing admin panel in
+  `ui/src/components/AgentAdminPanel.tsx` and embedded it into the existing
+  settings modal in `ui/src/App.tsx`.
+- The UI now lets operators:
+  create agents, issue one-time enrollment tokens, and revoke credentials
+  against the MCP server's admin API.
+- Added typed admin API helpers in `ui/src/api.ts` and new frontend types in
+  `ui/src/types.ts` for agents, credentials, and enrollment token responses.
+- Added a new CLI entrypoint in `mcp_server/admin_cli.py` and exposed it as the
+  `uo-agent-admin` console script through `pyproject.toml`.
+- Updated the README and UI docs so operators have both browser and terminal
+  workflows documented.
+
+**How it was validated:**
+
+- Added frontend API coverage in `ui/src/api.test.ts` for the new admin
+  endpoints and header handling.
+- Added component-level UI coverage in
+  `ui/src/components/AgentAdminPanel.test.tsx` for the full workflow:
+  connect, create agent, issue enrollment token, and revoke credential.
+- Added App integration coverage in `ui/src/App.test.tsx` to verify the admin
+  panel is reachable from the settings modal.
+- Added CLI coverage in `mcp_server/tests/test_admin_cli.py` for the
+  `create-agent`, `issue-enrollment-token`, and `revoke-credential` commands.
+- Ran `.venv/bin/pytest -q` and confirmed the Python suite passed
+  (`157 passed`).
+- Ran `cd ui && npm test` and confirmed the UI suite passed (`31 passed`).
+
+**Key Findings:**
+
+- The existing settings modal was the right place for operator controls because
+  it already owned environment-level configuration. Adding agent admin there
+  kept the UI discoverable without creating a disconnected second workspace.
+- Enrollment-token handling needs explicit one-time UX. Operators should see
+  the token clearly at issuance time because the backend does not support
+  retrieving the secret later.
+- The CLI and UI are now thin shells over the same admin API, which keeps
+  operational behavior aligned and reduces drift between manual and scripted
+  workflows.
+
+## Admin Group Selectors And Scope Clarification
+
+**What was built:**
+
+- Reworked the agent admin UI in `ui/src/components/AgentAdminPanel.tsx` so
+  `Default Group` and `Allowed Groups` are populated from live rule groups
+  fetched from the Rule Engine instead of raw text inputs.
+- Updated the MCP admin CLI in `mcp_server/admin_cli.py` with a
+  `--rule-engine-url` option and interactive group selection when
+  `--default-group-id` or `--allowed-group-id` are omitted.
+- Clarified in the docs that scopes are currently carried through enrollment,
+  token issuance, and audit records, but rule-group binding is the actual
+  enforcement mechanism in the current implementation.
+
+**How it was validated:**
+
+- Extended `ui/src/components/AgentAdminPanel.test.tsx` to verify group
+  selection through real UI controls backed by fetched group options.
+- Extended `mcp_server/tests/test_admin_cli.py` to verify interactive CLI
+  selection against discovered rule groups from the Rule Engine API.
+- Ran `.venv/bin/pytest -q` and confirmed the Python suite passed
+  (`158 passed`).
+- Ran `cd ui && npm test` and confirmed the UI suite passed (`31 passed`).
+
+**Key Findings:**
+
+- Group IDs are infrastructure detail. Asking operators to type them by hand
+  was avoidable friction and a likely source of bad credentials.
+- The current scope model should be documented conservatively until there is a
+  second authorization layer that actually enforces scope semantics beyond
+  group binding.
+
+## Admin Panel Connection Persistence And Feedback
+
+**What was built:**
+
+- Updated `ui/src/components/AgentAdminPanel.tsx` so the panel now auto-connects
+  on mount when `mcp_admin_base_url` and `mcp_admin_api_key` are already stored
+  in `sessionStorage`.
+- Added explicit success notices for:
+  admin API connection, agent creation, enrollment token issuance, and
+  credential revocation.
+- Tightened the enrollment button logic so the UI clearly communicates that the
+  admin API must be connected before credentials can be issued.
+
+**How it was validated:**
+
+- Added UI regression coverage in
+  `ui/src/components/AgentAdminPanel.test.tsx` for automatic reconnect behavior.
+- Added App-level coverage in `ui/src/App.test.tsx` to verify that reopening the
+  settings modal restores the connected admin panel state instead of forcing
+  the operator to reconnect manually.
+- Ran `cd ui && npm test` and confirmed the UI suite passed (`33 passed`).
+- Ran `.venv/bin/pytest -q` and confirmed the Python suite remained green
+  (`158 passed`).
+
+**Key Findings:**
+
+- The original admin panel state was local component state only. Closing the
+  settings modal destroyed that state even though the connection inputs were
+  already persisted.
+- Admin flows need visible feedback, especially when the same modal also
+  handles unrelated LLM settings. Silent success looked indistinguishable from
+  failure.
+
+## Dedicated Agent Admin Workspace And Optional Scopes
+
+**What was built:**
+
+- Moved agent authentication management out of the LLM provider modal and into
+  its own dedicated `Agent Admin` workspace accessible from the sidebar.
+- Made enrollment-token scopes optional in the MCP admin API, CLI, and UI while
+  keeping them documented and persisted when provided.
+- Persisted the latest issued enrollment token in browser session storage so it
+  remains visible after closing and reopening the UI.
+
+**How it was validated:**
+
+- Updated `ui/src/App.test.tsx` to verify that agent admin no longer appears in
+  the LLM settings modal and opens instead as its own workspace from the
+  sidebar.
+- Updated `ui/src/components/AgentAdminPanel.test.tsx` to verify that token
+  issuance works without scopes and that the most recent token is restored from
+  session storage.
+- Updated `mcp_server/tests/test_admin_cli.py` to verify CLI enrollment token
+  issuance without `--scope`.
+- Ran `cd ui && npm test`.
+- Ran `.venv/bin/pytest -q`.
+
+**Key Findings:**
+
+- Agent onboarding is operational state, not LLM provider configuration. Giving
+  it a dedicated workspace makes the flow persistent and easier to manage.
+- Enrollment tokens behave like secrets and need persistence at the operator UI
+  layer because the backend intentionally only returns them once.
+- Persisting only one global latest token created a misleading UX where
+  switching agents made it look like different agents shared the same token.
+  Token persistence needs to be keyed by `agent_id`.
+
+## Agent Admin Overlay And Richer Cards
+
+**What was built:**
+
+- Reworked the Agent Admin workspace so agent-specific management now opens in
+  an overlay instead of expanding inline below the card grid.
+- Enriched agent cards to carry status badges, credential counts, and latest
+  token metadata directly on the card so operators can scan the fleet before
+  opening any detail view.
+- Preserved the existing enrollment and revocation workflows inside the new
+  overlay context.
+
+**How it was validated:**
+
+- Extended `ui/src/components/AgentAdminPanel.test.tsx` to verify:
+  - agent context stays hidden until a card is opened
+  - the card opens a dialog-style overlay
+  - the overlay can be closed again
+  - card summaries show credential counts and latest token metadata
+- Ran `cd ui && npx vitest run src/components/AgentAdminPanel.test.tsx src/App.test.tsx`.
+- Ran `cd ui && npm test`.
+
+**Key Findings:**
+
+- Inline admin detail views made the workspace feel heavier than the rule
+  library. The overlay preserves the browse-first rhythm while still allowing
+  dense operational controls.
+- Once token and credential summary state is visible on the cards, operators do
+  not need to open each agent just to answer basic inventory questions.
+
+## Public Bootstrap Instructions Endpoint
+
+**What was built:**
+
+- Added a public `GET /instructions` endpoint to the MCP server so agents can
+  fetch the bootstrap recipe before they are authenticated.
+- The endpoint returns simple JSON with relative paths like
+  `/v1/agents/enroll` and `/oauth/token` plus a `same_host_as` field derived
+  from the incoming request, so no LAN IP or hostname is hardcoded into the
+  payload.
+- Kept the endpoint outside bearer-token enforcement so a fresh agent can read
+  the bootstrap instructions before enrollment.
+
+**How it was validated:**
+
+- Added `test_bootstrap_instructions_are_public_and_use_relative_paths` in
+  `mcp_server/tests/test_auth.py`.
+- Ran `.venv/bin/pytest mcp_server/tests/test_auth.py -q`.
+- Ran `.venv/bin/pytest -q`.
+
+**Key Findings:**
+
+- Bootstrap instructions have to live outside the authenticated MCP session or
+  they arrive too late to solve the enrollment problem.
+- Returning relative paths is clearer and safer than hardcoding a specific
+  machine IP into the instructions payload.
+
+## Streamable HTTP MCP Lifespan Fix
+
+**What was built:**
+
+- Fixed the authenticated Streamable HTTP MCP endpoint so mounted `/mcp`
+  requests now start the MCP sub-application lifecycle correctly.
+- Added a regression test that performs a real authenticated `initialize`
+  request against `/mcp` after enrollment and bearer-token issuance.
+
+**How it was validated:**
+
+- Reproduced the original failure locally and confirmed the root cause was:
+  `RuntimeError: Task group is not initialized.`
+- Added `test_streamable_http_mcp_initialize_works_after_auth` in
+  `mcp_server/tests/test_auth.py`.
+- Ran `.venv/bin/pytest mcp_server/tests/test_auth.py -q`.
+- Ran `.venv/bin/pytest -q`.
+
+**Key Findings:**
+
+- The MCP app was mounted into the FastAPI wrapper, but its own lifespan was
+  not being entered. That left the Streamable HTTP session manager unstarted,
+  so authenticated JSON-RPC requests to `/mcp` crashed with a server-side 500.
+- After the wrapper began entering the mounted app's lifespan, `/mcp`
+  initialization succeeded as expected.
+
+## Bootstrap Re-Authentication Guidance
+
+**What was built:**
+
+- Tightened the public `/instructions` payload so it now explicitly tells agents
+  not to consume a one-time enrollment token again after they have already
+  enrolled once.
+- Added a direct re-authentication instruction telling agents to reuse their
+  stored `client_id` and `client_secret` to request a fresh access token.
+
+**How it was validated:**
+
+- Updated the bootstrap instructions contract test in
+  `mcp_server/tests/test_auth.py`.
+- Ran `.venv/bin/pytest mcp_server/tests/test_auth.py -q`.
+- Ran `.venv/bin/pytest -q`.
+
+**Key Findings:**
+
+- The confusing behavior was not in the auth backend any more; it was in the
+  agent-side interpretation of the bootstrap flow after a successful first
+  enrollment.
+- Making the retry path explicit in `/instructions` reduces the chance that an
+  agent will treat a normal reconnect as a request for a new one-time token.
+
+## MVP Auth State Now Matches In-Memory Rule State
+
+**What was built:**
+
+- Removed on-disk persistence for MCP agent registrations, enrollment tokens,
+  and credentials so the auth layer now matches the MVP's in-memory-only rule
+  model.
+- Simplified `AuthStore` in `mcp_server/auth.py` into an in-memory container and
+  removed the `--auth-store-path` server option from `mcp_server/server.py`.
+- Updated `README.md` to state clearly that restarting the MCP server clears
+  agent auth state.
+
+**How it was validated:**
+
+- Replaced the auth persistence regression in `mcp_server/tests/test_auth.py`
+  with a test that proves a fresh auth store does not contain prior agents or
+  credentials.
+- Ran `.venv/bin/pytest mcp_server/tests/test_auth.py -q`.
+- Ran `.venv/bin/pytest -q`.
+
+**Key Findings:**
+
+- Persisting agent auth state while rules disappeared on restart created an
+  inconsistent MVP boundary and implied a durability guarantee the rule system
+  does not currently provide.
+- Keeping both rules and auth state ephemeral is architecturally clearer until
+  the project is ready to persist both sides together.
+
+## Backend Stack Restart Script
+
+**What was built:**
+
+- Added `scripts/start_backend_stack.sh` as a single local launcher for the MVP
+  backend stack.
+- The script activates `.venv`, stops any existing Rule Engine, Decision
+  Center, or MCP server processes matching the expected commands, then starts:
+  `rule_engine` on `:8001`, `decision_center` on `:8002`, and the authenticated
+  Streamable HTTP MCP server on `:8000`.
+- Updated `README.md` so the quick-start flow includes the one-command restart
+  path.
+
+**How it was validated:**
+
+- Added `tests/test_dev_scripts.py` to lock in the script path and the expected
+  backend commands.
+- Ran `.venv/bin/pytest tests/test_dev_scripts.py -q`.
+- Ran `bash -n scripts/start_backend_stack.sh`.
+- Ran `.venv/bin/pytest -q`.
+
+**Key Findings:**
+
+- The repo had no single restart command for the three backend services, which
+  made it easy to leave stale local processes behind while switching between
+  auth and non-auth runs.
+- Matching the exact launch command strings is a pragmatic MVP way to clean up
+  old local backend processes without introducing a heavier process manager.
+
+## Agent Admin No Longer Shows Stale Persisted Agents
+
+**What was built:**
+
+- Removed the UI behavior that created synthetic agent cards from locally
+  persisted enrollment-token state.
+- Updated `ui/src/components/AgentAdminPanel.tsx` so the Agent Admin workspace
+  now shows only agents returned by the live MCP admin API.
+- Added pruning of stale local token entries whenever the admin API refreshes
+  and an agent no longer exists on the backend.
+
+**How it was validated:**
+
+- Updated `ui/src/components/AgentAdminPanel.test.tsx` to verify that stale
+  local agent/token state disappears after a backend restart.
+- Ran `cd ui && npm test -- --run src/components/AgentAdminPanel.test.tsx`.
+- Ran `cd ui && npm test`.
+- Ran `.venv/bin/pytest -q`.
+
+**Key Findings:**
+
+- Persisting the latest token per agent is still useful, but only as metadata
+  attached to a live server agent.
+- Letting local token cache fabricate agent cards made the UI contradict the
+  MVP's in-memory backend model and confused operators after every restart.
+
+## Agent Admin Allowed Groups Uses Direct Toggles
+
+**What was built:**
+
+- Replaced the browser-native multi-select listbox for `Allowed Groups` in
+  `ui/src/components/AgentAdminPanel.tsx` with an explicit checkbox list.
+- Operators can now add or remove allowed rule groups one by one without using
+  modifier keys or relying on browser-specific multi-select behavior.
+- Updated the UI copy so the control explains the actual policy meaning instead
+  of keyboard instructions.
+
+**How it was validated:**
+
+- Added UI coverage in `ui/src/components/AgentAdminPanel.test.tsx` for adding
+  and removing allowed groups via direct toggles.
+- Ran `cd ui && npm test -- --run src/components/AgentAdminPanel.test.tsx`.
+- Ran `cd ui && npm test`.
+- Ran `.venv/bin/pytest -q`.
+
+**Key Findings:**
+
+- The native multi-select was a poor fit for this operator workflow and made it
+  look like all groups were permanently selected.
+- A checkbox list matches the permission model much more clearly: each allowed
+  group is an explicit on/off decision.
+
+## Agent Admin Keeps Default Group Draft State
+
+**What was built:**
+
+- Updated `ui/src/components/AgentAdminPanel.tsx` so the selected default group
+  is treated as implicitly allowed and shown as a disabled, greyed-out entry in
+  the allowed-groups checklist.
+- Added per-agent enrollment form draft persistence in session storage so
+  closing and reopening the same agent context no longer clears the selected
+  default group or other in-progress enrollment fields.
+
+**How it was validated:**
+
+- Extended `ui/src/components/AgentAdminPanel.test.tsx` with coverage for:
+  default-group implicit allow behavior and reopening the agent context with the
+  same draft state still present.
+- Ran `cd ui && npm test -- --run src/components/AgentAdminPanel.test.tsx`.
+- Ran `.venv/bin/pytest -q`.
+
+**Key Findings:**
+
+- The default group is not a separate policy choice from allowed groups; it is
+  a stronger statement that should visually read as already included.
+- Draft loss on close made the overlay feel unreliable. Storing per-agent draft
+  state keeps the operator workflow stable without changing backend behavior.
+
+## Agent Admin Draft Loop Freeze Fix
+
+**What was built:**
+
+- Fixed the Agent Admin enrollment form freeze caused by the new per-agent
+  draft persistence logic.
+- `ui/src/components/AgentAdminPanel.tsx` now hydrates draft state only when
+  the selected agent changes, instead of replaying persisted draft state back
+  into the form on every keystroke.
+- Added a guard so identical draft writes do not trigger redundant state
+  updates.
+
+**How it was validated:**
+
+- Extended `ui/src/components/AgentAdminPanel.test.tsx` to verify the form
+  remains editable after choosing a default group.
+- Ran `cd ui && npm test -- --run src/components/AgentAdminPanel.test.tsx`.
+- Ran `cd ui && npm test`.
+- Ran `.venv/bin/pytest -q`.
+
+**Key Findings:**
+
+- The freeze was a client-side rerender loop, not a backend issue.
+- Persisting draft state is still useful, but the component must treat the
+  live form fields as the source of truth while the overlay is open.
+
+## HTTP Auth Bootstrap Routes Fail Closed
+
+**What was built:**
+
+- Updated `mcp_server/server.py` so the auth bootstrap surface
+  (`/v1/admin/*`, `/v1/agents/enroll`, `/oauth/token`, `/instructions`) is
+  only registered when authenticated HTTP mode is actually enabled and backed
+  by an `AuthService`.
+- Added a construction-time guard so `build_http_app(...)` now raises
+  immediately if `auth_enabled=True` is paired with `auth_service=None`.
+- Tightened `main()` so starting the server with `--admin-api-key` but without
+  `--auth-enabled` exits early instead of serving a misleading partial config.
+- Updated `docs/connecting-agents.md` and `README.md` so the documented startup
+  path matches the enforced contract.
+
+**How it was validated:**
+
+- Added coverage in `mcp_server/tests/test_auth.py` for:
+  auth-disabled apps returning `404` for the auth bootstrap surface,
+  `build_http_app(...)` rejecting `auth_enabled=True` without an auth service,
+  and `main()` rejecting `--admin-api-key` without `--auth-enabled`.
+- Ran `.venv/bin/pytest mcp_server/tests/test_auth.py -k "main_requires_auth_enabled_when_admin_api_key_is_set or does_not_expose_auth_routes_when_auth_is_disabled or requires_auth_service_when_auth_is_enabled"`.
+- Ran `.venv/bin/pytest tests/test_dev_scripts.py`.
+
+**Key Findings:**
+
+- The original crash was caused by route registration, not the auth middleware:
+  handlers were present even when the auth backend was absent.
+- Failing closed at route registration plus startup validation is safer than
+  letting the server boot into a partially configured auth surface.
+
+## CLI Datapoint Sync Failures No Longer Abort Rule Creation
+
+**What was built:**
+
+- Updated `decision_center/cli.py` so the LLM rule wizard treats datapoint
+  definition sync as best-effort after translation succeeds.
+- A failed `PATCH /v1/groups/{group_id}/datapoints` request now prints a
+  warning and still proceeds to save the translated rule instead of dropping
+  into manual fallback.
+- Added explicit regression coverage in
+  `decision_center/tests/test_cli.py` for the request-error case.
+- Updated `docs/cli-wizard.md` to document that datapoint-definition sync is
+  attempted automatically but does not block rule creation if the Rule Engine
+  is temporarily unavailable.
+
+**How it was validated:**
+
+- Ran `.venv/bin/pytest decision_center/tests/test_cli.py -k "schema_extension_retry or swap_datapoint or saves_new_datapoints"`.
+- Ran `.venv/bin/pytest decision_center/tests/test_cli.py -k "keeps_rule_when_datapoint_sync_fails or schema_extension_retry or swap_datapoint or saves_new_datapoints"`.
+- Ran `.venv/bin/pytest decision_center/tests/test_cli.py`.
+- Ran `.venv/bin/pytest decision_center/tests -q`.
+- Ran `.venv/bin/pytest -q`.
+
+**Key Findings:**
+
+- The failing tests were not caused by translation logic. The translated rule
+  was correct; the bug was that a later datapoint-definition sync error was
+  caught by the broad translation fallback path.
+- Treating datapoint sync as best-effort is the safer operator workflow:
+  translated rules should not be discarded just because metadata persistence is
+  temporarily unavailable.

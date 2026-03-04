@@ -32,6 +32,49 @@ def _outcome_to_state(outcome: DecisionOutcome) -> DecisionState:
         return DecisionState.REJECTED
     return DecisionState.APPROVAL_REQUIRED
 
+
+async def _evaluate_and_log(req: EvaluateRequest) -> DecisionResult:
+    outcome, matched_rules, matched_details = await evaluate_request(req.context, req.group_id, req.rule_id)
+    req_id = str(uuid.uuid4())
+    state = _outcome_to_state(outcome)
+
+    identity = req.identity_dict()
+
+    store.log_atomic(AtomicLogEntry(
+        request_id=req_id,
+        request_description=req.request_description,
+        context=req.context,
+        decision=state,
+        **identity,
+    ))
+
+    store.log_chain_event(req_id, "REQUEST", details={
+        "description": req.request_description,
+        "context": req.context,
+        **identity,
+    })
+    store.log_chain_event(req_id, "EVALUATION", details={
+        "outcome": outcome.value,
+        "matched_rules": matched_rules,
+        "matched_details": matched_details,
+        **identity,
+    })
+
+    if state == DecisionState.APPROVAL_REQUIRED:
+        store.add_pending(req_id, {
+            "description": req.request_description,
+            "context": req.context,
+            **identity,
+        })
+
+    return DecisionResult(
+        request_id=req_id,
+        outcome=outcome,
+        matched_rules=matched_rules,
+        matched_details=matched_details,
+        **identity,
+    )
+
 @app.get("/v1/health")
 async def health():
     return {"status": "ok", "service": "decision_center"}
@@ -42,32 +85,17 @@ async def evaluate(request_description: str, context: str, group_id: str = None,
         ctx_dict = json.loads(context)
     except Exception:
         raise HTTPException(status_code=400, detail="Invalid context JSON")
-
-    # Evaluate
-    outcome, matched_rules, matched_details = await evaluate_request(ctx_dict, group_id, rule_id)
-    req_id = str(uuid.uuid4())
-    
-    # Log Atomic Decision
-    state = _outcome_to_state(outcome)
-    store.log_atomic(AtomicLogEntry(
+    return await _evaluate_and_log(EvaluateRequest(
         request_description=request_description,
         context=ctx_dict,
-        decision=state
+        group_id=group_id,
+        rule_id=rule_id,
     ))
 
-    # Log Chain Event
-    store.log_chain_event(req_id, "REQUEST", details={"description": request_description, "context": ctx_dict})
-    store.log_chain_event(req_id, "EVALUATION", details={"outcome": outcome.value, "matched_rules": matched_rules, "matched_details": matched_details})
 
-    if state == DecisionState.APPROVAL_REQUIRED:
-        store.add_pending(req_id, {"description": request_description, "context": ctx_dict})
-
-    return DecisionResult(
-        request_id=req_id,
-        outcome=outcome,
-        matched_rules=matched_rules,
-        matched_details=matched_details
-    )
+@app.post("/v1/decide", response_model=DecisionResult)
+async def evaluate_post(req: EvaluateRequest):
+    return await _evaluate_and_log(req)
 
 @app.get("/v1/pending", response_model=List[dict])
 async def get_pending():
@@ -79,13 +107,22 @@ async def submit_approval(request_id: str, submission: ApprovalSubmission):
     if not chain:
         raise HTTPException(status_code=404, detail="Decision chain not found")
     
+    # Guard against double-approval: pending is removed on first resolution.
+    # If it's gone, the request was already approved or rejected.
+    if not store.is_pending(request_id):
+        raise HTTPException(status_code=409, detail="Decision already resolved")
+
     status = "APPROVED" if submission.approved else "REJECTED"
-    
+    pending = store.resolve_pending(request_id) or {}
+
     store.log_chain_event(request_id, "APPROVAL_STATUS", details={
         "status": status,
-        "approver": submission.approver
+        "approver": submission.approver,
+        "agent_id": pending.get("agent_id"),
+        "credential_id": pending.get("credential_id"),
+        "user_id": pending.get("user_id"),
+        "effective_group_id": pending.get("effective_group_id"),
     })
-    store.resolve_pending(request_id)
     return {"status": "success", "request_id": request_id, "final_state": status}
 
 @app.get("/v1/logs/atomic", response_model=List[AtomicLogEntry])

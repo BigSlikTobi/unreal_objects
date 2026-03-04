@@ -1,0 +1,41 @@
+{
+  "agents": {
+    "agt_nR4i9NecZHo": {
+      "agent_id": "agt_nR4i9NecZHo",
+      "name": "Ops Agent",
+      "description": "",
+      "status": "active",
+      "created_at": "2026-03-03T09:21:01.602160Z",
+      "metadata": {}
+    }
+  },
+  "credentials": {
+    "cred_IUaGhczbcQA": {
+      "credential_id": "cred_IUaGhczbcQA",
+      "agent_id": "agt_nR4i9NecZHo",
+      "name": "finance",
+      "client_id": "uo_client_K1oKBJ6VuNE",
+      "client_secret_hash": "ddc44b660935d48dc9055a4e990c13fa:9a48c33e7d9ae96d352b9c6ea642d92e39d8f4b68fd24cec92deb743c759d52f",
+      "scopes": [],
+      "default_group_id": null,
+      "allowed_group_ids": [],
+      "status": "active",
+      "created_at": "2026-03-03T09:21:01.663335Z",
+      "revoked_at": null
+    }
+  },
+  "enrollment_tokens": {
+    "enroll_Oj9UNbFqais": {
+      "enrollment_token_id": "enroll_Oj9UNbFqais",
+      "agent_id": "agt_nR4i9NecZHo",
+      "credential_name": "finance",
+      "token_hash": "1af848a8e403b269a9dca8e62e8eac7c:6ae2f8c2a3760460e34cdb6eff3a8aa146af34b5ee9a18441f0ea1f6951fc7c9",
+      "scopes": [],
+      "default_group_id": null,
+      "allowed_group_ids": [],
+      "expires_at": "2026-03-03T10:21:01.624803Z",
+      "used_at": "2026-03-03T09:21:01.626069Z",
+      "status": "used"
+    }
+  }
+}
