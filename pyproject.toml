@@ -18,6 +18,7 @@ dependencies = [
 
 [project.scripts]
 uo-stress-test = "decision_center.stress_test.cli:main"
+uo-agent-admin = "mcp_server.admin_cli:main"
 
 [project.optional-dependencies]
 dev = [

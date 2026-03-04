@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Plus, Settings, ListTodo, Sun, Moon, Check, X, AlertTriangle } from 'lucide-react';
+import { Plus, Settings, ListTodo, Sun, Moon, Check, X, AlertTriangle, ShieldCheck } from 'lucide-react';
 import type { RuleGroup } from '../types';
 
 interface SidebarProps {
@@ -10,6 +10,7 @@ interface SidebarProps {
   isDarkMode: boolean;
   toggleDarkMode: () => void;
   onOpenSettings: () => void;
+  onOpenAgentAdmin: () => void;
   llmConfigured: boolean;
   className?: string;
 }
@@ -22,6 +23,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   isDarkMode,
   toggleDarkMode,
   onOpenSettings,
+  onOpenAgentAdmin,
   llmConfigured,
   className = '',
 }) => {
@@ -145,6 +147,13 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
       {/* Footer */}
       <div className="sticky bottom-0 p-4 border-t border-gray-200 dark:border-gray-800 space-y-1 bg-gray-50/95 dark:bg-gray-900/95 backdrop-blur">
+        <button
+          onClick={onOpenAgentAdmin}
+          className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-left text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+        >
+          <ShieldCheck size={16} />
+          <span className="text-sm font-medium">Agent Admin</span>
+        </button>
         <button
           onClick={onOpenSettings}
           className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-left transition-colors ${

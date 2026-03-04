@@ -31,9 +31,11 @@ class DecisionStore:
     def add_pending(self, request_id: str, context: dict):
         self.pending[request_id] = context
 
+    def is_pending(self, request_id: str) -> bool:
+        return request_id in self.pending
+
     def resolve_pending(self, request_id: str):
-        if request_id in self.pending:
-            del self.pending[request_id]
+        return self.pending.pop(request_id, None)
 
     def get_pending(self) -> List[dict]:
-        return [{"request_id": k, "context": v} for k, v in self.pending.items()]
+        return [{"request_id": k, **v} for k, v in self.pending.items()]

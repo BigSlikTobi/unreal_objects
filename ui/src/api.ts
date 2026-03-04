@@ -1,4 +1,16 @@
-import type { DatapointDefinition, DecisionResult, LlmConfig, ProposedField, Rule, RuleGroup, RulePayload, RuleTranslation } from './types';
+import type {
+  AgentRecord,
+  CredentialRecord,
+  DatapointDefinition,
+  DecisionResult,
+  EnrollmentTokenIssue,
+  LlmConfig,
+  ProposedField,
+  Rule,
+  RuleGroup,
+  RulePayload,
+  RuleTranslation,
+} from './types';
 
 export interface TranslateRuleRequest extends LlmConfig {
   natural_language: string;
@@ -19,6 +31,11 @@ export class ConceptMismatchError extends Error {
 
 const API_BASE = 'http://127.0.0.1:8001/v1';
 const DECISION_BASE = 'http://127.0.0.1:8002/v1';
+
+const buildAdminHeaders = (adminApiKey: string) => ({
+  'Content-Type': 'application/json',
+  'X-Admin-Key': adminApiKey,
+});
 
 export const fetchGroups = async (): Promise<RuleGroup[]> => {
   const res = await fetch(`${API_BASE}/groups`, {
@@ -122,3 +139,67 @@ export const executeTest = async (
   return res.json();
 };
 
+export const listAgents = async (baseUrl: string, adminApiKey: string): Promise<AgentRecord[]> => {
+  const res = await fetch(`${baseUrl}/v1/admin/agents`, {
+    headers: { 'X-Admin-Key': adminApiKey },
+    cache: 'no-store',
+  });
+  if (!res.ok) throw new Error('Failed to fetch agents');
+  return res.json();
+};
+
+export const createAgentRecord = async (
+  baseUrl: string,
+  adminApiKey: string,
+  payload: { name: string; description: string }
+): Promise<AgentRecord> => {
+  const res = await fetch(`${baseUrl}/v1/admin/agents`, {
+    method: 'POST',
+    headers: buildAdminHeaders(adminApiKey),
+    body: JSON.stringify(payload),
+  });
+  if (!res.ok) throw new Error('Failed to create agent');
+  return res.json();
+};
+
+export const listCredentials = async (baseUrl: string, adminApiKey: string): Promise<CredentialRecord[]> => {
+  const res = await fetch(`${baseUrl}/v1/admin/credentials`, {
+    headers: { 'X-Admin-Key': adminApiKey },
+    cache: 'no-store',
+  });
+  if (!res.ok) throw new Error('Failed to fetch credentials');
+  return res.json();
+};
+
+export const issueEnrollmentToken = async (
+  baseUrl: string,
+  adminApiKey: string,
+  agentId: string,
+  payload: {
+    credential_name: string;
+    scopes: string[];
+    default_group_id?: string;
+    allowed_group_ids: string[];
+  }
+): Promise<EnrollmentTokenIssue> => {
+  const res = await fetch(`${baseUrl}/v1/admin/agents/${agentId}/enrollment-tokens`, {
+    method: 'POST',
+    headers: buildAdminHeaders(adminApiKey),
+    body: JSON.stringify(payload),
+  });
+  if (!res.ok) throw new Error('Failed to issue enrollment token');
+  return res.json();
+};
+
+export const revokeCredential = async (
+  baseUrl: string,
+  adminApiKey: string,
+  credentialId: string
+): Promise<CredentialRecord> => {
+  const res = await fetch(`${baseUrl}/v1/admin/credentials/${credentialId}/revoke`, {
+    method: 'POST',
+    headers: { 'X-Admin-Key': adminApiKey },
+  });
+  if (!res.ok) throw new Error('Failed to revoke credential');
+  return res.json();
+};

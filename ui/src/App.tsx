@@ -1,13 +1,14 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { Sidebar } from './components/Sidebar';
 import { ChatInterface } from './components/ChatInterface';
 import { RuleLibrary } from './components/RuleLibrary';
 import { TestConsole } from './components/TestConsole';
+import { AgentAdminPanel } from './components/AgentAdminPanel';
 import { fetchGroups, createGroup, checkLLMConnection } from './api';
 import { Bot, Settings, X, Save, Plus, PanelLeftOpen } from 'lucide-react';
 import type { DatapointDefinition, LlmConfig, Rule, RuleGroup } from './types';
 
-type WorkspaceView = 'library' | 'builder';
+type WorkspaceView = 'library' | 'builder' | 'agent-admin';
 
 function App() {
   const [groups, setGroups] = useState<RuleGroup[]>([]);
@@ -38,6 +39,7 @@ function App() {
   const [systemNotice, setSystemNotice] = useState<string | null>(null);
   const [systemNoticeToken, setSystemNoticeToken] = useState(0);
   const [workspaceView, setWorkspaceView] = useState<WorkspaceView>('library');
+  const providerSelectRef = useRef<HTMLSelectElement>(null);
 
   useEffect(() => {
     if (isDarkMode) {
@@ -46,6 +48,12 @@ function App() {
       document.documentElement.classList.remove('dark');
     }
   }, [isDarkMode]);
+
+  useEffect(() => {
+    if (showSettings) {
+      providerSelectRef.current?.focus();
+    }
+  }, [showSettings]);
 
   const loadGroups = useCallback(async () => {
     try {
@@ -76,6 +84,7 @@ function App() {
     const g = await createGroup(name, description);
     setGroups((prev) => [...prev, g]);
     setSelectedGroupId(g.id);
+    setWorkspaceView('library');
   };
 
   const handleSelectRuleForBuilder = (rule: Rule) => {
@@ -133,7 +142,11 @@ function App() {
         <Sidebar
           groups={groups}
           selectedGroupId={selectedGroupId}
-          onSelectGroup={setSelectedGroupId}
+          onSelectGroup={(id) => {
+            setSelectedGroupId(id);
+            setWorkspaceView('library');
+          }}
+          onOpenAgentAdmin={() => setWorkspaceView('agent-admin')}
           onCreateGroup={handleCreateGroup}
           isDarkMode={isDarkMode}
           toggleDarkMode={() => setIsDarkMode(!isDarkMode)}
@@ -150,6 +163,11 @@ function App() {
               selectedGroupId={selectedGroupId}
               onSelectGroup={(id) => {
                 setSelectedGroupId(id);
+                setWorkspaceView('library');
+                setShowGroupPanel(false);
+              }}
+              onOpenAgentAdmin={() => {
+                setWorkspaceView('agent-admin');
                 setShowGroupPanel(false);
               }}
               onCreateGroup={handleCreateGroup}
@@ -187,7 +205,13 @@ function App() {
           )}
 
           <div className="min-h-0 flex-1">
-            {selectedGroupId ? (
+            {workspaceView === 'agent-admin' ? (
+              <div className="h-full overflow-y-auto p-6">
+                <div className="mx-auto max-w-6xl">
+                  <AgentAdminPanel />
+                </div>
+              </div>
+            ) : selectedGroupId ? (
               workspaceView === 'library' ? (
                 <div className="flex h-full min-h-0 flex-col">
                   {systemNotice && (
@@ -247,7 +271,7 @@ function App() {
       {/* Settings Modal */}
       {showSettings && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
-          <div className="bg-white dark:bg-gray-800 rounded-xl max-w-md w-full shadow-2xl overflow-hidden">
+          <div className="bg-white dark:bg-gray-800 rounded-xl max-w-2xl w-full max-h-[90vh] shadow-2xl overflow-hidden">
             <div className="p-4 border-b border-gray-200 dark:border-gray-700 font-semibold flex items-center justify-between text-gray-800 dark:text-gray-200">
               <div className="flex items-center gap-2">
                 <Settings size={18} />
@@ -260,44 +284,47 @@ function App() {
                 <X size={18} />
               </button>
             </div>
-            <div className="p-5 space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Provider</label>
-                <select
-                  value={provider}
-                  onChange={(e) => setProvider(e.target.value)}
-                  className="w-full bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-lg px-3 py-2 text-sm text-gray-900 dark:text-gray-100"
-                >
-                  <option value="openai">OpenAI</option>
-                  <option value="anthropic">Anthropic</option>
-                  <option value="gemini">Google Gemini</option>
-                </select>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Model Name</label>
-                <input
-                  type="text"
-                  value={model}
-                  onChange={(e) => setModel(e.target.value)}
-                  placeholder="e.g. gpt-5.2-2025-12-11, claude-sonnet-4-6"
-                  className="w-full bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-lg px-3 py-2 text-sm text-gray-900 dark:text-gray-100 placeholder-gray-400"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">API Key</label>
-                <input
-                  type="password"
-                  value={apiKey}
-                  onChange={(e) => setApiKey(e.target.value)}
-                  placeholder="sk-..."
-                  className="w-full bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-lg px-3 py-2 text-sm text-gray-900 dark:text-gray-100 placeholder-gray-400"
-                />
-              </div>
-              {llmError && (
-                <div className="text-red-600 dark:text-red-400 text-sm font-medium">
-                  {llmError}
+            <div className="max-h-[calc(90vh-128px)] overflow-y-auto p-5 space-y-6">
+              <section className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Provider</label>
+                  <select
+                    ref={providerSelectRef}
+                    value={provider}
+                    onChange={(e) => setProvider(e.target.value)}
+                    className="w-full bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-lg px-3 py-2 text-sm text-gray-900 dark:text-gray-100"
+                  >
+                    <option value="openai">OpenAI</option>
+                    <option value="anthropic">Anthropic</option>
+                    <option value="gemini">Google Gemini</option>
+                  </select>
                 </div>
-              )}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Model Name</label>
+                  <input
+                    type="text"
+                    value={model}
+                    onChange={(e) => setModel(e.target.value)}
+                    placeholder="e.g. gpt-5.2-2025-12-11, claude-sonnet-4-6"
+                    className="w-full bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-lg px-3 py-2 text-sm text-gray-900 dark:text-gray-100 placeholder-gray-400"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">API Key</label>
+                  <input
+                    type="password"
+                    value={apiKey}
+                    onChange={(e) => setApiKey(e.target.value)}
+                    placeholder="sk-..."
+                    className="w-full bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-lg px-3 py-2 text-sm text-gray-900 dark:text-gray-100 placeholder-gray-400"
+                  />
+                </div>
+                {llmError && (
+                  <div className="text-red-600 dark:text-red-400 text-sm font-medium">
+                    {llmError}
+                  </div>
+                )}
+              </section>
             </div>
             <div className="p-4 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50 flex justify-end gap-2">
               <button

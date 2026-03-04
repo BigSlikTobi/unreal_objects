@@ -86,6 +86,66 @@ async def test_approval_flow_and_logs(mock_rule_engine):
         assert chain["events"][-1]["event_type"] == "APPROVAL_STATUS"
         assert chain["events"][-1]["details"]["status"] == "APPROVED"
 
+
+@pytest.mark.asyncio
+async def test_post_evaluate_records_identity_fields_in_logs_and_pending(mock_rule_engine):
+    mock_response = MagicMock()
+    mock_response.status_code = 200
+    mock_response.json.return_value = {
+        "id": "g1",
+        "name": "Grp",
+        "rules": [
+            {"id": "r1", "rule_logic": "IF amount > 100 THEN ASK_FOR_APPROVAL"}
+        ]
+    }
+    mock_rule_engine.return_value = mock_response
+
+    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
+        resp = await client.post(
+            "/v1/decide",
+            json={
+                "request_description": "NeedLaptop",
+                "context": {"amount": 150},
+                "group_id": "g1",
+                "agent_id": "agt_ops_01",
+                "credential_id": "cred_finance_a",
+                "user_id": "user_4821",
+                "scope": "finance:execute",
+            },
+        )
+        assert resp.status_code == 200
+        data = resp.json()
+        assert data["outcome"] == "ASK_FOR_APPROVAL"
+        assert data["agent_id"] == "agt_ops_01"
+        assert data["credential_id"] == "cred_finance_a"
+        assert data["user_id"] == "user_4821"
+        req_id = data["request_id"]
+
+        pending_resp = await client.get("/v1/pending")
+        assert pending_resp.status_code == 200
+        pending = next(p for p in pending_resp.json() if p["request_id"] == req_id)
+        assert pending["agent_id"] == "agt_ops_01"
+        assert pending["credential_id"] == "cred_finance_a"
+        assert pending["user_id"] == "user_4821"
+        assert pending["effective_group_id"] == "g1"
+
+        atomic_resp = await client.get("/v1/logs/atomic")
+        assert atomic_resp.status_code == 200
+        atomic = next(a for a in atomic_resp.json() if a["request_id"] == req_id)
+        assert atomic["agent_id"] == "agt_ops_01"
+        assert atomic["credential_id"] == "cred_finance_a"
+        assert atomic["user_id"] == "user_4821"
+        assert atomic["effective_group_id"] == "g1"
+
+        chain_resp = await client.get(f"/v1/logs/chains/{req_id}")
+        assert chain_resp.status_code == 200
+        chain = chain_resp.json()
+        request_event = next(e for e in chain["events"] if e["event_type"] == "REQUEST")
+        assert request_event["details"]["agent_id"] == "agt_ops_01"
+        assert request_event["details"]["credential_id"] == "cred_finance_a"
+        assert request_event["details"]["user_id"] == "user_4821"
+        assert request_event["details"]["effective_group_id"] == "g1"
+
 @pytest.mark.asyncio
 async def test_evaluate_with_edge_cases(mock_rule_engine):
     mock_response = MagicMock()
