@@ -58,5 +58,10 @@ python decision_center/cli.py
 7. **Accept, Edit, deactivate, or fall back to Manual** — the wizard shows the
    current stored rule before editing, lets you update only the fields you want
    to change, and can mark a rule inactive without deleting it.
-8. **Auto-Test** — immediately simulate an agent payload against the saved rule
+8. **Datapoint type capture** — when the LLM introduces a datapoint the group
+   has not seen before, the wizard asks for its type and tries to persist that
+   definition back to the Rule Engine. That sync is best-effort; if the
+   datapoint-definition update fails, the rule creation flow should still
+   continue so operators do not lose the translated rule.
+9. **Auto-Test** — immediately simulate an agent payload against the saved rule
    and see the exact decision outcome.

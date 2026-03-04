@@ -1,4 +1,5 @@
 import pytest
+import httpx
 from unittest.mock import patch, MagicMock
 
 from decision_center.translator import SchemaConceptMismatchError
@@ -248,6 +249,63 @@ def test_prompt_rule_creation_saves_new_datapoints(mock_get, mock_post, mock_pat
     assert len(saved_defs) == 1
     assert saved_defs[0]["name"] == "new_dp"
     assert saved_defs[0]["type"] == "number"
+
+
+@patch("builtins.input", side_effect=[
+    "New Rule",
+    "Fraud",
+    "",
+    "new_dp > 50",
+    "3",
+    "4",
+    "n",
+    "A",
+    "2",
+])
+@patch("decision_center.cli.translate_rule")
+@patch("httpx.Client.patch")
+@patch("httpx.Client.post")
+@patch("httpx.Client.get")
+def test_prompt_rule_creation_keeps_rule_when_datapoint_sync_fails(
+    mock_get,
+    mock_post,
+    mock_patch,
+    mock_translate,
+    mock_input,
+    capsys,
+):
+    llm_config = {"provider": "openai", "model": "gpt-5.2", "api_key": "test_key"}
+
+    mock_get_resp = MagicMock()
+    mock_get_resp.status_code = 200
+    mock_get_resp.json.return_value = {"rules": [], "datapoint_definitions": []}
+    mock_get.return_value = mock_get_resp
+
+    mock_translate.return_value = {
+        "datapoints": ["new_dp"],
+        "edge_cases": [],
+        "edge_cases_json": [],
+        "rule_logic": "IF new_dp > 50 THEN REJECT",
+        "rule_logic_json": {"if": [{">": [{"var": "new_dp"}, 50]}, "REJECT", "APPROVE"]},
+    }
+
+    mock_post_resp = MagicMock()
+    mock_post_resp.status_code = 201
+    mock_post_resp.json.return_value = {
+        "id": "rule_new", "name": "New Rule",
+        "rule_logic": "IF new_dp > 50 THEN REJECT", "edge_cases": [],
+        "rule_logic_json": {}, "edge_cases_json": [],
+    }
+    mock_post.return_value = mock_post_resp
+
+    mock_patch.side_effect = httpx.RequestError("connection refused", request=MagicMock())
+
+    rule = prompt_rule_creation("group_123", llm_config=llm_config)
+
+    assert rule["id"] == "rule_new"
+    output = capsys.readouterr().out
+    assert "Could not save datapoint definitions" in output
+    assert "Falling back to manual creation." not in output
 
 
 @patch("builtins.input", side_effect=[

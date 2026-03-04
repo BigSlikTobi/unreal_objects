@@ -495,15 +495,18 @@ def prompt_rule_creation(group_id: str, llm_config: dict | None = None) -> dict:
                             known_names.add(dp)
                     if new_defs:
                         print(f"\nSaving {len(new_defs)} new datapoint definition(s)...")
-                        with httpx.Client() as client:
-                            patch_resp = client.patch(
-                                f"http://127.0.0.1:8001/v1/groups/{group_id}/datapoints",
-                                json=new_defs
-                            )
-                            if patch_resp.status_code == 200:
-                                print("✅ Datapoint definitions saved.")
-                            else:
-                                print(f"⚠️  Could not save datapoint definitions: {patch_resp.status_code}")
+                        try:
+                            with httpx.Client() as client:
+                                patch_resp = client.patch(
+                                    f"http://127.0.0.1:8001/v1/groups/{group_id}/datapoints",
+                                    json=new_defs
+                                )
+                                if patch_resp.status_code == 200:
+                                    print("✅ Datapoint definitions saved.")
+                                else:
+                                    print(f"⚠️  Could not save datapoint definitions: {patch_resp.status_code}")
+                        except httpx.RequestError as exc:
+                            print(f"⚠️  Could not save datapoint definitions: {exc}")
                     break
             except SchemaConceptMismatchError as e:
                 print(f"\n⚠️  {e}")
