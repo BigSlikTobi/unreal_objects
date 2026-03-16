@@ -4,11 +4,12 @@ import { ChatInterface } from './components/ChatInterface';
 import { RuleLibrary } from './components/RuleLibrary';
 import { TestConsole } from './components/TestConsole';
 import { AgentAdminPanel } from './components/AgentAdminPanel';
+import { DecisionLog } from './components/DecisionLog';
 import { fetchGroups, createGroup, checkLLMConnection } from './api';
 import { Bot, Settings, X, Save, Plus, PanelLeftOpen } from 'lucide-react';
 import type { DatapointDefinition, LlmConfig, Rule, RuleGroup } from './types';
 
-type WorkspaceView = 'library' | 'builder' | 'agent-admin';
+type WorkspaceView = 'library' | 'builder' | 'agent-admin' | 'decision-log';
 
 function App() {
   const [groups, setGroups] = useState<RuleGroup[]>([]);
@@ -147,6 +148,7 @@ function App() {
             setWorkspaceView('library');
           }}
           onOpenAgentAdmin={() => setWorkspaceView('agent-admin')}
+          onOpenDecisionLog={() => setWorkspaceView('decision-log')}
           onCreateGroup={handleCreateGroup}
           isDarkMode={isDarkMode}
           toggleDarkMode={() => setIsDarkMode(!isDarkMode)}
@@ -168,6 +170,10 @@ function App() {
               }}
               onOpenAgentAdmin={() => {
                 setWorkspaceView('agent-admin');
+                setShowGroupPanel(false);
+              }}
+              onOpenDecisionLog={() => {
+                setWorkspaceView('decision-log');
                 setShowGroupPanel(false);
               }}
               onCreateGroup={handleCreateGroup}
@@ -209,6 +215,12 @@ function App() {
               <div className="h-full overflow-y-auto p-6">
                 <div className="mx-auto max-w-6xl">
                   <AgentAdminPanel />
+                </div>
+              </div>
+            ) : workspaceView === 'decision-log' ? (
+              <div className="h-full overflow-y-auto p-6">
+                <div className="mx-auto max-w-6xl">
+                  <DecisionLog />
                 </div>
               </div>
             ) : selectedGroupId ? (

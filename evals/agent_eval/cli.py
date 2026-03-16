@@ -8,7 +8,9 @@ from __future__ import annotations
 
 import argparse
 import asyncio
+import subprocess
 import sys
+import time
 from pathlib import Path
 
 import httpx
@@ -19,15 +21,72 @@ from evals.agent_eval.reporting import compute_stats, next_report_path, write_ag
 from evals.agent_eval.runner import run_scenario
 from evals.agent_eval.scenarios.ecommerce import ECOMMERCE_SCENARIOS
 from evals.agent_eval.scenarios.finance import FINANCE_SCENARIOS
+from evals.agent_eval.scenarios.generated import GENERATED_SCENARIOS, generate_scenarios
 
 
-def _get_scenarios(domain: str, scenario_id: str | None):
+def _start_services(rule_engine_url: str, decision_center_url: str) -> list[subprocess.Popen]:
+    """Start Rule Engine and Decision Center as background processes."""
+    re_port = rule_engine_url.rsplit(":", 1)[-1]
+    dc_port = decision_center_url.rsplit(":", 1)[-1]
+
+    procs = [
+        subprocess.Popen(
+            [sys.executable, "-m", "uvicorn", "rule_engine.app:app", "--port", re_port],
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+        ),
+        subprocess.Popen(
+            [sys.executable, "-m", "uvicorn", "decision_center.app:app", "--port", dc_port],
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+        ),
+    ]
+
+    # Wait for services to become available
+    max_wait = 10
+    start = time.monotonic()
+    while time.monotonic() - start < max_wait:
+        try:
+            with httpx.Client(timeout=2.0) as c:
+                c.get(f"{rule_engine_url}/v1/groups").raise_for_status()
+                c.get(f"{decision_center_url}/v1/decide", params={
+                    "request_description": "healthcheck",
+                    "context": "{}",
+                    "group_id": "missing",
+                })
+            return procs
+        except Exception:
+            # Check if either process died
+            for p in procs:
+                if p.poll() is not None:
+                    _stop_services(procs)
+                    raise RuntimeError(f"Service process exited with code {p.returncode}")
+            time.sleep(0.5)
+
+    _stop_services(procs)
+    raise RuntimeError(f"Services did not become available within {max_wait}s")
+
+
+def _stop_services(procs: list[subprocess.Popen]) -> None:
+    for p in procs:
+        p.terminate()
+    for p in procs:
+        p.wait(timeout=5)
+
+
+def _get_scenarios(domain: str, scenario_id: str | None, seed: int = 42):
+    generated = generate_scenarios(500, seed=seed) if seed != 42 else GENERATED_SCENARIOS
     all_scenarios = {
         "finance": FINANCE_SCENARIOS,
         "ecommerce": ECOMMERCE_SCENARIOS,
+        "generated": generated,
     }
     if domain == "all":
         pool = FINANCE_SCENARIOS + ECOMMERCE_SCENARIOS
+    elif domain == "generated":
+        pool = generated
+    elif domain == "full":
+        pool = FINANCE_SCENARIOS + ECOMMERCE_SCENARIOS + generated
     else:
         pool = all_scenarios.get(domain, [])
 
@@ -41,62 +100,70 @@ def _get_scenarios(domain: str, scenario_id: str | None):
 
 
 async def _run(args: argparse.Namespace) -> int:
-    if args.fail_on_missing_services:
-        try:
-            await ensure_services_available(args.rule_engine_url, args.decision_center_url)
-        except Exception as exc:
-            print(f"Services unavailable: {exc}", file=sys.stderr)
+    managed_procs: list[subprocess.Popen] = []
+    try:
+        await ensure_services_available(args.rule_engine_url, args.decision_center_url)
+    except Exception:
+        if args.fail_on_missing_services:
+            print("Services unavailable and --fail-on-missing-services is set.", file=sys.stderr)
             return 1
-    else:
+        print("Services not running — starting them automatically ...", flush=True)
         try:
-            await ensure_services_available(args.rule_engine_url, args.decision_center_url)
-        except Exception as exc:
-            print(f"Warning: services may be unavailable ({exc})", file=sys.stderr)
+            managed_procs = _start_services(args.rule_engine_url, args.decision_center_url)
+            print("Services started.")
+        except RuntimeError as exc:
+            print(f"Failed to start services: {exc}", file=sys.stderr)
+            return 1
 
-    scenarios = _get_scenarios(args.domain, getattr(args, "scenario", None))
-    if not scenarios:
-        print("No scenarios to run.", file=sys.stderr)
-        return 1
+    try:
+        scenarios = _get_scenarios(args.domain, getattr(args, "scenario", None), seed=args.seed)
+        if not scenarios:
+            print("No scenarios to run.", file=sys.stderr)
+            return 1
 
-    results: list[AgentRunResult] = []
-    for scenario in scenarios:
-        print(f"Running scenario: {scenario.scenario_id} ...", end=" ", flush=True)
-        try:
-            result = await run_scenario(
-                scenario=scenario,
-                rule_engine_url=args.rule_engine_url,
-                decision_center_url=args.decision_center_url,
-                keep_group=args.keep_group,
-            )
-            results.append(result)
-            print("PASS" if result.passed else "FAIL")
-        except Exception as exc:
-            results.append(
-                AgentRunResult(
-                    scenario_id=scenario.scenario_id,
-                    passed=False,
-                    steps=[],
-                    error=str(exc),
+        results: list[AgentRunResult] = []
+        for scenario in scenarios:
+            print(f"Running scenario: {scenario.scenario_id} ...", end=" ", flush=True)
+            try:
+                result = await run_scenario(
+                    scenario=scenario,
+                    rule_engine_url=args.rule_engine_url,
+                    decision_center_url=args.decision_center_url,
+                    keep_group=args.keep_group,
                 )
-            )
-            print(f"ERROR: {exc}")
+                results.append(result)
+                print("PASS" if result.passed else "FAIL")
+            except Exception as exc:
+                results.append(
+                    AgentRunResult(
+                        scenario_id=scenario.scenario_id,
+                        passed=False,
+                        steps=[],
+                        error=str(exc),
+                    )
+                )
+                print(f"ERROR: {exc}")
 
-    stats = compute_stats(results)
-    report_dir = Path(args.report_dir)
-    report_path = next_report_path(report_dir)
-    write_agent_eval_report(report_path, results, stats, domain=args.domain)
-    print(f"\nReport written to: {report_path}")
-    print(
-        f"Results: {stats.passed_scenarios}/{stats.total_scenarios} scenarios passed"
-    )
-    print(f"  Decision Accuracy:      {stats.decision_accuracy * 100:.1f}%")
-    print(f"  Agent Obedience Rate:   {stats.obedience_rate * 100:.1f}%")
-    print(f"  Receipt Validity Rate:  {stats.receipt_validity_rate * 100:.1f}%")
-    print(f"  Human Loop Completion:  {stats.human_loop_completion_rate * 100:.1f}%")
+        stats = compute_stats(results)
+        report_dir = Path(args.report_dir)
+        report_path = next_report_path(report_dir)
+        write_agent_eval_report(report_path, results, stats, domain=args.domain)
+        print(f"\nReport written to: {report_path}")
+        print(
+            f"Results: {stats.passed_scenarios}/{stats.total_scenarios} scenarios passed"
+        )
+        print(f"  Decision Accuracy:      {stats.decision_accuracy * 100:.1f}%")
+        print(f"  Agent Obedience Rate:   {stats.obedience_rate * 100:.1f}%")
+        print(f"  Receipt Validity Rate:  {stats.receipt_validity_rate * 100:.1f}%")
+        print(f"  Human Loop Completion:  {stats.human_loop_completion_rate * 100:.1f}%")
 
-    if stats.failed_scenarios > 0:
-        return 1
-    return 0
+        if stats.failed_scenarios > 0:
+            return 1
+        return 0
+    finally:
+        if managed_procs:
+            print("Stopping services ...")
+            _stop_services(managed_procs)
 
 
 def main() -> None:
@@ -106,9 +173,9 @@ def main() -> None:
     )
     parser.add_argument(
         "--domain",
-        choices=["finance", "ecommerce", "all"],
+        choices=["finance", "ecommerce", "generated", "full", "all"],
         default="all",
-        help="Domain to evaluate (default: all)",
+        help="Domain to evaluate: finance, ecommerce, generated (500 scenarios), full (all + generated), all (finance+ecommerce only)",
     )
     parser.add_argument(
         "--scenario",
@@ -142,8 +209,19 @@ def main() -> None:
         dest="fail_on_missing_services",
         help="Exit with code 1 if services are not reachable",
     )
+    parser.add_argument(
+        "--seed",
+        default="42",
+        help="Seed for generated scenarios. Use 'random' for a new set each run, or an integer for reproducibility (default: 42)",
+    )
 
     args = parser.parse_args()
+    if args.seed.lower() == "random":
+        import random as _random
+        args.seed = _random.randint(0, 2**31)
+        print(f"Using random seed: {args.seed}")
+    else:
+        args.seed = int(args.seed)
     exit_code = asyncio.run(_run(args))
     sys.exit(exit_code)
 
