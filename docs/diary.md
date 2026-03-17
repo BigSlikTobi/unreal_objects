@@ -1313,3 +1313,76 @@ left unchanged as it handles legitimate minor naming mismatches at runtime.
 - Treating datapoint sync as best-effort is the safer operator workflow:
   translated rules should not be discarded just because metadata persistence is
   temporarily unavailable.
+
+---
+
+## Agent Eval Harness
+
+**Date:** 2026-03-16
+
+**What was built:**
+
+Implemented `evals/agent_eval/` — a fully deterministic, LLM-free end-to-end
+evaluation harness for simulated agent behaviour. The harness validates that an
+agent correctly calls the Decision Center, obeys APPROVE/REJECT/ASK_FOR_APPROVAL
+outcomes, submits human approvals when required, and that the resulting audit
+chain matches expected receipts.
+
+**Architecture:**
+
+- `models.py` — Pydantic models (`WorkflowStep`, `AgentScenario`, `ReceiptAssertion`,
+  `StepResult`, `AgentRunResult`, `AgentEvalStats`) with validators enforcing
+  that `human_approves` is set iff `expected_outcome == ASK_FOR_APPROVAL`, and
+  that `receipt_assertions` length matches `workflow` length.
+- `agent.py` — `SimulatedAgent`: a state machine that posts to `/v1/decide` and,
+  for `ASK_FOR_APPROVAL` outcomes, immediately follows up with
+  `/v1/decide/{request_id}/approve`. Accepts an injected `httpx.AsyncClient`
+  for in-process ASGI testing.
+- `receipt.py` — `validate_receipt`: fetches `/v1/logs/chains/{request_id}` and
+  checks event types, EVALUATION outcome, and APPROVAL_STATUS details against
+  a `ReceiptAssertion`.
+- `runner.py` — `run_scenario`: creates a rule group, adds rules, runs each
+  workflow step, validates receipts, and deletes the group unless `keep_group=True`.
+  Returns an `AgentRunResult` with per-step details.
+- `reporting.py` — `compute_stats` and `write_agent_eval_report`: compute
+  four metrics (decision accuracy, obedience rate, receipt validity, human loop
+  completion) and write a versioned markdown report.
+- `cli.py` — `uo-agent-eval` console script with `--domain`, `--scenario`,
+  `--report-dir`, `--keep-group`, and `--fail-on-missing-services` flags.
+- `scenarios/finance.py` — 6 finance scenarios covering APPROVE, REJECT,
+  ASK_FOR_APPROVAL (approved and rejected), multi-step mixed workflow, and
+  fail-closed missing-data.
+- `scenarios/ecommerce.py` — 3 ecommerce scenarios covering APPROVE, REJECT,
+  and ASK_FOR_APPROVAL.
+
+**Tests added (`evals/agent_eval/tests/`):**
+
+- `test_models.py` — Pydantic validator edge cases.
+- `test_scenarios.py` — Schema and invariant checks across all 9 scenarios.
+- `test_agent.py` — Unit tests for `SimulatedAgent` with mock `httpx.AsyncClient`.
+- `test_receipt.py` — Unit tests for `validate_receipt` covering all assertion paths.
+- `test_runner.py` — Integration tests using in-process ASGI transport against
+  real rule engine and decision center apps; patches `_fetch_group` to avoid
+  live HTTP.
+- `test_reporting.py` — Tests for `next_report_path` versioning, `compute_stats`,
+  and `write_agent_eval_report`.
+- `test_cli.py` — Tests for `_run` exit codes and `_get_scenarios` filtering.
+
+**Key design decisions:**
+
+- No LLM calls anywhere in the harness — all scenarios use pre-translated JSON
+  Logic rules so results are fully reproducible.
+- `SimulatedAgent` accepts an optional injected client so tests never touch a
+  live network.
+- The store reset fixture in `test_runner.py` uses the correct attribute names
+  (`atomic_logs`, `chains`, `pending`) discovered by reading
+  `decision_center/store.py`.
+- `uo-agent-eval` is registered as a console script alongside `uo-stress-test`
+  and `uo-agent-admin`.
+
+**How it was validated:**
+
+- All unit tests (models, scenarios, agent, receipt, reporting, cli) are
+  self-contained and require no running services.
+- `test_runner.py` uses `httpx.ASGITransport` with the real FastAPI apps to
+  exercise the full pipeline in-process.

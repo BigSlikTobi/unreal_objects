@@ -19,6 +19,7 @@ dependencies = [
 [project.scripts]
 uo-stress-test = "decision_center.stress_test.cli:main"
 uo-agent-admin = "mcp_server.admin_cli:main"
+uo-agent-eval = "evals.agent_eval.cli:main"
 
 [project.optional-dependencies]
 dev = [
@@ -37,11 +38,13 @@ testpaths = [
     "decision_center/tests",
     "mcp_server/tests",
     "tests",
+    "evals/agent_eval/tests",
 ]
 
 [tool.hatch.build.targets.wheel]
 packages = [
     "rule_engine",
     "decision_center",
-    "mcp_server"
+    "mcp_server",
+    "evals"
 ]
