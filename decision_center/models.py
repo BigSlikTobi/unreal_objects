@@ -90,3 +90,21 @@ class RuleTranslationRequest(BaseModel):
     api_key: str
     context_schema: Optional[Dict[str, Any]] = None
     datapoint_definitions: List[Dict[str, Any]] = Field(default_factory=list)
+
+class SchemaField(BaseModel):
+    name: str
+    type: str
+    description: str
+
+class SchemaGenerationRequest(BaseModel):
+    provider: str
+    model: str
+    api_key: str
+    user_message: str
+    conversation_history: List[Dict[str, Any]] = Field(default_factory=list)
+    current_schema: Optional[Dict[str, Any]] = None
+
+class SchemaSaveRequest(BaseModel):
+    name: str
+    description: str
+    fields: List[SchemaField]

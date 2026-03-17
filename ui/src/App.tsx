@@ -4,11 +4,12 @@ import { ChatInterface } from './components/ChatInterface';
 import { RuleLibrary } from './components/RuleLibrary';
 import { TestConsole } from './components/TestConsole';
 import { AgentAdminPanel } from './components/AgentAdminPanel';
+import { SchemaWorkshop } from './components/SchemaWorkshop';
 import { fetchGroups, createGroup, checkLLMConnection } from './api';
 import { Bot, Settings, X, Save, Plus, PanelLeftOpen } from 'lucide-react';
 import type { DatapointDefinition, LlmConfig, Rule, RuleGroup } from './types';
 
-type WorkspaceView = 'library' | 'builder' | 'agent-admin';
+type WorkspaceView = 'library' | 'builder' | 'agent-admin' | 'schema-workshop';
 
 function App() {
   const [groups, setGroups] = useState<RuleGroup[]>([]);
@@ -147,6 +148,7 @@ function App() {
             setWorkspaceView('library');
           }}
           onOpenAgentAdmin={() => setWorkspaceView('agent-admin')}
+          onOpenSchemaWorkshop={() => setWorkspaceView('schema-workshop')}
           onCreateGroup={handleCreateGroup}
           isDarkMode={isDarkMode}
           toggleDarkMode={() => setIsDarkMode(!isDarkMode)}
@@ -168,6 +170,10 @@ function App() {
               }}
               onOpenAgentAdmin={() => {
                 setWorkspaceView('agent-admin');
+                setShowGroupPanel(false);
+              }}
+              onOpenSchemaWorkshop={() => {
+                setWorkspaceView('schema-workshop');
                 setShowGroupPanel(false);
               }}
               onCreateGroup={handleCreateGroup}
@@ -211,6 +217,8 @@ function App() {
                   <AgentAdminPanel />
                 </div>
               </div>
+            ) : workspaceView === 'schema-workshop' ? (
+              <SchemaWorkshop llmConfig={llmConfig} onOpenSettings={() => setShowSettings(true)} />
             ) : selectedGroupId ? (
               workspaceView === 'library' ? (
                 <div className="flex h-full min-h-0 flex-col">
