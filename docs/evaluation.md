@@ -171,14 +171,30 @@ end-to-end, without any LLM involvement. Scenarios are fully reproducible.
 uo-agent-eval --domain finance
 uo-agent-eval --domain ecommerce
 uo-agent-eval --domain all
+uo-agent-eval --domain generated          # 500 generated edge-case scenarios
+uo-agent-eval --domain full               # handwritten + generated (509 total)
 uo-agent-eval --domain finance --scenario fin_reject_high_risk
 ```
 
 Or via module:
 
 ```bash
-python -m evals.agent_eval.cli --domain all
+python -m evals.agent_eval.cli --domain generated
 ```
+
+**Seed control** — the 500 generated scenarios are seeded for reproducibility.
+Use `--seed` to vary the generated set:
+
+```bash
+uo-agent-eval --domain generated                   # default seed 42 (same scenarios every run)
+uo-agent-eval --domain generated --seed random      # new scenarios each run (seed printed for replay)
+uo-agent-eval --domain generated --seed 123         # reproducible with seed 123
+```
+
+**Auto-start services** — if the Rule Engine and Decision Center are not running,
+the CLI starts them automatically and stops them when the run completes. Use
+`--fail-on-missing-services` to disable auto-start (e.g., in CI where services
+should be pre-provisioned).
 
 ### What It Tests
 
@@ -207,7 +223,7 @@ For each step the harness:
 
 ### Domains and Scenarios
 
-**Finance** (6 scenarios):
+**Finance** (6 handwritten scenarios):
 
 - `fin_approve_low_transfer` — Low-amount transfers pass automatically
 - `fin_reject_high_risk` — High AML score triggers hard reject
@@ -216,18 +232,55 @@ For each step the harness:
 - `fin_multi_step_workflow` — Mixed APPROVE / ASK_FOR_APPROVAL / APPROVE workflow
 - `fin_fail_closed_missing_data` — Missing field triggers fail-closed REJECT
 
-**Ecommerce** (3 scenarios):
+**Ecommerce** (3 handwritten scenarios):
 
 - `ecom_approve_standard_order` — Standard low-value orders pass
 - `ecom_reject_fraud_signal` — High fraud score triggers hard reject
 - `ecom_ask_high_value_order` — High-value order requires and receives human approval
 
+**Generated** (500 scenarios across 5 domains and 12 patterns):
+
+The generated scenario corpus (`evals/agent_eval/scenarios/generated.py`) produces
+500 deterministic scenarios covering hard edge cases. Domains: finance, ecommerce,
+healthcare, logistics, HR. Patterns tested:
+
+| Pattern | Count | What it stresses |
+| --- | ---: | --- |
+| Single rule | ~55 | Basic operator/outcome correctness |
+| Boundary values | ~60 | Value exactly at threshold (`<` vs `<=`) |
+| No-match fallthrough | ~45 | Rule condition not met → default APPROVE |
+| Fail-closed (missing data) | ~60 | Missing variable → fail-closed (severity-aware) |
+| Type mismatch | ~46 | String where number expected → fail-closed |
+| Fuzzy variable mapping | ~40 | Context key differs from rule var (substring match) |
+| Edge-case short-circuit | ~35 | `edge_cases_json` overrides main rule logic |
+| Inactive rules | ~25 | `active: false` rules are skipped |
+| Outcome precedence | ~40 | Multi-rule: REJECT > ASK_FOR_APPROVAL > APPROVE |
+| Legacy string fallback | ~35 | No `rule_logic_json` → legacy string parser |
+| Multi-step workflows | ~40 | 2–4 steps mixing outcomes per scenario |
+| Fail-closed + multi-rule | ~19 | One rule fires + one has missing data |
+
 ### Reports
 
 Reports are written to `evals/agent_eval_report_vN.md` (versioned, one per run).
 
+### Current Results
+
+| Domain | Scenarios | Pass Rate | Report |
+| --- | ---: | --- | --- |
+| `generated` | 500 | **100%** | `evals/agent_eval_report_v6.md` |
+| `finance` | 6 | **100%** | `evals/agent_eval_report_v5.md` |
+| `ecommerce` | 3 | **100%** | `evals/agent_eval_report_v5.md` |
+
+### Notable Findings
+
+**Fuzzy mapper false positive on shared suffix** (found by `gen_fcmulti_0493`):
+The original fuzzy variable mapper (`difflib` cutoff 0.4) incorrectly resolved
+`aml_score` → `credit_score` because they share the `_score` suffix (ratio ~0.57).
+This silently bypassed a REJECT rule on missing data. Fix: raised cutoff to 0.7
+and added semantic-parts filtering so multi-part names must share a non-generic
+word part. See `evals/agent_eval_report_v4.md` for the full write-up.
+
 ### Operational Requirements
 
-- Rule Engine must be running on `http://127.0.0.1:8001`
-- Decision Center must be running on `http://127.0.0.1:8002`
+- Services auto-start if not running (use `--fail-on-missing-services` to disable)
 - No LLM API key required (fully deterministic)

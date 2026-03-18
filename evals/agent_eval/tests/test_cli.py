@@ -53,6 +53,7 @@ async def test_cli_exits_zero_on_all_pass(tmp_path):
                     report_dir=str(tmp_path),
                     keep_group=False,
                     fail_on_missing_services=False,
+                    seed=42,
                 )
                 exit_code = await _run(args)
                 assert exit_code == 0
@@ -74,6 +75,7 @@ async def test_cli_exits_one_on_failure(tmp_path):
                 report_dir=str(tmp_path),
                 keep_group=False,
                 fail_on_missing_services=False,
+                seed=42,
             )
             from evals.agent_eval.cli import _run
             exit_code = await _run(args)
@@ -96,6 +98,7 @@ async def test_cli_fail_on_missing_services_exits_one(tmp_path):
             report_dir=str(tmp_path),
             keep_group=False,
             fail_on_missing_services=True,
+            seed=42,
         )
         from evals.agent_eval.cli import _run
         exit_code = await _run(args)
