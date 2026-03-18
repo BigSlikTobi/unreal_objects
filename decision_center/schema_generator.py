@@ -16,12 +16,8 @@ except ImportError:
 
 try:
     from google import genai
-    import google.generativeai.types as genai_types
 except ImportError:
-    try:
-        import google.generativeai as genai
-    except ImportError:
-        genai = None
+    genai = None
 
 from .models import SchemaField
 
@@ -110,7 +106,7 @@ def generate_schema(
 
     elif provider == "gemini":
         if genai is None:
-            raise ImportError("google-generativeai package not installed")
+            raise ImportError("google-genai package not installed")
         client = genai.Client(api_key=api_key)
         full_prompt = SCHEMA_GENERATION_SYS_PROMPT + "\n\nTask:\n" + prompt
         response = client.models.generate_content(
@@ -138,7 +134,39 @@ def convert_to_canonical_schema(proposal: SchemaProposal) -> dict:
     return {f.name: f"{f.type} ({f.description})" for f in proposal.fields}
 
 
-def save_schema(proposal: SchemaProposal, schemas_dir: str = DEFAULT_SCHEMAS_DIR) -> str:
+class SchemaExistsError(FileExistsError):
+    """Raised when a schema file already exists and overwrite is not enabled."""
+    pass
+
+
+def list_schemas(schemas_dir: str = DEFAULT_SCHEMAS_DIR) -> list[dict]:
+    """Return all saved schemas from the schemas directory."""
+    if not os.path.isdir(schemas_dir):
+        return []
+    results = []
+    for fname in sorted(os.listdir(schemas_dir)):
+        if not fname.endswith(".json"):
+            continue
+        try:
+            with open(os.path.join(schemas_dir, fname)) as f:
+                data = json.load(f)
+            key = fname.removesuffix(".json")
+            results.append({
+                "key": key,
+                "name": data.get("name", key),
+                "description": data.get("description", ""),
+                "schema": data.get("schema", {}),
+            })
+        except (json.JSONDecodeError, OSError):
+            continue
+    return results
+
+
+def save_schema(
+    proposal: SchemaProposal,
+    schemas_dir: str = DEFAULT_SCHEMAS_DIR,
+    overwrite: bool = False,
+) -> str:
     """Persist a SchemaProposal as a JSON file in the schemas directory."""
     os.makedirs(schemas_dir, exist_ok=True)
 
@@ -148,13 +176,19 @@ def save_schema(proposal: SchemaProposal, schemas_dir: str = DEFAULT_SCHEMAS_DIR
     if not name:
         name = "custom_schema"
 
+    path = os.path.join(schemas_dir, f"{name}.json")
+
+    if os.path.exists(path) and not overwrite:
+        raise SchemaExistsError(
+            f"Schema file '{name}.json' already exists. Use overwrite=true to replace it."
+        )
+
     data = {
         "name": proposal.name,
         "description": proposal.description,
         "schema": convert_to_canonical_schema(proposal),
     }
 
-    path = os.path.join(schemas_dir, f"{name}.json")
     with open(path, "w") as f:
         json.dump(data, f, indent=2)
 

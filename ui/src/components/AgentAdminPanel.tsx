@@ -1,5 +1,5 @@
-import { type ChangeEvent, useEffect, useMemo, useState } from 'react';
-import { KeyRound, RefreshCw, ShieldCheck, UserPlus, X } from 'lucide-react';
+import { useEffect, useMemo, useState } from 'react';
+import { Check, Copy, RefreshCw, ShieldCheck, UserPlus, X } from 'lucide-react';
 
 import {
   createAgentRecord,
@@ -29,6 +29,72 @@ const splitCsv = (value: string) => value
   .map((entry) => entry.trim())
   .filter(Boolean);
 
+const MCP_CLIENT_CONFIGS = [
+  {
+    label: 'Claude Desktop (HTTP)',
+    generate: (serverName: string, baseUrl: string, token: string) =>
+      JSON.stringify(
+        {
+          mcpServers: {
+            [serverName]: {
+              type: 'streamable-http',
+              url: `${baseUrl}/mcp`,
+              headers: { Authorization: `Bearer ${token}` },
+              note: 'The enrollment token is one-time. After first use, the agent auto-enrolls and manages its own OAuth tokens.',
+            },
+          },
+        },
+        null,
+        2,
+      ),
+  },
+  {
+    label: 'Claude Desktop (stdio)',
+    generate: (serverName: string) =>
+      JSON.stringify(
+        {
+          mcpServers: {
+            [serverName]: {
+              command: 'python',
+              args: ['mcp_server/server.py'],
+            },
+          },
+        },
+        null,
+        2,
+      ),
+  },
+  {
+    label: 'Cursor / Windsurf',
+    generate: (serverName: string, baseUrl: string, token: string) =>
+      JSON.stringify(
+        {
+          mcpServers: {
+            [serverName]: {
+              url: `${baseUrl}/mcp`,
+              headers: { Authorization: `Bearer ${token}` },
+            },
+          },
+        },
+        null,
+        2,
+      ),
+  },
+  {
+    label: 'Generic / Other',
+    generate: (_serverName: string, baseUrl: string, token: string) =>
+      [
+        `MCP Endpoint:   ${baseUrl}/mcp`,
+        `Transport:      streamable-http (or SSE at ${baseUrl}/sse)`,
+        `Auth Header:    Authorization: Bearer ${token}`,
+        ``,
+        `The enrollment token is one-time. After the first`,
+        `connection the agent auto-enrolls and manages its`,
+        `own OAuth tokens.`,
+      ].join('\n'),
+  },
+];
+
 const formatTokenMeta = (token: EnrollmentTokenIssue | undefined) => {
   if (!token) {
     return 'No enrollment token issued';
@@ -54,6 +120,8 @@ export function AgentAdminPanel() {
   const [defaultGroupId, setDefaultGroupId] = useState('');
   const [allowedGroupIds, setAllowedGroupIds] = useState<string[]>([]);
   const [issuedToken, setIssuedToken] = useState<EnrollmentTokenIssue | null>(null);
+  const [selectedConfigTab, setSelectedConfigTab] = useState(0);
+  const [configCopied, setConfigCopied] = useState(false);
   const [persistedTokens, setPersistedTokens] = useState<PersistedEnrollmentTokens>({});
   const [persistedDrafts, setPersistedDrafts] = useState<PersistedEnrollmentDrafts>({});
 
@@ -669,6 +737,48 @@ export function AgentAdminPanel() {
                         </div>
                         <div className="mt-2 text-xs text-emerald-800 dark:text-emerald-200">
                           This token stays visible in this workspace until you issue another one or clear session storage.
+                        </div>
+                        {/* MCP Config Snippet */}
+                        <div className="mt-3 border-t border-emerald-200 pt-3 dark:border-emerald-900/40">
+                          <div className="mb-2 font-semibold">MCP Config Snippet</div>
+                          <div className="flex flex-wrap gap-1">
+                            {MCP_CLIENT_CONFIGS.map((cfg, idx) => (
+                              <button
+                                key={cfg.label}
+                                onClick={() => { setSelectedConfigTab(idx); setConfigCopied(false); }}
+                                className={`rounded-md px-2 py-1 text-xs font-medium transition-colors ${
+                                  selectedConfigTab === idx
+                                    ? 'bg-emerald-700 text-white dark:bg-emerald-600'
+                                    : 'bg-emerald-100 text-emerald-800 hover:bg-emerald-200 dark:bg-emerald-900/30 dark:text-emerald-200 dark:hover:bg-emerald-900/50'
+                                }`}
+                              >
+                                {cfg.label}
+                              </button>
+                            ))}
+                          </div>
+                          {(() => {
+                            const serverName = `${(agents.find((a) => a.agent_id === issuedToken.agent_id)?.name ?? 'agent').toLowerCase().replace(/\s+/g, '-')}-unreal-objects`;
+                            const snippet = MCP_CLIENT_CONFIGS[selectedConfigTab].generate(serverName, baseUrl, issuedToken.enrollment_token);
+                            return (
+                          <div className="relative mt-2">
+                            <pre className="overflow-x-auto rounded-md bg-gray-900 p-3 text-xs text-gray-100 dark:bg-gray-950">
+                              {snippet}
+                            </pre>
+                            <button
+                              onClick={() => {
+                                navigator.clipboard.writeText(snippet).then(() => {
+                                  setConfigCopied(true);
+                                  setTimeout(() => setConfigCopied(false), 2000);
+                                });
+                              }}
+                              className="absolute right-2 top-2 rounded-md bg-gray-700 p-1.5 text-gray-300 transition-colors hover:bg-gray-600 hover:text-white"
+                              aria-label="Copy config to clipboard"
+                            >
+                              {configCopied ? <Check size={14} /> : <Copy size={14} />}
+                            </button>
+                          </div>
+                            );
+                          })()}
                         </div>
                       </div>
                     )}

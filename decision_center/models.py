@@ -108,3 +108,4 @@ class SchemaSaveRequest(BaseModel):
     name: str
     description: str
     fields: List[SchemaField]
+    overwrite: bool = False

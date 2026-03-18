@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { Bot, User, Check, Plus, FlaskConical, Code2, X, Wand2, ChevronDown } from 'lucide-react';
-import { translateRule, createRule, getGroup, updateDatapointDefinitions, updateRule, ConceptMismatchError } from '../api';
+import { translateRule, createRule, getGroup, updateDatapointDefinitions, updateRule, ConceptMismatchError, fetchSchemas } from '../api';
+import type { SchemaEntry } from '../api';
 import { DatapointConfigurator } from './DatapointConfigurator';
 import type { DatapointDefinition, LlmConfig, ProposedField, Rule, RulePayload, RuleTranslation } from '../types';
 
@@ -38,42 +39,7 @@ const MAIN_RULE_PATTERN = /^\s*IF\s+(.+?)\s+THEN\s+(APPROVE|ASK_FOR_APPROVAL|REJ
 const EDGE_CASE_PATTERN = /^\s*IF\s+(.+?)\s+THEN\s+(APPROVE|ASK_FOR_APPROVAL|REJECT)\s*$/i;
 const QUOTED_LITERAL_PATTERN = /("[^"]+"|'[^']+')/;
 
-const SCHEMAS: Record<string, { label: string; schema: Record<string, string> }> = {
-  ecommerce: {
-    label: 'E-Commerce Blueprint',
-    schema: {
-      transaction_amount: 'number (the total cost of the order)',
-      currency: "string (e.g., 'USD', 'EUR')",
-      user_risk_score: 'number (0-100 risk assessment)',
-      account_age_days: 'number (days since user registration)',
-      merchant_category: "string (e.g., 'electronics', 'apparel', 'gift_card')",
-      shipping_address_matches_billing: 'boolean',
-      item_count: 'number (total items in cart)',
-      coupon_applied: 'boolean',
-      payment_method: "string (e.g., 'credit_card', 'paypal', 'crypto')",
-      user_country: 'string (ISO country code)',
-      shipping_speed: "string (e.g., 'standard', 'overnight')",
-      is_first_time_buyer: 'boolean',
-    },
-  },
-  finance: {
-    label: 'Finance Blueprint',
-    schema: {
-      withdrawal_amount: 'number (amount requested for withdrawal)',
-      account_balance: 'number (current available funds)',
-      daily_withdrawal_limit: 'number (maximum allowed withdrawal per day)',
-      is_corporate_account: 'boolean',
-      kyc_verified: 'boolean',
-      transaction_time_hour: 'number (0-23 hour of the transaction)',
-      beneficiary_country: 'string (ISO country code of receiver)',
-      aml_risk_score: 'number (Anti-Money Laundering score 0-100)',
-      loan_amount_requested: 'number',
-      user_credit_score: 'number (e.g., 300-850)',
-      failed_login_attempts: 'number',
-      device_trust_score: 'number (0-100)',
-    },
-  },
-};
+type SchemaMap = Record<string, { label: string; schema: Record<string, string> }>;
 
 const outcomeColor = (value: string) => {
   if (value === 'APPROVE') return 'text-green-700 dark:text-green-400';
@@ -371,6 +337,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
   const [datapointDefs, setDatapointDefs] = useState<DatapointDefinition[]>([]);
   const [editingRule, setEditingRule] = useState<Rule | null>(null);
   const [schemaExtensions, setSchemaExtensions] = useState<Record<string, string>>({});
+  const [schemas, setSchemas] = useState<SchemaMap>({});
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -381,6 +348,18 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
   useEffect(() => {
     scrollToBottom();
   }, [messages, isLoading]);
+
+  useEffect(() => {
+    fetchSchemas()
+      .then((entries: SchemaEntry[]) => {
+        const map: SchemaMap = {};
+        for (const e of entries) {
+          map[e.key] = { label: e.name, schema: e.schema };
+        }
+        setSchemas(map);
+      })
+      .catch(() => {/* schemas endpoint unavailable — dropdown stays empty */});
+  }, []);
 
   useEffect(() => {
     getGroup(groupId)
@@ -479,7 +458,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
     const header = [
       ruleName && `"${ruleName}"`,
       feature && `[${feature}]`,
-      selectedSchema && `{${SCHEMAS[selectedSchema]?.label}}`,
+      selectedSchema && `{${schemas[selectedSchema]?.label}}`,
     ].filter(Boolean).join(' ');
     let text = header ? `${header}\n` : '';
     text += `IF ${condition || '…'} THEN ${thenOutcome}`;
@@ -520,7 +499,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
         model: llmConfig.model,
         api_key: llmConfig.api_key,
         context_schema: selectedSchema
-          ? { ...SCHEMAS[selectedSchema].schema, ...schemaExtensions, ...extraSchema }
+          ? { ...schemas[selectedSchema].schema, ...schemaExtensions, ...extraSchema }
           : undefined,
         datapoint_definitions: datapointDefs
       });
@@ -781,7 +760,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
                   className="bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm text-gray-700 dark:text-gray-300 focus:ring-2 focus:ring-blue-500 focus:outline-none"
                 >
                   <option value="">No schema</option>
-                  {Object.entries(SCHEMAS).map(([key, s]) => (
+                  {Object.entries(schemas).map(([key, s]) => (
                     <option key={key} value={key}>{s.label}</option>
                   ))}
                 </select>
@@ -913,7 +892,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
                                 dp={dp}
                                 schemaFields={
                                   selectedSchema
-                                    ? { ...SCHEMAS[selectedSchema].schema, ...schemaExtensions }
+                                    ? { ...schemas[selectedSchema].schema, ...schemaExtensions }
                                     : null
                                 }
                                 onSwap={(oldVar, newVar) => handleSwapVariable(msg.id, oldVar, newVar)}

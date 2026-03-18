@@ -1,0 +1,7 @@
+{
+  "name": "Conflict Test",
+  "description": "A schema",
+  "schema": {
+    "x": "number (X)"
+  }
+}

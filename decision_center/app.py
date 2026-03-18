@@ -3,6 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from typing import List
 import json
+import os
 
 from .models import (
     DecisionOutcome, DecisionState, EvaluateRequest, DecisionResult,
@@ -12,7 +13,7 @@ from .models import (
 from .store import DecisionStore
 from .evaluator import evaluate_request
 from .translator import check_llm_connection, translate_rule, SchemaConceptMismatchError
-from .schema_generator import generate_schema, save_schema, SchemaProposal
+from .schema_generator import generate_schema, list_schemas, save_schema, SchemaProposal, SchemaExistsError
 import uuid
 
 app = FastAPI(title="Unreal Objects Decision Center API")
@@ -26,6 +27,14 @@ app.add_middleware(
 )
 
 store = DecisionStore()
+
+_ADMIN_API_KEY = os.environ.get("ADMIN_API_KEY")
+
+def _require_admin(request: Request):
+    if not _ADMIN_API_KEY:
+        return  # no key configured — open access (dev mode)
+    if request.headers.get("X-Admin-Key") != _ADMIN_API_KEY:
+        raise HTTPException(status_code=401, detail="Invalid admin API key")
 
 def _outcome_to_state(outcome: DecisionOutcome) -> DecisionState:
     if outcome == DecisionOutcome.APPROVE:
@@ -186,8 +195,13 @@ async def generate_schema_api(req: SchemaGenerationRequest):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+@app.get("/v1/schemas")
+async def list_schemas_api():
+    return list_schemas()
+
 @app.post("/v1/schemas/save")
-async def save_schema_api(req: SchemaSaveRequest):
+async def save_schema_api(req: SchemaSaveRequest, request: Request):
+    _require_admin(request)
     try:
         proposal = SchemaProposal(
             name=req.name,
@@ -195,7 +209,9 @@ async def save_schema_api(req: SchemaSaveRequest):
             fields=req.fields,
             message="",
         )
-        path = save_schema(proposal)
+        path = save_schema(proposal, overwrite=req.overwrite)
         return {"path": path, "name": proposal.name}
+    except SchemaExistsError as e:
+        raise HTTPException(status_code=409, detail=str(e))
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))

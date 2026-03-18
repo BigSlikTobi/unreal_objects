@@ -62,7 +62,7 @@ export const SchemaWorkshop: React.FC<SchemaWorkshopProps> = ({ llmConfig, onOpe
         model: llmConfig.model,
         api_key: llmConfig.api_key,
         user_message: text,
-        conversation_history: conversationHistory,
+        conversation_history: newHistory,
         current_schema: currentSchemaFlat(),
       });
 

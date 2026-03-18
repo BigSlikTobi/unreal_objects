@@ -1,0 +1,7 @@
+{
+  "name": "Test Schema",
+  "description": "A test schema",
+  "schema": {
+    "amount": "number (Amount)"
+  }
+}

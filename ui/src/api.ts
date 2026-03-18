@@ -194,6 +194,19 @@ export const issueEnrollmentToken = async (
   return res.json();
 };
 
+export interface SchemaEntry {
+  key: string;
+  name: string;
+  description: string;
+  schema: Record<string, string>;
+}
+
+export const fetchSchemas = async (): Promise<SchemaEntry[]> => {
+  const res = await fetch(`${DECISION_BASE}/schemas`, { cache: 'no-store' });
+  if (!res.ok) throw new Error('Failed to fetch schemas');
+  return res.json();
+};
+
 export const generateSchema = async (data: GenerateSchemaRequest): Promise<SchemaProposal> => {
   const res = await fetch(`${DECISION_BASE}/llm/schema`, {
     method: 'POST',
@@ -208,10 +221,14 @@ export const generateSchema = async (data: GenerateSchemaRequest): Promise<Schem
   return res.json();
 };
 
-export const saveSchema = async (proposal: Omit<SchemaProposal, 'message'> & { fields: SchemaField[] }): Promise<{ path: string; name: string }> => {
+export const saveSchema = async (proposal: Omit<SchemaProposal, 'message'> & { fields: SchemaField[] }, adminApiKey?: string): Promise<{ path: string; name: string }> => {
+  const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+  if (adminApiKey) {
+    headers['X-Admin-Key'] = adminApiKey;
+  }
   const res = await fetch(`${DECISION_BASE}/schemas/save`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers,
     body: JSON.stringify(proposal),
   });
   if (!res.ok) {

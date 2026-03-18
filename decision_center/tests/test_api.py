@@ -1,7 +1,9 @@
+import json
 import pytest
 from httpx import AsyncClient, ASGITransport
 
 from decision_center.app import app
+import decision_center.app as app_module
 
 # We need to mock the Rule Engine API call in real life, but for MVP evaluator tests
 # we can just use a mocked httpx transport or patch it. Since the app makes outbound
@@ -363,3 +365,228 @@ async def test_translate_api_backfills_datapoints_when_provider_omits_them(mock_
     assert data["datapoints"] == ["withdrawal_amount", "currency"]
     assert data["rule_logic_json"]["if"][0][">"][0]["var"] == "withdrawal_amount"
     assert data["edge_cases_json"][0]["if"][0]["!="][0]["var"] == "currency"
+
+
+# ── Schema listing, generation & saving endpoints ──
+
+@pytest.mark.asyncio
+async def test_list_schemas_api(tmp_path):
+    """GET /v1/schemas returns schemas from the schemas directory."""
+    # Write a test schema file
+    schema_data = {
+        "name": "Test Domain",
+        "description": "A test domain",
+        "schema": {"amount": "number (order total)"},
+    }
+    (tmp_path / "test_domain.json").write_text(json.dumps(schema_data))
+
+    with patch("decision_center.app.list_schemas", return_value=[{
+        "key": "test_domain",
+        "name": "Test Domain",
+        "description": "A test domain",
+        "schema": {"amount": "number (order total)"},
+    }]):
+        async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
+            resp = await client.get("/v1/schemas")
+            assert resp.status_code == 200
+            data = resp.json()
+            assert len(data) == 1
+            assert data[0]["key"] == "test_domain"
+            assert data[0]["name"] == "Test Domain"
+            assert "amount" in data[0]["schema"]
+
+@pytest.mark.asyncio
+@patch("decision_center.schema_generator.openai")
+async def test_generate_schema_api(mock_openai_mod):
+    mock_client = MagicMock()
+    mock_openai_mod.OpenAI.return_value = mock_client
+
+    mock_message = MagicMock()
+    mock_message.content = json.dumps({
+        "name": "ecommerce",
+        "description": "E-commerce domain schema",
+        "fields": [
+            {"name": "order_amount", "type": "number", "description": "Total order value"},
+            {"name": "customer_email", "type": "string", "description": "Customer email"},
+        ],
+        "message": "Proposed 2 fields for e-commerce.",
+    })
+    mock_choice = MagicMock()
+    mock_choice.message = mock_message
+    mock_response = MagicMock()
+    mock_response.choices = [mock_choice]
+    mock_client.chat.completions.create.return_value = mock_response
+
+    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
+        resp = await client.post(
+            "/v1/llm/schema",
+            json={
+                "provider": "openai",
+                "model": "gpt-4o",
+                "api_key": "fake_key",
+                "user_message": "Create an e-commerce schema",
+                "conversation_history": [],
+                "current_schema": None,
+            },
+        )
+
+    assert resp.status_code == 200
+    data = resp.json()
+    assert data["name"] == "ecommerce"
+    assert len(data["fields"]) == 2
+    assert data["fields"][0]["name"] == "order_amount"
+    assert data["message"] == "Proposed 2 fields for e-commerce."
+
+
+@pytest.mark.asyncio
+async def test_save_schema_api(tmp_path):
+    from decision_center.schema_generator import SchemaProposal
+
+    original_save = __import__("decision_center.schema_generator", fromlist=["save_schema"]).save_schema
+
+    def _save_with_tmp(proposal, overwrite=False, **kwargs):
+        return original_save(proposal, schemas_dir=str(tmp_path), overwrite=overwrite)
+
+    with patch("decision_center.app.save_schema", side_effect=_save_with_tmp):
+        async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
+            resp = await client.post(
+                "/v1/schemas/save",
+                json={
+                    "name": "Test Schema",
+                    "description": "A test schema",
+                    "fields": [
+                        {"name": "amount", "type": "number", "description": "Amount"},
+                    ],
+                },
+            )
+
+    assert resp.status_code == 200
+    data = resp.json()
+    assert data["name"] == "Test Schema"
+    assert "test_schema.json" in data["path"]
+
+    # Verify file was written
+    saved = json.loads((tmp_path / "test_schema.json").read_text())
+    assert saved["name"] == "Test Schema"
+    assert "amount" in saved["schema"]
+
+
+@pytest.mark.asyncio
+async def test_save_schema_api_conflict(tmp_path):
+    from decision_center.schema_generator import save_schema as original_save
+
+    def _save_with_tmp(proposal, overwrite=False, **kwargs):
+        return original_save(proposal, schemas_dir=str(tmp_path), overwrite=overwrite)
+
+    with patch("decision_center.app.save_schema", side_effect=_save_with_tmp):
+        async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
+            # First save succeeds
+            payload = {
+                "name": "Conflict Test",
+                "description": "A schema",
+                "fields": [{"name": "x", "type": "number", "description": "X"}],
+            }
+            resp = await client.post("/v1/schemas/save", json=payload)
+            assert resp.status_code == 200
+
+            # Second save without overwrite returns 409
+            resp = await client.post("/v1/schemas/save", json=payload)
+            assert resp.status_code == 409
+
+            # With overwrite=true it succeeds
+            payload["overwrite"] = True
+            resp = await client.post("/v1/schemas/save", json=payload)
+            assert resp.status_code == 200
+
+
+# ── Admin API key auth tests for /v1/schemas/save ──
+
+_SAVE_PAYLOAD = {
+    "name": "Auth Test",
+    "description": "A schema",
+    "fields": [{"name": "x", "type": "number", "description": "X"}],
+}
+
+
+@pytest.mark.asyncio
+async def test_save_schema_rejects_missing_key(tmp_path):
+    """When ADMIN_API_KEY is set, requests without the header get 401."""
+    from decision_center.schema_generator import save_schema as original_save
+
+    def _save_with_tmp(proposal, overwrite=False, **kwargs):
+        return original_save(proposal, schemas_dir=str(tmp_path), overwrite=overwrite)
+
+    old_key = app_module._ADMIN_API_KEY
+    try:
+        app_module._ADMIN_API_KEY = "test-secret"
+        with patch("decision_center.app.save_schema", side_effect=_save_with_tmp):
+            async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
+                resp = await client.post("/v1/schemas/save", json=_SAVE_PAYLOAD)
+                assert resp.status_code == 401
+    finally:
+        app_module._ADMIN_API_KEY = old_key
+
+
+@pytest.mark.asyncio
+async def test_save_schema_rejects_wrong_key(tmp_path):
+    """When ADMIN_API_KEY is set, requests with wrong header get 401."""
+    from decision_center.schema_generator import save_schema as original_save
+
+    def _save_with_tmp(proposal, overwrite=False, **kwargs):
+        return original_save(proposal, schemas_dir=str(tmp_path), overwrite=overwrite)
+
+    old_key = app_module._ADMIN_API_KEY
+    try:
+        app_module._ADMIN_API_KEY = "test-secret"
+        with patch("decision_center.app.save_schema", side_effect=_save_with_tmp):
+            async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
+                resp = await client.post(
+                    "/v1/schemas/save",
+                    json=_SAVE_PAYLOAD,
+                    headers={"X-Admin-Key": "wrong-key"},
+                )
+                assert resp.status_code == 401
+    finally:
+        app_module._ADMIN_API_KEY = old_key
+
+
+@pytest.mark.asyncio
+async def test_save_schema_accepts_correct_key(tmp_path):
+    """When ADMIN_API_KEY is set, requests with correct header succeed."""
+    from decision_center.schema_generator import save_schema as original_save
+
+    def _save_with_tmp(proposal, overwrite=False, **kwargs):
+        return original_save(proposal, schemas_dir=str(tmp_path), overwrite=overwrite)
+
+    old_key = app_module._ADMIN_API_KEY
+    try:
+        app_module._ADMIN_API_KEY = "test-secret"
+        with patch("decision_center.app.save_schema", side_effect=_save_with_tmp):
+            async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
+                resp = await client.post(
+                    "/v1/schemas/save",
+                    json=_SAVE_PAYLOAD,
+                    headers={"X-Admin-Key": "test-secret"},
+                )
+                assert resp.status_code == 200
+    finally:
+        app_module._ADMIN_API_KEY = old_key
+
+
+@pytest.mark.asyncio
+async def test_save_schema_open_access_when_no_key(tmp_path):
+    """When ADMIN_API_KEY is unset, requests pass through without auth (dev mode)."""
+    from decision_center.schema_generator import save_schema as original_save
+
+    def _save_with_tmp(proposal, overwrite=False, **kwargs):
+        return original_save(proposal, schemas_dir=str(tmp_path), overwrite=overwrite)
+
+    old_key = app_module._ADMIN_API_KEY
+    try:
+        app_module._ADMIN_API_KEY = None
+        with patch("decision_center.app.save_schema", side_effect=_save_with_tmp):
+            async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
+                resp = await client.post("/v1/schemas/save", json=_SAVE_PAYLOAD)
+                assert resp.status_code == 200
+    finally:
+        app_module._ADMIN_API_KEY = old_key
