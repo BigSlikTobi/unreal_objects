@@ -19,11 +19,11 @@ const DECISION_COLORS: Record<DecisionState, { badge: string; dot: string }> = {
 };
 
 function formatTimestamp(ts: string) {
-  try {
-    return new Date(ts).toLocaleString();
-  } catch {
+  const date = new Date(ts);
+  if (Number.isNaN(date.getTime())) {
     return ts;
   }
+  return date.toLocaleString();
 }
 
 function truncateId(id: string) {
