@@ -5,11 +5,12 @@ import { RuleLibrary } from './components/RuleLibrary';
 import { TestConsole } from './components/TestConsole';
 import { AgentAdminPanel } from './components/AgentAdminPanel';
 import { SchemaWorkshop } from './components/SchemaWorkshop';
+import { DecisionLog } from './components/DecisionLog';
 import { fetchGroups, createGroup, checkLLMConnection } from './api';
 import { Bot, Settings, X, Save, Plus, PanelLeftOpen } from 'lucide-react';
 import type { DatapointDefinition, LlmConfig, Rule, RuleGroup } from './types';
 
-type WorkspaceView = 'library' | 'builder' | 'agent-admin' | 'schema-workshop';
+type WorkspaceView = 'library' | 'builder' | 'agent-admin' | 'schema-workshop' | 'decision-log';
 
 function App() {
   const [groups, setGroups] = useState<RuleGroup[]>([]);
@@ -149,6 +150,7 @@ function App() {
           }}
           onOpenAgentAdmin={() => setWorkspaceView('agent-admin')}
           onOpenSchemaWorkshop={() => setWorkspaceView('schema-workshop')}
+          onOpenDecisionLog={() => setWorkspaceView('decision-log')}
           onCreateGroup={handleCreateGroup}
           isDarkMode={isDarkMode}
           toggleDarkMode={() => setIsDarkMode(!isDarkMode)}
@@ -174,6 +176,10 @@ function App() {
               }}
               onOpenSchemaWorkshop={() => {
                 setWorkspaceView('schema-workshop');
+                setShowGroupPanel(false);
+              }}
+              onOpenDecisionLog={() => {
+                setWorkspaceView('decision-log');
                 setShowGroupPanel(false);
               }}
               onCreateGroup={handleCreateGroup}
@@ -219,6 +225,12 @@ function App() {
               </div>
             ) : workspaceView === 'schema-workshop' ? (
               <SchemaWorkshop llmConfig={llmConfig} onOpenSettings={() => setShowSettings(true)} />
+            ) : workspaceView === 'decision-log' ? (
+              <div className="h-full overflow-y-auto p-6">
+                <div className="mx-auto max-w-6xl">
+                  <DecisionLog />
+                </div>
+              </div>
             ) : selectedGroupId ? (
               workspaceView === 'library' ? (
                 <div className="flex h-full min-h-0 flex-col">

@@ -8,6 +8,8 @@ Unreal Objects is accountability infrastructure for autonomous AI agents. It sit
 
 ## Commands
 
+Requires **Python 3.11+** and **Node.js 18+**.
+
 ### Python Backend
 
 ```bash
@@ -16,17 +18,30 @@ python3 -m venv .venv
 source .venv/bin/activate
 pip install -e ".[dev]"
 
-# Run services
+# Run all three backend services (kills old processes first)
+./scripts/start_backend_stack.sh
+
+# Or run services individually
 uvicorn rule_engine.app:app --port 8001
 uvicorn decision_center.app:app --port 8002
-python mcp_server/server.py --transport sse --host 0.0.0.0 --port 8000
-uvicorn mcp_server.tool_agent:app --port 8003  # optional: Tool Creation Agent
+python mcp_server/server.py --transport streamable-http --host 0.0.0.0 --port 8000
+# With agent auth:
+python mcp_server/server.py --transport streamable-http --host 0.0.0.0 --port 8000 --auth-enabled --admin-api-key admin-secret
 
 # Tests
 pytest -v                                          # all tests
 pytest rule_engine/tests/test_api.py -v            # single file
 pytest decision_center/tests/test_evaluator.py -v  # evaluator unit tests
 pytest tests/test_integration.py -v               # end-to-end (starts live servers)
+
+# Agent eval (auto-starts services if needed)
+uo-agent-eval --domain generated                   # 500 edge-case scenarios (seed 42)
+uo-agent-eval --domain generated --seed random      # fresh scenarios each run
+uo-agent-eval --domain full                         # handwritten + generated (509 total)
+
+# Other CLI entry points (installed via pip install -e)
+uo-stress-test                                     # LLM translation stress test
+uo-agent-admin                                     # MCP agent administration
 
 # CLI wizard
 python decision_center/cli.py
@@ -81,7 +96,7 @@ If a provider omits `datapoints` but still returns usable JSON Logic, the transl
 
 ### MCP Server (`mcp_server/server.py`)
 
-Uses `FastMCP` and proxies calls to the Rule Engine and Decision Center. Supports both `stdio` (local Claude Desktop) and `sse` (SSE/HTTP for LAN agents) transports.
+Uses `FastMCP` and proxies calls to the Rule Engine and Decision Center. Supports `stdio` (local Claude Desktop) and `streamable-http` (HTTP for LAN agents) transports. Optional `--auth-enabled` flag enables agent authentication with API key enrollment and per-agent audit identity.
 
 ### Schema Management API (`decision_center/schema_generator.py`, `decision_center/app.py`)
 
@@ -90,13 +105,13 @@ Uses `FastMCP` and proxies calls to the Rule Engine and Decision Center. Support
 
 ### React UI (`ui/`)
 
-Vite + React + TypeScript + Tailwind CSS. Talks directly to Rule Engine (`:8001`) and Decision Center (`:8002`). Main components: `Sidebar` (group management), `ChatInterface` (LLM wizard for rule creation), `TestConsole` (action simulation).
+Vite + React + TypeScript + Tailwind CSS. Talks directly to Rule Engine (`:8001`) and Decision Center (`:8002`). Main components: `Sidebar` (group management), `ChatInterface` (LLM wizard for rule creation), `TestConsole` (action simulation), `DecisionLog` (audit trail viewer with expandable chain timelines).
 
 The `ChatInterface` schema dropdown is dynamically populated from `GET /v1/schemas` on mount (previously a hardcoded constant). `AgentAdminPanel` includes an MCP config snippet generator with tabs for Claude Desktop (HTTP/stdio), Cursor/Windsurf, and Generic clients, plus copy-to-clipboard.
 
 ## Key Design Decisions
 
-- **Fuzzy variable mapping** (`evaluator.py:map_missing_variables`): Before JSON Logic evaluation, missing variables are resolved via substring and difflib fuzzy matching against available context keys. This tolerates minor naming inconsistencies between rule definitions and agent context payloads.
+- **Fuzzy variable mapping** (`evaluator.py:map_missing_variables`): Before JSON Logic evaluation, missing variables are resolved via substring containment and difflib fuzzy matching against available context keys. To prevent false positives on shared generic suffixes (`_score`, `_amount`, `_days`, etc.), multi-part variable names must share at least one non-generic semantic part. Single-part names (e.g., `amount`) bypass this filter. The difflib cutoff is 0.7.
 - **Fail-closed**: All evaluation errors (type mismatch, unreachable Rule Engine, missing data) produce `ASK_FOR_APPROVAL`, never a silent `APPROVE` or an inherited `REJECT`. This is uniform across both the legacy string-parsing path and the JSON Logic path. Before failing closed, the evaluator attempts safe type coercion: `_coerce_bool_strings` converts `"true"`/`"false"` strings to booleans, and `_coerce_pair` converts string-number mismatches at the operator level.
 - **Dual rule format**: Every rule stores both a human-readable string and a JSON Logic AST. The string is used for CLI display and legacy fallback; the AST is authoritative for evaluation.
 - **Schema enforcement**: The CLI and UI both support optionally loading a JSON schema from `schemas/` (ecommerce or finance blueprints) to constrain variable names the LLM may use when generating rules.

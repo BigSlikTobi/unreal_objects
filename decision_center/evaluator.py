@@ -21,34 +21,69 @@ def extract_vars_from_jsonlogic(logic: Any, vars_set: set):
         for item in logic:
             extract_vars_from_jsonlogic(item, vars_set)
 
+def _split_var_parts(name: str) -> set[str]:
+    """Split a variable name into semantic parts (by underscore)."""
+    return {p for p in name.lower().split("_") if p}
+
+
 def map_missing_variables(rule_json: dict, context: Dict[str, Any]):
     """
-    Finds required variables in rule_json. If missing from context, 
+    Finds required variables in rule_json. If missing from context,
     fuzzily matches them against available keys and aliases them.
+
+    Matching strategy (in order):
+    1. Containment match — one name fully contains the other AND they share
+       at least one semantic word part beyond common suffixes like 'score',
+       'amount', 'days', 'rate', 'pct', 'count', 'id', 'value', 'time'.
+    2. Fuzzy match — difflib with cutoff=0.7 (raised from 0.4 to prevent
+       false positives on shared suffixes).
     """
     if not rule_json:
         return
-        
+
     required_vars = set()
     extract_vars_from_jsonlogic(rule_json, required_vars)
-    
+
     available_keys = list(context.keys())
-    
+    # Common suffixes that should NOT be sufficient for a match on their own
+    _GENERIC_PARTS = {"score", "amount", "days", "rate", "pct", "count", "id", "value", "time", "kg", "km"}
+
     for req_var in required_vars:
         if req_var not in context:
-            # 1. Substring Match (e.g., "amount" in "transaction_amount" or vice versa)
+            req_parts = _split_var_parts(req_var)
+
+            # 1. Containment match with semantic overlap check
             substring_matches = [k for k in available_keys if req_var in k or k in req_var]
             if substring_matches:
-                # Pick the shortest match to avoid overly broad grabs
-                best_match = min(substring_matches, key=len)
-                context[req_var] = context[best_match]
-                continue
-                
-            # 2. Fuzzy Match Backup
-            matches = difflib.get_close_matches(req_var, available_keys, n=1, cutoff=0.4)
+                best_match = None
+                for candidate in substring_matches:
+                    cand_parts = _split_var_parts(candidate)
+                    shared = req_parts & cand_parts
+                    # Single-part variable names (e.g. "amount") that are fully
+                    # contained in a context key are always valid matches.
+                    # For multi-part names, require a shared part beyond generic
+                    # suffixes to prevent e.g. aml_score → credit_score.
+                    if len(req_parts) <= 1:
+                        ok = bool(shared)
+                    else:
+                        ok = bool(shared - _GENERIC_PARTS)
+                    if ok:
+                        if best_match is None or len(candidate) < len(best_match):
+                            best_match = candidate
+                if best_match is not None:
+                    context[req_var] = context[best_match]
+                    continue
+
+            # 2. Fuzzy match backup (stricter cutoff + semantic check)
+            matches = difflib.get_close_matches(req_var, available_keys, n=1, cutoff=0.7)
             if matches:
                 alias = matches[0]
-                context[req_var] = context[alias]
+                # Apply same semantic check: multi-part names must share
+                # a meaningful (non-generic) part to prevent false positives.
+                alias_parts = _split_var_parts(alias)
+                shared = req_parts & alias_parts
+                if len(req_parts) <= 1 or bool(shared - _GENERIC_PARTS):
+                    context[req_var] = context[alias]
 
 # ── Type coercion helpers ──
 # Agents and UIs send context values as strings ("500", "true") while JSON Logic

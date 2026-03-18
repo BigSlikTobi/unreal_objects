@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Plus, Settings, ListTodo, Sun, Moon, Check, X, AlertTriangle, ShieldCheck, Layers } from 'lucide-react';
+import { Plus, Settings, ListTodo, Sun, Moon, Check, X, AlertTriangle, ShieldCheck, Layers, ScrollText } from 'lucide-react';
 import type { RuleGroup } from '../types';
 
 interface SidebarProps {
@@ -12,6 +12,7 @@ interface SidebarProps {
   onOpenSettings: () => void;
   onOpenAgentAdmin: () => void;
   onOpenSchemaWorkshop?: () => void;
+  onOpenDecisionLog: () => void;
   llmConfigured: boolean;
   className?: string;
 }
@@ -26,6 +27,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   onOpenSettings,
   onOpenAgentAdmin,
   onOpenSchemaWorkshop,
+  onOpenDecisionLog,
   llmConfigured,
   className = '',
 }) => {
@@ -165,6 +167,13 @@ export const Sidebar: React.FC<SidebarProps> = ({
             <span className="text-sm font-medium">Schema Workshop</span>
           </button>
         )}
+        <button
+          onClick={onOpenDecisionLog}
+          className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-left text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+        >
+          <ScrollText size={16} />
+          <span className="text-sm font-medium">Decision Log</span>
+        </button>
         <button
           onClick={onOpenSettings}
           className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-left transition-colors ${

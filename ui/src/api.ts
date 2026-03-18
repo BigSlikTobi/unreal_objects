@@ -1,7 +1,9 @@
 import type {
   AgentRecord,
+  AtomicLogEntry,
   CredentialRecord,
   DatapointDefinition,
+  DecisionChain,
   DecisionResult,
   EnrollmentTokenIssue,
   GenerateSchemaRequest,
@@ -236,6 +238,18 @@ export const saveSchema = async (proposal: Omit<SchemaProposal, 'message'> & { f
     try { body = await res.json(); } catch { /* ignore */ }
     throw new Error((body?.detail as string) || 'Save schema failed');
   }
+  return res.json();
+};
+
+export const fetchAtomicLogs = async (): Promise<AtomicLogEntry[]> => {
+  const res = await fetch(`${DECISION_BASE}/logs/atomic`, { cache: 'no-store' });
+  if (!res.ok) throw new Error('Failed to fetch decision logs');
+  return res.json();
+};
+
+export const fetchDecisionChain = async (requestId: string): Promise<DecisionChain> => {
+  const res = await fetch(`${DECISION_BASE}/logs/chains/${encodeURIComponent(requestId)}`, { cache: 'no-store' });
+  if (!res.ok) throw new Error('Failed to fetch decision chain');
   return res.json();
 };
 
