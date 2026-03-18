@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { ChevronDown, ChevronRight, RefreshCw, ScrollText } from 'lucide-react';
 import { fetchAtomicLogs, fetchDecisionChain } from '../api';
 import type { AtomicLogEntry, DecisionChain, DecisionState } from '../types';
@@ -37,6 +37,11 @@ export function DecisionLog() {
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [chain, setChain] = useState<DecisionChain | null>(null);
   const [chainLoading, setChainLoading] = useState(false);
+  const expandedIdRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    expandedIdRef.current = expandedId;
+  }, [expandedId]);
 
   const refresh = useCallback(async () => {
     setIsLoading(true);
@@ -68,11 +73,18 @@ export function DecisionLog() {
     setChainLoading(true);
     try {
       const data = await fetchDecisionChain(requestId);
+      if (expandedIdRef.current !== requestId) {
+        return;
+      }
       setChain(data);
     } catch {
-      setChain(null);
+      if (expandedIdRef.current === requestId) {
+        setChain(null);
+      }
     } finally {
-      setChainLoading(false);
+      if (expandedIdRef.current === requestId) {
+        setChainLoading(false);
+      }
     }
   };
 
