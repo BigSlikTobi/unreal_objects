@@ -102,3 +102,28 @@ export interface EnrollmentTokenIssue {
   allowed_group_ids: string[];
   expires_at: string;
 }
+
+export type DecisionState = 'APPROVED' | 'REJECTED' | 'APPROVAL_REQUIRED';
+
+export interface AtomicLogEntry {
+  request_id: string;
+  timestamp: string;
+  request_description: string;
+  context: Record<string, unknown>;
+  decision: DecisionState;
+  agent_id?: string | null;
+  credential_id?: string | null;
+  user_id?: string | null;
+  effective_group_id?: string | null;
+}
+
+export interface ChainEvent {
+  timestamp: string;
+  event_type: string;
+  details: Record<string, unknown>;
+}
+
+export interface DecisionChain {
+  request_id: string;
+  events: ChainEvent[];
+}

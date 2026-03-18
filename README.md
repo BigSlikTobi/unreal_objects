@@ -80,13 +80,29 @@ pytest -v
 
 ---
 
-## 📈 Stress-Test Snapshot
+## 📈 Evaluation Snapshot
+
+### LLM Translation Stress Test
 
 | Schema         | Pass Rate             | Evidence                                   |
 | -------------- | --------------------- | ------------------------------------------ |
 | **E-Commerce** | **98.7%** (532 cases) | `evals/generative_evaluation_report_v5.md` |
 | **Finance**    | **92.3%** (519 cases) | `evals/generative_evaluation_report_v6.md` |
 | **No Schema**  | CLI-ready             | No committed baseline yet                  |
+
+### Agent Eval (end-to-end pipeline)
+
+| Domain        | Scenarios | Pass Rate  | Evidence                  |
+| ------------- | --------: | ---------- | ------------------------- |
+| **Generated** |       500 | **100.0%** | `evals/agent_eval_report_v5.md` |
+| **Finance**   |         6 | **100.0%** | No committed baseline yet |
+| **Ecommerce** |         3 | **100.0%** | No committed baseline yet |
+
+500 generated scenarios cover 12 edge-case patterns (boundary values, fail-closed
+missing data, type mismatches, fuzzy variable mapping, inactive rules, outcome
+precedence, legacy fallback, edge-case short-circuiting, multi-step workflows,
+and more) across 5 domains. Run `uo-agent-eval --domain generated --seed random`
+for a fresh set each time.
 
 ---
 
