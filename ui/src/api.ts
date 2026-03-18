@@ -6,12 +6,15 @@ import type {
   DecisionChain,
   DecisionResult,
   EnrollmentTokenIssue,
+  GenerateSchemaRequest,
   LlmConfig,
   ProposedField,
   Rule,
   RuleGroup,
   RulePayload,
   RuleTranslation,
+  SchemaField,
+  SchemaProposal,
 } from './types';
 
 export interface TranslateRuleRequest extends LlmConfig {
@@ -190,6 +193,51 @@ export const issueEnrollmentToken = async (
     body: JSON.stringify(payload),
   });
   if (!res.ok) throw new Error('Failed to issue enrollment token');
+  return res.json();
+};
+
+export interface SchemaEntry {
+  key: string;
+  name: string;
+  description: string;
+  schema: Record<string, string>;
+}
+
+export const fetchSchemas = async (): Promise<SchemaEntry[]> => {
+  const res = await fetch(`${DECISION_BASE}/schemas`, { cache: 'no-store' });
+  if (!res.ok) throw new Error('Failed to fetch schemas');
+  return res.json();
+};
+
+export const generateSchema = async (data: GenerateSchemaRequest): Promise<SchemaProposal> => {
+  const res = await fetch(`${DECISION_BASE}/llm/schema`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data),
+  });
+  if (!res.ok) {
+    let body: Record<string, unknown> | null = null;
+    try { body = await res.json(); } catch { /* ignore */ }
+    throw new Error((body?.detail as string) || 'Schema generation failed');
+  }
+  return res.json();
+};
+
+export const saveSchema = async (proposal: Omit<SchemaProposal, 'message'> & { fields: SchemaField[] }, adminApiKey?: string): Promise<{ path: string; name: string }> => {
+  const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+  if (adminApiKey) {
+    headers['X-Admin-Key'] = adminApiKey;
+  }
+  const res = await fetch(`${DECISION_BASE}/schemas/save`, {
+    method: 'POST',
+    headers,
+    body: JSON.stringify(proposal),
+  });
+  if (!res.ok) {
+    let body: Record<string, unknown> | null = null;
+    try { body = await res.json(); } catch { /* ignore */ }
+    throw new Error((body?.detail as string) || 'Save schema failed');
+  }
   return res.json();
 };
 

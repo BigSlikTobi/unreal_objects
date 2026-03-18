@@ -103,6 +103,25 @@ export interface EnrollmentTokenIssue {
   expires_at: string;
 }
 
+export interface SchemaField {
+  name: string;
+  type: string;
+  description: string;
+}
+
+export interface SchemaProposal {
+  name: string;
+  description: string;
+  fields: SchemaField[];
+  message: string;
+}
+
+export interface GenerateSchemaRequest extends LlmConfig {
+  user_message: string;
+  conversation_history: { role: string; content: string }[];
+  current_schema?: Record<string, string>;
+}
+
 export type DecisionState = 'APPROVED' | 'REJECTED' | 'APPROVAL_REQUIRED';
 
 export interface AtomicLogEntry {

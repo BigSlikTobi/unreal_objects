@@ -627,6 +627,117 @@ def prompt_auto_test(group_id: str, rule: dict):
         except Exception as e:
             print(f"\n❌ Test Failed: {e}")
 
+def _call_schema_api(user_message: str, history: list, current_schema: dict | None, llm_config: dict) -> dict:
+    with httpx.Client(timeout=60) as client:
+        try:
+            resp = client.post(
+                "http://127.0.0.1:8002/v1/llm/schema",
+                json={
+                    "provider": llm_config["provider"],
+                    "model": llm_config["model"],
+                    "api_key": llm_config["api_key"],
+                    "user_message": user_message,
+                    "conversation_history": history,
+                    "current_schema": current_schema,
+                },
+            )
+            resp.raise_for_status()
+            return resp.json()
+        except httpx.RequestError as exc:
+            print(f"\n❌ Cannot reach Decision Center on port 8002. Start it first.\n   {exc}")
+            raise
+
+
+def _proposal_to_flat_schema(proposal: dict) -> dict:
+    return {f["name"]: f"{f['type']} ({f['description']})" for f in proposal.get("fields", [])}
+
+
+def _print_schema_proposal(proposal: dict):
+    name = proposal.get("name", "")
+    desc = proposal.get("description", "")
+    fields = proposal.get("fields", [])
+    message = proposal.get("message", "")
+
+    if name:
+        print(f"\n  Schema: {name}")
+    if desc:
+        print(f"  Description: {desc}")
+    if message:
+        print(f"\n  AI: {message}")
+    if fields:
+        print(f"\n  {'Field':<35} {'Type':<10} {'Description'}")
+        print(f"  {'-'*35} {'-'*10} {'-'*40}")
+        for f in fields:
+            print(f"  {f['name']:<35} {f['type']:<10} {f['description']}")
+
+
+def _save_schema_via_api(proposal: dict):
+    with httpx.Client() as client:
+        try:
+            resp = client.post(
+                "http://127.0.0.1:8002/v1/schemas/save",
+                json={
+                    "name": proposal.get("name", "custom_schema"),
+                    "description": proposal.get("description", ""),
+                    "fields": proposal.get("fields", []),
+                },
+            )
+            resp.raise_for_status()
+            data = resp.json()
+            print(f"\n✅ Schema saved to: {data['path']}")
+            return data
+        except httpx.RequestError as exc:
+            print(f"\n❌ Cannot reach Decision Center on port 8002. Start it first.\n   {exc}")
+            raise
+
+
+def run_schema_wizard(llm_config: dict):
+    print("\n--- Schema Workshop ---")
+    print("Describe your domain and the AI will propose a field schema.")
+    print("Refine iteratively until satisfied, then save.\n")
+
+    history = []
+    current_proposal = None
+
+    domain_desc = input("Describe your domain (e.g. 'healthcare patient intake'): ").strip()
+    if not domain_desc:
+        print("Aborted.")
+        return
+
+    while True:
+        user_message = domain_desc if not history else domain_desc
+        print("\nGenerating schema...")
+        try:
+            current_schema = _proposal_to_flat_schema(current_proposal) if current_proposal else None
+            proposal = _call_schema_api(user_message, history, current_schema, llm_config)
+        except Exception:
+            return
+
+        _print_schema_proposal(proposal)
+        current_proposal = proposal
+
+        # Update conversation history
+        history.append({"role": "user", "content": user_message})
+        history.append({"role": "assistant", "content": proposal.get("message", "Schema updated.")})
+
+        print("\nOptions: [D]one (save)  |  [A]bort  |  <type refinement>")
+        raw = input("Choice: ").strip()
+        upper = raw.upper()
+
+        if upper == "A":
+            print("Aborted.")
+            return
+        elif upper == "D" or upper == "":
+            if current_proposal:
+                try:
+                    _save_schema_via_api(current_proposal)
+                except Exception:
+                    pass
+            return
+        else:
+            domain_desc = raw
+
+
 def main():
     os.system('cls' if os.name == 'nt' else 'clear')
     print(r"""
@@ -652,15 +763,28 @@ def main():
                                         ▝▘ ▝▀ ▝▀▘ ▝▀▀▀▘▝▀▀▀▘ ▀▀▘      ▝▀▀▀▘▝▘ ▀▘  ▀▀  ▀▀▀ ▝▘ ▀▘▝▀▀▀▘                    
 """)
     prompt_start_servers()
-    
+
+    print("\n--- Mode Selection ---")
+    print("  1. Rule Management")
+    print("  2. Schema Workshop")
+    mode = input("Select mode [1-2, Default: 1]: ").strip() or "1"
+
     llm_config = prompt_llm_setup()
+
+    if mode == "2":
+        if not llm_config:
+            print("\n❌ Schema Workshop requires an LLM. Please configure one.")
+            return
+        run_schema_wizard(llm_config)
+        return
+
     group_id = prompt_group_selection()
     print(f"\nFinal Selected Group ID: {group_id}")
-    
+
     while True:
         rule = prompt_rule_creation(group_id, llm_config)
         prompt_auto_test(group_id, rule)
-        
+
         cont = input("\nDo you want to manage another rule in this group? [Y/n] ").strip().lower()
         if cont == 'n':
             print("Exiting Decision Center Wizard. Goodbye!")

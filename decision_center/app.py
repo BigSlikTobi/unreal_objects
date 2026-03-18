@@ -3,14 +3,17 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from typing import List
 import json
+import os
 
 from .models import (
     DecisionOutcome, DecisionState, EvaluateRequest, DecisionResult,
-    ApprovalSubmission, AtomicLogEntry, DecisionChain, LLMConnectionRequest, RuleTranslationRequest
+    ApprovalSubmission, AtomicLogEntry, DecisionChain, LLMConnectionRequest, RuleTranslationRequest,
+    SchemaGenerationRequest, SchemaSaveRequest,
 )
 from .store import DecisionStore
 from .evaluator import evaluate_request
 from .translator import check_llm_connection, translate_rule, SchemaConceptMismatchError
+from .schema_generator import generate_schema, list_schemas, save_schema, SchemaProposal, SchemaExistsError
 import uuid
 
 app = FastAPI(title="Unreal Objects Decision Center API")
@@ -24,6 +27,14 @@ app.add_middleware(
 )
 
 store = DecisionStore()
+
+_ADMIN_API_KEY = os.environ.get("ADMIN_API_KEY")
+
+def _require_admin(request: Request):
+    if not _ADMIN_API_KEY:
+        return  # no key configured — open access (dev mode)
+    if request.headers.get("X-Admin-Key") != _ADMIN_API_KEY:
+        raise HTTPException(status_code=401, detail="Invalid admin API key")
 
 def _outcome_to_state(outcome: DecisionOutcome) -> DecisionState:
     if outcome == DecisionOutcome.APPROVE:
@@ -166,5 +177,41 @@ async def translate_rule_api(req: RuleTranslationRequest):
         if e.proposed_field:
             content["proposed_field"] = e.proposed_field
         return JSONResponse(status_code=422, content=content)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/v1/llm/schema")
+async def generate_schema_api(req: SchemaGenerationRequest):
+    try:
+        proposal = generate_schema(
+            req.user_message,
+            req.conversation_history,
+            req.current_schema,
+            req.provider,
+            req.model,
+            req.api_key,
+        )
+        return proposal.model_dump()
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/v1/schemas")
+async def list_schemas_api():
+    return list_schemas()
+
+@app.post("/v1/schemas/save")
+async def save_schema_api(req: SchemaSaveRequest, request: Request):
+    _require_admin(request)
+    try:
+        proposal = SchemaProposal(
+            name=req.name,
+            description=req.description,
+            fields=req.fields,
+            message="",
+        )
+        path = save_schema(proposal, overwrite=req.overwrite)
+        return {"path": path, "name": proposal.name}
+    except SchemaExistsError as e:
+        raise HTTPException(status_code=409, detail=str(e))
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))

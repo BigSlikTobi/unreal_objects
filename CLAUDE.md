@@ -76,7 +76,7 @@ When an action is evaluated (`GET /v1/decide`):
 1. The Decision Center fetches the rule group from the Rule Engine at `127.0.0.1:8001`.
 2. For each rule, **edge cases are evaluated first** (they short-circuit if matched).
 3. If no edge case matches, the main `rule_logic_json` (JSON Logic AST) is evaluated.
-4. Strict fail-closed type checking: type mismatches or missing variables default to `ASK_FOR_APPROVAL` or `REJECT`. A missing `group_id` defaults to `APPROVE`.
+4. Strict fail-closed type checking: type mismatches or missing variables always default to `ASK_FOR_APPROVAL` (regardless of the rule's own outcome). A missing `group_id` defaults to `APPROVE`. String booleans (`"true"`/`"false"`) and string numbers (`"600"`) are coerced to native types before evaluation; un-coerceable mismatches escalate to `ASK_FOR_APPROVAL`.
 5. Outcome precedence: `REJECT` > `ASK_FOR_APPROVAL` > `APPROVE` (most restrictive wins).
 6. All decisions are written to two audit logs: atomic log (flat entries) and decision chains (event sequences per request).
 
@@ -98,14 +98,21 @@ If a provider omits `datapoints` but still returns usable JSON Logic, the transl
 
 Uses `FastMCP` and proxies calls to the Rule Engine and Decision Center. Supports `stdio` (local Claude Desktop) and `streamable-http` (HTTP for LAN agents) transports. Optional `--auth-enabled` flag enables agent authentication with API key enrollment and per-agent audit identity.
 
+### Schema Management API (`decision_center/schema_generator.py`, `decision_center/app.py`)
+
+- `GET /v1/schemas`: lists all `.json` files under `schemas/`, returning `{key, name, description, schema}` per entry.
+- `POST /v1/schemas/save`: persists a `SchemaProposal` as JSON. Requires `overwrite: true` to replace an existing file; returns HTTP 409 (`SchemaExistsError`) otherwise. Optionally protected by `ADMIN_API_KEY` env var (checked via `X-Admin-Key` header); if the env var is unset, the endpoint is open (dev mode).
+
 ### React UI (`ui/`)
 
 Vite + React + TypeScript + Tailwind CSS. Talks directly to Rule Engine (`:8001`) and Decision Center (`:8002`). Main components: `Sidebar` (group management), `ChatInterface` (LLM wizard for rule creation), `TestConsole` (action simulation), `DecisionLog` (audit trail viewer with expandable chain timelines).
 
+The `ChatInterface` schema dropdown is dynamically populated from `GET /v1/schemas` on mount (previously a hardcoded constant). `AgentAdminPanel` includes an MCP config snippet generator with tabs for Claude Desktop (HTTP/stdio), Cursor/Windsurf, and Generic clients, plus copy-to-clipboard.
+
 ## Key Design Decisions
 
 - **Fuzzy variable mapping** (`evaluator.py:map_missing_variables`): Before JSON Logic evaluation, missing variables are resolved via substring containment and difflib fuzzy matching against available context keys. To prevent false positives on shared generic suffixes (`_score`, `_amount`, `_days`, etc.), multi-part variable names must share at least one non-generic semantic part. Single-part names (e.g., `amount`) bypass this filter. The difflib cutoff is 0.7.
-- **Fail-closed**: All evaluation errors (type mismatch, unreachable Rule Engine, missing data) produce a restrictive outcome, never a silent `APPROVE`.
+- **Fail-closed**: All evaluation errors (type mismatch, unreachable Rule Engine, missing data) produce `ASK_FOR_APPROVAL`, never a silent `APPROVE` or an inherited `REJECT`. This is uniform across both the legacy string-parsing path and the JSON Logic path. Before failing closed, the evaluator attempts safe type coercion: `_coerce_bool_strings` converts `"true"`/`"false"` strings to booleans, and `_coerce_pair` converts string-number mismatches at the operator level.
 - **Dual rule format**: Every rule stores both a human-readable string and a JSON Logic AST. The string is used for CLI display and legacy fallback; the AST is authoritative for evaluation.
 - **Schema enforcement**: The CLI and UI both support optionally loading a JSON schema from `schemas/` (ecommerce or finance blueprints) to constrain variable names the LLM may use when generating rules.
 - **Schema-constrained translation**: When a schema is provided, translator prompts explicitly forbid pseudo-datapoints such as `exists`, `missing`, or helper field-presence flags. Built-in blueprints should cover common delivery/shipping and transfer/beneficiary concepts so the model can stay inside the approved vocabulary.

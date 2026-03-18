@@ -1,0 +1,30 @@
+{
+  "name": "high_value_global_box_shipment",
+  "description": "Operational and risk-focused schema for global shipments of high-value boxed goods.",
+  "schema": {
+    "shipment_reference": "string (External shipment reference code)",
+    "customer_type": "string (Customer segment (e.g., enterprise, retail))",
+    "origin_country": "string (Country of shipment origin)",
+    "origin_city": "string (City of shipment origin)",
+    "destination_country": "string (Country of shipment destination)",
+    "destination_city": "string (City of shipment destination)",
+    "trade_incoterm": "string (Incoterm governing responsibility)",
+    "transport_mode": "string (Primary transport mode (air, ocean, road))",
+    "service_level": "string (Service tier (standard, express, secure))",
+    "package_count": "number (Number of boxes in the shipment)",
+    "total_weight_kg": "number (Total shipment weight in kilograms)",
+    "total_volume_m3": "number (Total shipment volume in cubic meters)",
+    "declared_value_amount": "number (Declared value for carriage and insurance)",
+    "declared_value_currency": "string (Currency of declared value)",
+    "goods_category": "string (High-level goods category)",
+    "hs_code": "string (Customs HS classification code)",
+    "dangerous_goods_flag": "boolean (Indicates regulated dangerous goods)",
+    "temperature_control_required": "boolean (Requires temperature-controlled handling)",
+    "insurance_required": "boolean (Indicates shipment is insured/needs insurance)",
+    "custody_chain_required": "boolean (Requires enhanced chain-of-custody controls)",
+    "customs_clearance_type": "string (Clearance approach (broker, self, courier))",
+    "duties_taxes_paid_by": "string (Party responsible for duties and taxes)",
+    "delivery_signature_required": "boolean (Requires signature on delivery)",
+    "risk_rating": "string (Operational risk level (low, medium, high))"
+  }
+}

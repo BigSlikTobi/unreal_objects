@@ -85,9 +85,38 @@ def map_missing_variables(rule_json: dict, context: Dict[str, Any]):
                 if len(req_parts) <= 1 or bool(shared - _GENERIC_PARTS):
                     context[req_var] = context[alias]
 
+# ── Type coercion helpers ──
+# Agents and UIs send context values as strings ("500", "true") while JSON Logic
+# rules use native types (500, true).  Rather than failing closed on every
+# type mismatch, we attempt safe coercion at the operator level so that the
+# rule can be evaluated correctly.
+
+def _try_coerce_numeric(s: str):
+    """Attempt to parse a string as int or float.  Returns the original string on failure."""
+    try:
+        return int(s) if "." not in s else float(s)
+    except (ValueError, OverflowError):
+        return s
+
+
+def _coerce_pair(a, b):
+    """If one side is a string and the other a number, try to coerce the string.
+
+    Returns the (possibly coerced) pair.  Does NOT coerce bool strings here —
+    that is handled upstream in _coerce_bool_strings so it covers all operators
+    uniformly.
+    """
+    if isinstance(a, str) and isinstance(b, (int, float)) and not isinstance(b, bool):
+        a = _try_coerce_numeric(a)
+    elif isinstance(b, str) and isinstance(a, (int, float)) and not isinstance(a, bool):
+        b = _try_coerce_numeric(b)
+    return a, b
+
+
 # Enforce fail-closed type checking within JSON Logic
 def strict_eq(a, b):
     if a is None or b is None: raise ValueError("Missing data")
+    a, b = _coerce_pair(a, b)
     if type(a) != type(b) and not (isinstance(a, (int, float)) and isinstance(b, (int, float))):
         raise ValueError("Type mismatch in ==")
     if isinstance(a, str) and isinstance(b, str): return a.lower() == b.lower()
@@ -95,6 +124,7 @@ def strict_eq(a, b):
 
 def strict_neq(a, b):
     if a is None or b is None: raise ValueError("Missing data")
+    a, b = _coerce_pair(a, b)
     if type(a) != type(b) and not (isinstance(a, (int, float)) and isinstance(b, (int, float))):
         raise ValueError("Type mismatch in !=")
     if isinstance(a, str) and isinstance(b, str): return a.lower() != b.lower()
@@ -102,18 +132,22 @@ def strict_neq(a, b):
 
 def strict_gt(a, b):
     if a is None or b is None: raise ValueError("Missing data")
+    a, b = _coerce_pair(a, b)
     return a > b
 
 def strict_lt(a, b):
     if a is None or b is None: raise ValueError("Missing data")
+    a, b = _coerce_pair(a, b)
     return a < b
 
 def strict_gte(a, b):
     if a is None or b is None: raise ValueError("Missing data")
+    a, b = _coerce_pair(a, b)
     return a >= b
 
 def strict_lte(a, b):
     if a is None or b is None: raise ValueError("Missing data")
+    a, b = _coerce_pair(a, b)
     return a <= b
 
 # Overwrite built-ins to secure them
@@ -146,10 +180,9 @@ def legacy_evaluate_rule(rule_logic: str, context: Dict[str, Any]) -> str | None
     if operator == "=":
         operator = "=="
 
-    _RESTRICTIVE = {"REJECT", "ASK_FOR_APPROVAL"}
-    fail_closed_outcome = outcome.upper() if outcome.upper() in _RESTRICTIVE else "ASK_FOR_APPROVAL"
-
-    if value is None: return fail_closed_outcome
+    if value is None:
+        # Missing data — escalate to human, never silently approve or reject
+        return "ASK_FOR_APPROVAL"
 
     try:
         if operator == "==" and strict_eq(value, threshold_val): return outcome.upper()
@@ -159,27 +192,39 @@ def legacy_evaluate_rule(rule_logic: str, context: Dict[str, Any]) -> str | None
         if operator == ">=" and strict_gte(value, threshold_val): return outcome.upper()
         if operator == "<=" and strict_lte(value, threshold_val): return outcome.upper()
     except (ValueError, TypeError):
-        return fail_closed_outcome
+        # Type mismatch after coercion — we cannot evaluate the rule, so we
+        # must not claim it matched.  Always escalate to human review.
+        return "ASK_FOR_APPROVAL"
         
     return None
+
+def _coerce_bool_strings(context: Dict[str, Any]) -> None:
+    """Coerce string 'true'/'false' values to actual booleans.
+
+    JSON Logic rules use real booleans, but callers (UI, agents) sometimes
+    send string representations.  Without coercion, strict_eq raises a type
+    mismatch and the rule fail-closes instead of evaluating correctly.
+    """
+    for k, v in context.items():
+        if isinstance(v, str):
+            low = v.lower()
+            if low == "true":
+                context[k] = True
+            elif low == "false":
+                context[k] = False
+
 
 def evaluate_rule(rule_json: dict | None, rule_logic: str, context: Dict[str, Any]) -> str | None:
     """Evaluates rules using JSON Logic if available, falling back to legacy string parsing."""
     if not rule_json:
         return legacy_evaluate_rule(rule_logic, context)
 
-    # Calculate safe fallback based on the legacy string severity
-    _RESTRICTIVE = {"REJECT", "ASK_FOR_APPROVAL"}
-    fail_closed_outcome = "ASK_FOR_APPROVAL"
-    pattern = r"THEN\s+(\w+)"
-    match = re.search(pattern, rule_logic, re.IGNORECASE)
-    if match and match.group(1).upper() in _RESTRICTIVE:
-        fail_closed_outcome = match.group(1).upper()
-
     try:
+        # Coerce string booleans before evaluation
+        _coerce_bool_strings(context)
         # Map missing variables via fuzzy matching before evaluating
         map_missing_variables(rule_json, context)
-        
+
         # Evaluate safely
         result = jsonLogic(rule_json, context)
         if result in ["APPROVE", "REJECT", "ASK_FOR_APPROVAL"]:
@@ -187,8 +232,11 @@ def evaluate_rule(rule_json: dict | None, rule_logic: str, context: Dict[str, An
         # If False/None, the condition wasn't met
         return None
     except (ValueError, TypeError):
-        # Type mismatch or missing data
-        return fail_closed_outcome
+        # Type mismatch or missing data *after* coercion — we cannot
+        # determine what the rule would have decided, so we must not claim
+        # it matched (REJECT) or that it didn't (APPROVE).  Always
+        # escalate to human review.
+        return "ASK_FOR_APPROVAL"
 
 import httpx
 
