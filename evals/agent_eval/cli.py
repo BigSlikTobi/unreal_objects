@@ -12,6 +12,7 @@ import subprocess
 import sys
 import time
 from pathlib import Path
+from urllib.parse import urlparse
 
 import httpx
 
@@ -26,17 +27,29 @@ from evals.agent_eval.scenarios.generated import GENERATED_SCENARIOS, generate_s
 
 def _start_services(rule_engine_url: str, decision_center_url: str) -> list[subprocess.Popen]:
     """Start Rule Engine and Decision Center as background processes."""
-    re_port = rule_engine_url.rsplit(":", 1)[-1]
-    dc_port = decision_center_url.rsplit(":", 1)[-1]
+    re_parsed = urlparse(rule_engine_url)
+    dc_parsed = urlparse(decision_center_url)
+
+    re_port = re_parsed.port
+    dc_port = dc_parsed.port
+
+    for name, url, port in (
+        ("rule_engine_url", rule_engine_url, re_port),
+        ("decision_center_url", decision_center_url, dc_port),
+    ):
+        if port is None:
+            raise ValueError(f"{name} must include an explicit port (got {url!r})")
+        if not isinstance(port, int) or not (0 < port < 65536):
+            raise ValueError(f"Invalid port {port!r} extracted from {name}={url!r}")
 
     procs = [
         subprocess.Popen(
-            [sys.executable, "-m", "uvicorn", "rule_engine.app:app", "--port", re_port],
+            [sys.executable, "-m", "uvicorn", "rule_engine.app:app", "--port", str(re_port)],
             stdout=subprocess.DEVNULL,
             stderr=subprocess.DEVNULL,
         ),
         subprocess.Popen(
-            [sys.executable, "-m", "uvicorn", "decision_center.app:app", "--port", dc_port],
+            [sys.executable, "-m", "uvicorn", "decision_center.app:app", "--port", str(dc_port)],
             stdout=subprocess.DEVNULL,
             stderr=subprocess.DEVNULL,
         ),
