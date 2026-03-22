@@ -90,6 +90,110 @@ async def test_approval_flow_and_logs(mock_rule_engine):
 
 
 @pytest.mark.asyncio
+async def test_approval_logs_atomic_entry_approved(mock_rule_engine):
+    """After approve, a second atomic log entry with APPROVED decision is created."""
+    mock_response = MagicMock()
+    mock_response.status_code = 200
+    mock_response.json.return_value = {
+        "id": "g1",
+        "name": "Grp",
+        "rules": [
+            {"id": "r1", "rule_logic": "IF amount > 100 THEN ASK_FOR_APPROVAL"}
+        ]
+    }
+    mock_rule_engine.return_value = mock_response
+
+    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
+        context_str = '{"amount": 150}'
+        resp = await client.get(f"/v1/decide?request_description=NeedLaptop&context={context_str}&group_id=g1")
+        req_id = resp.json()["request_id"]
+
+        # Submit approval
+        resp = await client.post(f"/v1/decide/{req_id}/approve", json={"approved": True, "approver": "Alice"})
+        assert resp.status_code == 200
+
+        # Atomic log should have two entries for this request_id
+        resp = await client.get("/v1/logs/atomic")
+        entries = [e for e in resp.json() if e["request_id"] == req_id]
+        assert len(entries) == 2
+        assert entries[0]["decision"] == "APPROVAL_REQUIRED"
+        assert entries[1]["decision"] == "APPROVED"
+        assert entries[1]["request_description"] == "NeedLaptop"
+        assert entries[1]["context"] == {"amount": 150}
+
+
+@pytest.mark.asyncio
+async def test_approval_logs_atomic_entry_rejected(mock_rule_engine):
+    """After reject, a second atomic log entry with REJECTED decision is created."""
+    mock_response = MagicMock()
+    mock_response.status_code = 200
+    mock_response.json.return_value = {
+        "id": "g1",
+        "name": "Grp",
+        "rules": [
+            {"id": "r1", "rule_logic": "IF amount > 100 THEN ASK_FOR_APPROVAL"}
+        ]
+    }
+    mock_rule_engine.return_value = mock_response
+
+    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
+        context_str = '{"amount": 150}'
+        resp = await client.get(f"/v1/decide?request_description=NeedLaptop&context={context_str}&group_id=g1")
+        req_id = resp.json()["request_id"]
+
+        # Submit rejection
+        resp = await client.post(f"/v1/decide/{req_id}/approve", json={"approved": False, "approver": "Bob"})
+        assert resp.status_code == 200
+
+        # Atomic log should have two entries for this request_id
+        resp = await client.get("/v1/logs/atomic")
+        entries = [e for e in resp.json() if e["request_id"] == req_id]
+        assert len(entries) == 2
+        assert entries[0]["decision"] == "APPROVAL_REQUIRED"
+        assert entries[1]["decision"] == "REJECTED"
+        assert entries[1]["request_description"] == "NeedLaptop"
+
+
+@pytest.mark.asyncio
+async def test_approval_preserves_identity_in_atomic_entry(mock_rule_engine):
+    """Atomic log entry from approval preserves identity fields from the original request."""
+    mock_response = MagicMock()
+    mock_response.status_code = 200
+    mock_response.json.return_value = {
+        "id": "g1",
+        "name": "Grp",
+        "rules": [
+            {"id": "r1", "rule_logic": "IF amount > 100 THEN ASK_FOR_APPROVAL"}
+        ]
+    }
+    mock_rule_engine.return_value = mock_response
+
+    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
+        resp = await client.post(
+            "/v1/decide",
+            json={
+                "request_description": "NeedLaptop",
+                "context": {"amount": 150},
+                "group_id": "g1",
+                "agent_id": "agt_01",
+                "credential_id": "cred_a",
+                "user_id": "user_1",
+            },
+        )
+        req_id = resp.json()["request_id"]
+
+        await client.post(f"/v1/decide/{req_id}/approve", json={"approved": True, "approver": "Alice"})
+
+        resp = await client.get("/v1/logs/atomic")
+        entries = [e for e in resp.json() if e["request_id"] == req_id]
+        final = entries[-1]
+        assert final["decision"] == "APPROVED"
+        assert final["agent_id"] == "agt_01"
+        assert final["credential_id"] == "cred_a"
+        assert final["user_id"] == "user_1"
+
+
+@pytest.mark.asyncio
 async def test_post_evaluate_records_identity_fields_in_logs_and_pending(mock_rule_engine):
     mock_response = MagicMock()
     mock_response.status_code = 200
