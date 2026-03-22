@@ -134,6 +134,19 @@ async def submit_approval(request_id: str, submission: ApprovalSubmission):
         "user_id": pending.get("user_id"),
         "effective_group_id": pending.get("effective_group_id"),
     })
+
+    final_decision = DecisionState.APPROVED if submission.approved else DecisionState.REJECTED
+    store.log_atomic(AtomicLogEntry(
+        request_id=request_id,
+        request_description=pending.get("description", ""),
+        context=pending.get("context", {}),
+        decision=final_decision,
+        agent_id=pending.get("agent_id"),
+        credential_id=pending.get("credential_id"),
+        user_id=pending.get("user_id"),
+        effective_group_id=pending.get("effective_group_id"),
+    ))
+
     return {"status": "success", "request_id": request_id, "final_state": status}
 
 @app.get("/v1/logs/atomic", response_model=List[AtomicLogEntry])

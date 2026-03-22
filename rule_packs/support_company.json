@@ -1,0 +1,169 @@
+{
+  "name": "Support Company Rules",
+  "description": "Hand-authored rule pack for the virtual support company. Covers account updates, refunds, sensitive changes, and fraud detection.",
+  "rules": [
+    {
+      "name": "Low-risk account updates",
+      "feature": "account_update",
+      "active": true,
+      "datapoints": ["case_type", "risk_score"],
+      "edge_cases": [
+        "IF case_type == 'account_update' AND risk_score > 70 THEN ASK_FOR_APPROVAL"
+      ],
+      "edge_cases_json": [
+        {
+          "condition": {"and": [{"==": [{"var": "case_type"}, "account_update"]}, {">": [{"var": "risk_score"}, 70]}]},
+          "outcome": "ASK_FOR_APPROVAL"
+        }
+      ],
+      "rule_logic": "IF case_type == 'account_update' AND risk_score <= 70 THEN APPROVE",
+      "rule_logic_json": {
+        "if": [
+          {"and": [{"==": [{"var": "case_type"}, "account_update"]}, {"<=": [{"var": "risk_score"}, 70]}]},
+          "APPROVE",
+          "ASK_FOR_APPROVAL"
+        ]
+      }
+    },
+    {
+      "name": "Refund threshold",
+      "feature": "refund_request",
+      "active": true,
+      "datapoints": ["case_type", "refund_amount"],
+      "edge_cases": [
+        "IF case_type == 'refund_request' AND refund_amount > 500 THEN ASK_FOR_APPROVAL"
+      ],
+      "edge_cases_json": [
+        {
+          "condition": {"and": [{"==": [{"var": "case_type"}, "refund_request"]}, {">": [{"var": "refund_amount"}, 500]}]},
+          "outcome": "ASK_FOR_APPROVAL"
+        }
+      ],
+      "rule_logic": "IF case_type == 'refund_request' AND refund_amount <= 500 THEN APPROVE",
+      "rule_logic_json": {
+        "if": [
+          {"and": [{"==": [{"var": "case_type"}, "refund_request"]}, {"<=": [{"var": "refund_amount"}, 500]}]},
+          "APPROVE",
+          "ASK_FOR_APPROVAL"
+        ]
+      }
+    },
+    {
+      "name": "Sensitive identity changes require approval",
+      "feature": "sensitive_change",
+      "active": true,
+      "datapoints": ["case_type", "requires_identity_check"],
+      "edge_cases": [],
+      "edge_cases_json": [],
+      "rule_logic": "IF case_type == 'sensitive_change' OR requires_identity_check == true THEN ASK_FOR_APPROVAL",
+      "rule_logic_json": {
+        "if": [
+          {"or": [{"==": [{"var": "case_type"}, "sensitive_change"]}, {"==": [{"var": "requires_identity_check"}, true]}]},
+          "ASK_FOR_APPROVAL",
+          "APPROVE"
+        ]
+      }
+    },
+    {
+      "name": "High-risk fraud rejection",
+      "feature": "fraud_detection",
+      "active": true,
+      "datapoints": ["risk_score", "account_age_days"],
+      "edge_cases": [
+        "IF risk_score > 90 THEN REJECT"
+      ],
+      "edge_cases_json": [
+        {
+          "condition": {">": [{"var": "risk_score"}, 90]},
+          "outcome": "REJECT"
+        }
+      ],
+      "rule_logic": "IF risk_score > 70 AND account_age_days < 30 THEN REJECT",
+      "rule_logic_json": {
+        "if": [
+          {"and": [{">": [{"var": "risk_score"}, 70]}, {"<": [{"var": "account_age_days"}, 30]}]},
+          "REJECT",
+          "ASK_FOR_APPROVAL"
+        ]
+      }
+    },
+    {
+      "name": "Suspicious request handling",
+      "feature": "suspicious_request",
+      "active": true,
+      "datapoints": ["case_type", "risk_score", "contains_policy_exception"],
+      "edge_cases": [
+        "IF case_type == 'suspicious_request' AND risk_score > 80 THEN REJECT"
+      ],
+      "edge_cases_json": [
+        {
+          "condition": {"and": [{"==": [{"var": "case_type"}, "suspicious_request"]}, {">": [{"var": "risk_score"}, 80]}]},
+          "outcome": "REJECT"
+        }
+      ],
+      "rule_logic": "IF case_type == 'suspicious_request' THEN ASK_FOR_APPROVAL",
+      "rule_logic_json": {
+        "if": [
+          {"==": [{"var": "case_type"}, "suspicious_request"]},
+          "ASK_FOR_APPROVAL",
+          "APPROVE"
+        ]
+      }
+    },
+    {
+      "name": "Policy exception escalation",
+      "feature": "policy_exception",
+      "active": true,
+      "datapoints": ["contains_policy_exception"],
+      "edge_cases": [],
+      "edge_cases_json": [],
+      "rule_logic": "IF contains_policy_exception == true THEN ASK_FOR_APPROVAL",
+      "rule_logic_json": {
+        "if": [
+          {"==": [{"var": "contains_policy_exception"}, true]},
+          "ASK_FOR_APPROVAL",
+          "APPROVE"
+        ]
+      }
+    },
+    {
+      "name": "Escalation handling",
+      "feature": "escalation",
+      "active": true,
+      "datapoints": ["case_type", "priority", "customer_tier"],
+      "edge_cases": [
+        "IF case_type == 'escalation' AND priority == 'critical' THEN ASK_FOR_APPROVAL"
+      ],
+      "edge_cases_json": [
+        {
+          "condition": {"and": [{"==": [{"var": "case_type"}, "escalation"]}, {"==": [{"var": "priority"}, "critical"]}]},
+          "outcome": "ASK_FOR_APPROVAL"
+        }
+      ],
+      "rule_logic": "IF case_type == 'escalation' AND customer_tier == 'enterprise' THEN ASK_FOR_APPROVAL",
+      "rule_logic_json": {
+        "if": [
+          {"and": [{"==": [{"var": "case_type"}, "escalation"]}, {"==": [{"var": "customer_tier"}, "enterprise"]}]},
+          "ASK_FOR_APPROVAL",
+          "APPROVE"
+        ]
+      }
+    },
+    {
+      "name": "Missing identity data fail-closed",
+      "feature": "identity_check",
+      "active": true,
+      "datapoints": ["requires_identity_check", "customer_tier"],
+      "edge_cases": [],
+      "edge_cases_json": [],
+      "rule_logic": "IF requires_identity_check == true THEN ASK_FOR_APPROVAL",
+      "rule_logic_json": {
+        "if": [
+          {"==": [{"var": "requires_identity_check"}, true]},
+          "ASK_FOR_APPROVAL",
+          "APPROVE"
+        ]
+      }
+    }
+  ]
+}

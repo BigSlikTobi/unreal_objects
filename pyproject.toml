@@ -14,12 +14,14 @@ dependencies = [
     "google-genai>=0.2.0",
     "json-logic-qubit>=0.9.1",
     "python-dotenv>=1.0.1",
+    "pydantic-settings>=2.0.0",
 ]
 
 [project.scripts]
 uo-stress-test = "decision_center.stress_test.cli:main"
 uo-agent-admin = "mcp_server.admin_cli:main"
 uo-agent-eval = "evals.agent_eval.cli:main"
+uo-company-server = "company_server.cli:main"
 
 [project.optional-dependencies]
 dev = [
@@ -39,6 +41,7 @@ testpaths = [
     "mcp_server/tests",
     "tests",
     "evals/agent_eval/tests",
+    "company_server/tests",
 ]
 
 [tool.hatch.build.targets.wheel]
@@ -46,5 +49,7 @@ packages = [
     "rule_engine",
     "decision_center",
     "mcp_server",
-    "evals"
+    "evals",
+    "support_company",
+    "company_server",
 ]
