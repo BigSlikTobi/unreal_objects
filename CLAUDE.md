@@ -124,7 +124,7 @@ Uses `FastMCP` and proxies calls to the Rule Engine and Decision Center. Support
 ### Schema Management API (`decision_center/schema_generator.py`, `decision_center/app.py`)
 
 - `GET /v1/schemas`: lists all `.json` files under `schemas/`, returning `{key, name, description, schema}` per entry.
-- `POST /v1/schemas/save`: persists a `SchemaProposal` as JSON. Requires `overwrite: true` to replace an existing file; returns HTTP 409 (`SchemaExistsError`) otherwise. Optionally protected by `ADMIN_API_KEY` env var (checked via `X-Admin-Key` header); if the env var is unset, the endpoint is open (dev mode).
+- `POST /v1/schemas/save`: persists a `SchemaProposal` as JSON. Requires `overwrite: true` to replace an existing file; returns HTTP 409 (`SchemaExistsError`) otherwise. The endpoint is open (no authentication required).
 
 ### Living Virtual Company (`company_server/`, `support_company/`)
 

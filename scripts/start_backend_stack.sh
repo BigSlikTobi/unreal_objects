@@ -42,7 +42,7 @@ uvicorn rule_engine.app:app --port 8001 --host 0.0.0.0 &
 RULE_ENGINE_PID=$!
 
 echo "Starting Decision Center on http://0.0.0.0:8002"
-ADMIN_API_KEY=admin-secret uvicorn decision_center.app:app --port 8002 --host 0.0.0.0 &
+uvicorn decision_center.app:app --port 8002 --host 0.0.0.0 &
 DECISION_CENTER_PID=$!
 
 echo "Starting Unreal Objects MCP Server on http://0.0.0.0:8000"
