@@ -1,9 +1,8 @@
-from fastapi import FastAPI, HTTPException, Request
+from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from typing import List
 import json
-import os
 
 from .models import (
     DecisionOutcome, DecisionState, EvaluateRequest, DecisionResult,
@@ -28,13 +27,6 @@ app.add_middleware(
 
 store = DecisionStore()
 
-_ADMIN_API_KEY = os.environ.get("ADMIN_API_KEY")
-
-def _require_admin(request: Request):
-    if not _ADMIN_API_KEY:
-        return  # no key configured — open access (dev mode)
-    if request.headers.get("X-Admin-Key") != _ADMIN_API_KEY:
-        raise HTTPException(status_code=401, detail="Invalid admin API key")
 
 def _outcome_to_state(outcome: DecisionOutcome) -> DecisionState:
     if outcome == DecisionOutcome.APPROVE:
@@ -213,8 +205,7 @@ async def list_schemas_api():
     return list_schemas()
 
 @app.post("/v1/schemas/save")
-async def save_schema_api(req: SchemaSaveRequest, request: Request):
-    _require_admin(request)
+async def save_schema_api(req: SchemaSaveRequest):
     try:
         proposal = SchemaProposal(
             name=req.name,

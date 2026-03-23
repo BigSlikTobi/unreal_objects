@@ -3,7 +3,6 @@ import pytest
 from httpx import AsyncClient, ASGITransport
 
 from decision_center.app import app
-import decision_center.app as app_module
 
 # We need to mock the Rule Engine API call in real life, but for MVP evaluator tests
 # we can just use a mocked httpx transport or patch it. Since the app makes outbound
@@ -613,84 +612,14 @@ _SAVE_PAYLOAD = {
 
 
 @pytest.mark.asyncio
-async def test_save_schema_rejects_missing_key(tmp_path):
-    """When ADMIN_API_KEY is set, requests without the header get 401."""
+async def test_save_schema_no_auth_required(tmp_path):
+    """Schema save endpoint requires no authentication."""
     from decision_center.schema_generator import save_schema as original_save
 
     def _save_with_tmp(proposal, overwrite=False, **kwargs):
         return original_save(proposal, schemas_dir=str(tmp_path), overwrite=overwrite)
 
-    old_key = app_module._ADMIN_API_KEY
-    try:
-        app_module._ADMIN_API_KEY = "test-secret"
-        with patch("decision_center.app.save_schema", side_effect=_save_with_tmp):
-            async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
-                resp = await client.post("/v1/schemas/save", json=_SAVE_PAYLOAD)
-                assert resp.status_code == 401
-    finally:
-        app_module._ADMIN_API_KEY = old_key
-
-
-@pytest.mark.asyncio
-async def test_save_schema_rejects_wrong_key(tmp_path):
-    """When ADMIN_API_KEY is set, requests with wrong header get 401."""
-    from decision_center.schema_generator import save_schema as original_save
-
-    def _save_with_tmp(proposal, overwrite=False, **kwargs):
-        return original_save(proposal, schemas_dir=str(tmp_path), overwrite=overwrite)
-
-    old_key = app_module._ADMIN_API_KEY
-    try:
-        app_module._ADMIN_API_KEY = "test-secret"
-        with patch("decision_center.app.save_schema", side_effect=_save_with_tmp):
-            async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
-                resp = await client.post(
-                    "/v1/schemas/save",
-                    json=_SAVE_PAYLOAD,
-                    headers={"X-Admin-Key": "wrong-key"},
-                )
-                assert resp.status_code == 401
-    finally:
-        app_module._ADMIN_API_KEY = old_key
-
-
-@pytest.mark.asyncio
-async def test_save_schema_accepts_correct_key(tmp_path):
-    """When ADMIN_API_KEY is set, requests with correct header succeed."""
-    from decision_center.schema_generator import save_schema as original_save
-
-    def _save_with_tmp(proposal, overwrite=False, **kwargs):
-        return original_save(proposal, schemas_dir=str(tmp_path), overwrite=overwrite)
-
-    old_key = app_module._ADMIN_API_KEY
-    try:
-        app_module._ADMIN_API_KEY = "test-secret"
-        with patch("decision_center.app.save_schema", side_effect=_save_with_tmp):
-            async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
-                resp = await client.post(
-                    "/v1/schemas/save",
-                    json=_SAVE_PAYLOAD,
-                    headers={"X-Admin-Key": "test-secret"},
-                )
-                assert resp.status_code == 200
-    finally:
-        app_module._ADMIN_API_KEY = old_key
-
-
-@pytest.mark.asyncio
-async def test_save_schema_open_access_when_no_key(tmp_path):
-    """When ADMIN_API_KEY is unset, requests pass through without auth (dev mode)."""
-    from decision_center.schema_generator import save_schema as original_save
-
-    def _save_with_tmp(proposal, overwrite=False, **kwargs):
-        return original_save(proposal, schemas_dir=str(tmp_path), overwrite=overwrite)
-
-    old_key = app_module._ADMIN_API_KEY
-    try:
-        app_module._ADMIN_API_KEY = None
-        with patch("decision_center.app.save_schema", side_effect=_save_with_tmp):
-            async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
-                resp = await client.post("/v1/schemas/save", json=_SAVE_PAYLOAD)
-                assert resp.status_code == 200
-    finally:
-        app_module._ADMIN_API_KEY = old_key
+    with patch("decision_center.app.save_schema", side_effect=_save_with_tmp):
+        async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
+            resp = await client.post("/v1/schemas/save", json=_SAVE_PAYLOAD)
+            assert resp.status_code == 200
