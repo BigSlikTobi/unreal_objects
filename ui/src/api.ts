@@ -34,8 +34,16 @@ export class ConceptMismatchError extends Error {
   }
 }
 
-const API_BASE = 'http://127.0.0.1:8001/v1';
-const DECISION_BASE = 'http://127.0.0.1:8002/v1';
+const withDefaultBase = (value: string | undefined, fallback: string): string =>
+  (value?.trim() || fallback).replace(/\/+$/, '');
+
+const RULE_ENGINE_ORIGIN = withDefaultBase(import.meta.env.VITE_RULE_ENGINE_BASE_URL, 'http://127.0.0.1:8001');
+const DECISION_CENTER_ORIGIN = withDefaultBase(import.meta.env.VITE_DECISION_CENTER_BASE_URL, 'http://127.0.0.1:8002');
+const TOOL_AGENT_ORIGIN = withDefaultBase(import.meta.env.VITE_TOOL_AGENT_BASE_URL, 'http://127.0.0.1:8003');
+
+const API_BASE = `${RULE_ENGINE_ORIGIN}/v1`;
+const DECISION_BASE = `${DECISION_CENTER_ORIGIN}/v1`;
+export const TOOL_AGENT_BASE = `${TOOL_AGENT_ORIGIN}/v1`;
 
 const buildAdminHeaders = (adminApiKey: string) => ({
   'Content-Type': 'application/json',
@@ -239,7 +247,7 @@ export const fetchSchemas = async (): Promise<SchemaEntry[]> => {
 };
 
 export const fetchProposals = async (): Promise<ToolProposal[]> => {
-  const res = await fetch('http://127.0.0.1:8003/v1/proposals', { cache: 'no-store' });
+  const res = await fetch(`${TOOL_AGENT_BASE}/proposals`, { cache: 'no-store' });
   if (!res.ok) throw new Error('Failed to fetch tool proposals');
   return res.json();
 };
@@ -249,7 +257,7 @@ export const reviewProposal = async (
   approved: boolean,
   reviewer: string,
 ): Promise<{ status?: string; proposal_id?: string; message?: string }> => {
-  const res = await fetch(`http://127.0.0.1:8003/v1/proposals/${proposalId}/review`, {
+  const res = await fetch(`${TOOL_AGENT_BASE}/proposals/${proposalId}/review`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ approved, reviewer }),

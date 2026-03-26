@@ -1,9 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { CheckCircle, ChevronLeft, Clock, Code2, RefreshCw, User, X, XCircle } from 'lucide-react';
-import { fetchProposals, reviewProposal } from '../api';
+import { fetchProposals, reviewProposal, TOOL_AGENT_BASE } from '../api';
 import type { ToolProposal } from '../api';
-
-const TOOL_AGENT_BASE = 'http://127.0.0.1:8003/v1';
 
 interface Props {
   onClose: () => void;
@@ -36,7 +34,7 @@ export function ToolProposals({ onClose }: Props) {
       setProposals(data.sort((a, b) => b.created_at.localeCompare(a.created_at)));
       if (cfg) setLlmStatus(cfg);
     } catch {
-      setError('Could not reach the Tool Creation Agent (port 8003). Is it running?');
+      setError('Could not reach the Tool Creation Agent. Check the configured tool agent base URL and confirm it is running.');
     } finally {
       setLoading(false);
     }
