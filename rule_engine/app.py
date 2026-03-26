@@ -1,5 +1,6 @@
 import httpx
-from fastapi import BackgroundTasks, FastAPI, HTTPException, Response
+import os
+from fastapi import BackgroundTasks, FastAPI, Header, HTTPException, Response, status
 from fastapi.middleware.cors import CORSMiddleware
 from typing import List
 
@@ -18,7 +19,18 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-store = RuleStore()
+store = RuleStore(persistence_path=os.getenv("RULE_ENGINE_PERSISTENCE_PATH"))
+
+
+def _require_admin_token_for_destructive_action(admin_token: str | None) -> None:
+    expected_token = os.getenv("RULE_ENGINE_ADMIN_TOKEN")
+    if not expected_token:
+        return
+    if admin_token != expected_token:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Admin token required for destructive action",
+        )
 
 @app.get("/v1/health")
 async def health():
@@ -42,7 +54,8 @@ async def get_group(group_id: str, response: Response):
     return group
 
 @app.delete("/v1/groups/{group_id}", status_code=204)
-async def delete_group(group_id: str):
+async def delete_group(group_id: str, x_admin_token: str | None = Header(default=None)):
+    _require_admin_token_for_destructive_action(x_admin_token)
     if not store.delete_group(group_id):
         raise HTTPException(status_code=404, detail="Group not found")
 
@@ -97,11 +110,7 @@ async def update_rule(group_id: str, rule_id: str, rule: CreateRule):
 
 @app.patch("/v1/groups/{group_id}/datapoints", response_model=BusinessRuleGroup)
 async def update_datapoints(group_id: str, definitions: List[DatapointDefinition]):
-    group = store.get_group(group_id)
+    group = store.update_datapoints(group_id, definitions)
     if not group:
         raise HTTPException(status_code=404, detail="Group not found")
-    existing = {d.name: d for d in group.datapoint_definitions}
-    for defn in definitions:
-        existing[defn.name] = defn
-    group.datapoint_definitions = list(existing.values())
     return group

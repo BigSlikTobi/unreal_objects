@@ -14,6 +14,7 @@ ui/.vite/deps/package.json
 
 # data files 
 data/agent_auth.json
+data/rule_engine_store.json
 # test files
 data/test_agent_auth_tmp.json
 data/test_agent_auth_tmp2.json

@@ -7,9 +7,11 @@ import {
   checkLLMConnection,
   createGroup,
   createAgentRecord,
+  deleteGroup,
   createRule,
   executeTest,
   fetchGroups,
+  fetchSchemas,
   getGroup,
   issueEnrollmentToken,
   listAgents,
@@ -24,7 +26,9 @@ import type { RuleGroup } from './types';
 vi.mock('./api', () => ({
   fetchGroups: vi.fn(),
   createGroup: vi.fn(),
+  deleteGroup: vi.fn(),
   getGroup: vi.fn(),
+  fetchSchemas: vi.fn(),
   checkLLMConnection: vi.fn(),
   listAgents: vi.fn(),
   createAgentRecord: vi.fn(),
@@ -69,6 +73,7 @@ describe('App rule library layout', () => {
     sessionStorage.setItem('llm_api_key', 'test-key');
 
     vi.mocked(fetchGroups).mockResolvedValue([baseGroup]);
+    vi.mocked(fetchSchemas).mockResolvedValue([]);
     vi.mocked(getGroup).mockResolvedValue(baseGroup);
     vi.mocked(checkLLMConnection).mockResolvedValue({ ok: true });
     vi.mocked(listAgents).mockResolvedValue([]);
@@ -106,6 +111,7 @@ describe('App rule library layout', () => {
       rules: [],
       datapoint_definitions: [],
     });
+    vi.mocked(deleteGroup).mockResolvedValue(undefined);
     vi.mocked(translateRule).mockResolvedValue({
       datapoints: ['transaction_amount'],
       edge_cases: [],

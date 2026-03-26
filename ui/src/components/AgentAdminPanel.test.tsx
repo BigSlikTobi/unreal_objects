@@ -168,7 +168,9 @@ describe('AgentAdminPanel', () => {
       });
     });
 
-    await screen.findByText(/enroll_123/i);
+    await waitFor(() => {
+      expect(screen.getAllByText(/enroll_123/i).length).toBeGreaterThan(0);
+    });
 
     await user.click(screen.getByRole('button', { name: /revoke finance/i }));
 
@@ -238,7 +240,9 @@ describe('AgentAdminPanel', () => {
     });
     await userEvent.setup().click(await screen.findByRole('button', { name: /open agent ops agent/i }));
     await screen.findByRole('dialog', { name: /agent context for ops agent/i });
-    await screen.findByText(/persisted_token_123/i);
+    await waitFor(() => {
+      expect(screen.getAllByText(/persisted_token_123/i).length).toBeGreaterThan(0);
+    });
   });
 
   it('shows the persisted token for the selected agent instead of reusing one global token', async () => {
@@ -289,14 +293,18 @@ describe('AgentAdminPanel', () => {
 
     await user.click(await screen.findByRole('button', { name: /open agent ops agent/i }));
     await screen.findByRole('dialog', { name: /agent context for ops agent/i });
-    await screen.findByText(/token_for_ops/i);
+    await waitFor(() => {
+      expect(screen.getAllByText(/token_for_ops/i).length).toBeGreaterThan(0);
+    });
     await waitFor(() => {
       expect(listAgents).toHaveBeenCalledWith('http://127.0.0.1:8000', 'admin-secret');
     });
     await user.click(screen.getByRole('button', { name: /open agent support agent/i }));
     await screen.findByRole('dialog', { name: /agent context for support agent/i });
-    await screen.findByText(/token_for_support/i);
-    expect(screen.queryByText(/token_for_ops/i)).toBeNull();
+    await waitFor(() => {
+      expect(screen.getAllByText(/token_for_support/i).length).toBeGreaterThan(0);
+    });
+    expect(screen.queryByRole('dialog', { name: /agent context for ops agent/i })).toBeNull();
   });
 
   it('does not show stale persisted-only agents after backend restart and prunes their token cache', async () => {

@@ -1,8 +1,40 @@
+from __future__ import annotations
+
+import json
+from pathlib import Path
+
 from .models import BusinessRule, BusinessRuleGroup, CreateRule, CreateRuleGroup
 
+
 class RuleStore:
-    def __init__(self):
+    def __init__(self, persistence_path: str | Path | None = None):
         self.groups: dict[str, BusinessRuleGroup] = {}
+        self.persistence_path = Path(persistence_path) if persistence_path else None
+        self._load()
+
+    def _load(self) -> None:
+        if self.persistence_path is None or not self.persistence_path.exists():
+            return
+        try:
+            payload = json.loads(self.persistence_path.read_text())
+        except json.JSONDecodeError as exc:
+            raise RuntimeError(f"Failed to parse rule store at {self.persistence_path}: {exc}") from exc
+
+        raw_groups = payload.get("groups", [])
+        try:
+            groups = [BusinessRuleGroup.model_validate(group) for group in raw_groups]
+        except Exception as exc:
+            raise RuntimeError(f"Failed to validate rule store at {self.persistence_path}: {exc}") from exc
+        self.groups = {group.id: group for group in groups}
+
+    def _save(self) -> None:
+        if self.persistence_path is None:
+            return
+        self.persistence_path.parent.mkdir(parents=True, exist_ok=True)
+        payload = {
+            "groups": [group.model_dump(mode="json") for group in self.groups.values()],
+        }
+        self.persistence_path.write_text(json.dumps(payload, indent=2))
 
     def create_group(self, group_create: CreateRuleGroup) -> BusinessRuleGroup:
         group = BusinessRuleGroup(
@@ -10,6 +42,7 @@ class RuleStore:
             description=group_create.description
         )
         self.groups[group.id] = group
+        self._save()
         return group
 
     def list_groups(self) -> list[BusinessRuleGroup]:
@@ -21,6 +54,7 @@ class RuleStore:
     def delete_group(self, group_id: str) -> bool:
         if group_id in self.groups:
             del self.groups[group_id]
+            self._save()
             return True
         return False
 
@@ -39,6 +73,7 @@ class RuleStore:
             rule_logic_json=rule_create.rule_logic_json,
         )
         group.rules.append(rule)
+        self._save()
         return rule
 
     def get_rule(self, group_id: str, rule_id: str) -> BusinessRule | None:
@@ -57,6 +92,7 @@ class RuleStore:
         for i, rule in enumerate(group.rules):
             if rule.id == rule_id:
                 del group.rules[i]
+                self._save()
                 return True
         return False
 
@@ -76,6 +112,18 @@ class RuleStore:
                 group.rules[i].edge_cases_json = rule_update.edge_cases_json
                 group.rules[i].rule_logic = rule_update.rule_logic
                 group.rules[i].rule_logic_json = rule_update.rule_logic_json
+                self._save()
                 return group.rules[i]
         
         return None
+
+    def update_datapoints(self, group_id: str, definitions) -> BusinessRuleGroup | None:
+        group = self.get_group(group_id)
+        if not group:
+            return None
+        existing = {definition.name: definition for definition in group.datapoint_definitions}
+        for definition in definitions:
+            existing[definition.name] = definition
+        group.datapoint_definitions = list(existing.values())
+        self._save()
+        return group

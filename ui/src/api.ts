@@ -60,6 +60,22 @@ export const createGroup = async (name: string, description: string): Promise<Ru
   return res.json();
 };
 
+export const deleteGroup = async (id: string, adminToken?: string): Promise<void> => {
+  const headers: Record<string, string> = {};
+  if (adminToken?.trim()) {
+    headers['X-Admin-Token'] = adminToken.trim();
+  }
+  const res = await fetch(`${API_BASE}/groups/${id}`, {
+    method: 'DELETE',
+    headers,
+  });
+  if (!res.ok) {
+    let body: Record<string, unknown> | null = null;
+    try { body = await res.json(); } catch { /* ignore */ }
+    throw new Error((body?.detail as string) || 'Failed to delete group');
+  }
+};
+
 export const getGroup = async (id: string): Promise<RuleGroup> => {
   const res = await fetch(`${API_BASE}/groups/${id}`, {
     cache: 'no-store',
@@ -203,9 +219,46 @@ export interface SchemaEntry {
   schema: Record<string, string>;
 }
 
+export interface ToolProposal {
+  id: string;
+  tool_name: string;
+  action_description: string;
+  trigger_rule: string;
+  trigger_group: string;
+  reason: string;
+  generated_code: string;
+  created_at: string;
+  reviewer?: string | null;
+  status: 'pending_review' | 'approved' | 'rejected';
+}
+
 export const fetchSchemas = async (): Promise<SchemaEntry[]> => {
   const res = await fetch(`${DECISION_BASE}/schemas`, { cache: 'no-store' });
   if (!res.ok) throw new Error('Failed to fetch schemas');
+  return res.json();
+};
+
+export const fetchProposals = async (): Promise<ToolProposal[]> => {
+  const res = await fetch('http://127.0.0.1:8003/v1/proposals', { cache: 'no-store' });
+  if (!res.ok) throw new Error('Failed to fetch tool proposals');
+  return res.json();
+};
+
+export const reviewProposal = async (
+  proposalId: string,
+  approved: boolean,
+  reviewer: string,
+): Promise<{ status?: string; proposal_id?: string; message?: string }> => {
+  const res = await fetch(`http://127.0.0.1:8003/v1/proposals/${proposalId}/review`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ approved, reviewer }),
+  });
+  if (!res.ok) {
+    let body: Record<string, unknown> | null = null;
+    try { body = await res.json(); } catch { /* ignore */ }
+    throw new Error((body?.detail as string) || 'Failed to review tool proposal');
+  }
   return res.json();
 };
 

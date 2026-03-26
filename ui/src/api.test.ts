@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { createAgentRecord, executeTest, fetchGroups, getGroup, issueEnrollmentToken, revokeCredential } from './api';
+import { createAgentRecord, deleteGroup, executeTest, fetchGroups, getGroup, issueEnrollmentToken, revokeCredential } from './api';
 
 describe('api caching behavior', () => {
   beforeEach(() => {
@@ -38,6 +38,24 @@ describe('api caching behavior', () => {
     expect(fetchMock).toHaveBeenCalledWith(
       'http://127.0.0.1:8001/v1/groups/group_123',
       expect.objectContaining({ cache: 'no-store' })
+    );
+  });
+
+  it('deleteGroup sends the admin token header when provided', async () => {
+    const fetchMock = vi.spyOn(globalThis, 'fetch').mockResolvedValue({
+      ok: true,
+    } as Response);
+
+    await deleteGroup('group_123', 'sudo-secret');
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      'http://127.0.0.1:8001/v1/groups/group_123',
+      expect.objectContaining({
+        method: 'DELETE',
+        headers: expect.objectContaining({
+          'X-Admin-Token': 'sudo-secret',
+        }),
+      })
     );
   });
 
