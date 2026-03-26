@@ -78,6 +78,16 @@ cd ui && npm install && npm run dev
 pytest -v
 ```
 
+When you use `./scripts/start_backend_stack.sh`, the Rule Engine persists its
+live rule store to `data/rule_engine_store.json`. That file is runtime-only and
+gitignored, so your active company rules survive restart without being published
+to source control.
+
+If you want a sudo-style destructive mode for cleaning up test groups, set
+`RULE_ENGINE_ADMIN_TOKEN`. When that env var is present, deleting a rule group
+requires the same token in the `X-Admin-Token` header. The React UI exposes this
+as a guarded "Destroy rule group" flow with explicit name confirmation.
+
 ---
 
 ## 📈 Evaluation Snapshot

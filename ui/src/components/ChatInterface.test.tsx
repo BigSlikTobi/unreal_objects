@@ -4,11 +4,12 @@ import { useState } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { ChatInterface, replaceVariableToken, swapVariableInResult } from './ChatInterface';
-import { createRule, getGroup, translateRule, updateDatapointDefinitions, updateRule } from '../api';
+import { createRule, fetchSchemas, getGroup, translateRule, updateDatapointDefinitions, updateRule } from '../api';
 import type { Rule, RuleGroup } from '../types';
 
 vi.mock('../api', () => ({
   createRule: vi.fn(),
+  fetchSchemas: vi.fn(),
   getGroup: vi.fn(),
   translateRule: vi.fn(),
   updateDatapointDefinitions: vi.fn(),
@@ -44,6 +45,7 @@ describe('ChatInterface rule management', () => {
     vi.mocked(createRule).mockResolvedValue(existingRule);
     vi.mocked(updateRule).mockResolvedValue(existingRule);
     vi.mocked(updateDatapointDefinitions).mockResolvedValue(baseGroup);
+    vi.mocked(fetchSchemas).mockResolvedValue([]);
     vi.mocked(translateRule).mockResolvedValue({
       datapoints: ['transaction_amount', 'currency'],
       edge_cases: ['IF currency != EUR THEN REJECT'],
@@ -221,12 +223,14 @@ describe('ChatInterface utility functions', () => {
       };
 
       const result = swapVariableInResult(input, 'account_age_days', 'delivery_time_days');
+      const logic = result.rule_logic_json as { if: Array<Record<string, Array<unknown>>> };
+      const edgeCase = result.edge_cases_json[0] as { if: Array<Record<string, Array<unknown>>> };
 
       expect(result.datapoints).toEqual(['delivery_time_days', 'currency']);
       expect(result.rule_logic).toBe('IF delivery_time_days > 10 THEN REJECT');
-      expect(result.rule_logic_json.if[0]['>']).toEqual([{ var: 'delivery_time_days' }, 10]);
+      expect(logic.if[0]['>']).toEqual([{ var: 'delivery_time_days' }, 10]);
       expect(result.edge_cases[0]).toBe('IF delivery_time_days < 0 THEN REJECT');
-      expect(result.edge_cases_json[0].if[0]['<']).toEqual([{ var: 'delivery_time_days' }, 0]);
+      expect(edgeCase.if[0]['<']).toEqual([{ var: 'delivery_time_days' }, 0]);
     });
 
     it('replaces multiple occurrences in rule_logic', () => {

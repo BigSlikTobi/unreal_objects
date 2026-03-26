@@ -6,7 +6,7 @@ import { TestConsole } from './components/TestConsole';
 import { AgentAdminPanel } from './components/AgentAdminPanel';
 import { SchemaWorkshop } from './components/SchemaWorkshop';
 import { DecisionLog } from './components/DecisionLog';
-import { fetchGroups, createGroup, checkLLMConnection } from './api';
+import { fetchGroups, createGroup, deleteGroup, checkLLMConnection } from './api';
 import { Bot, Settings, X, Save, Plus, PanelLeftOpen } from 'lucide-react';
 import type { DatapointDefinition, LlmConfig, Rule, RuleGroup } from './types';
 
@@ -121,6 +121,27 @@ function App() {
     setSystemNoticeToken(Date.now());
   };
 
+  const handleDeleteGroup = async (group: RuleGroup, adminToken?: string) => {
+    await deleteGroup(group.id, adminToken);
+    setGroups((prev) => {
+      const nextGroups = prev.filter((item) => item.id !== group.id);
+      setSelectedGroupId((current) => {
+        if (current !== group.id) {
+          return current;
+        }
+        return nextGroups[0]?.id ?? null;
+      });
+      return nextGroups;
+    });
+    setSelectedRule(null);
+    setSelectedRuleToken(0);
+    setRuleToTest(null);
+    setTestDatapointDefs([]);
+    setSystemNotice(`Rule group '${group.name}' destroyed.`);
+    setSystemNoticeToken(Date.now());
+    setWorkspaceView('library');
+  };
+
   const handleSaveLlmConfig = async () => {
     setIsTestingLlm(true);
     setLlmError(null);
@@ -152,6 +173,7 @@ function App() {
           onOpenSchemaWorkshop={() => setWorkspaceView('schema-workshop')}
           onOpenDecisionLog={() => setWorkspaceView('decision-log')}
           onCreateGroup={handleCreateGroup}
+          onDeleteGroup={handleDeleteGroup}
           isDarkMode={isDarkMode}
           toggleDarkMode={() => setIsDarkMode(!isDarkMode)}
           onOpenSettings={() => setShowSettings(true)}
@@ -183,6 +205,7 @@ function App() {
                 setShowGroupPanel(false);
               }}
               onCreateGroup={handleCreateGroup}
+              onDeleteGroup={handleDeleteGroup}
               isDarkMode={isDarkMode}
               toggleDarkMode={() => setIsDarkMode(!isDarkMode)}
               onOpenSettings={() => {

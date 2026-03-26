@@ -104,6 +104,41 @@ def test_group_reads_disable_http_caching(populated_client):
     assert group_resp.status_code == 200
     assert group_resp.headers["cache-control"] == "no-store"
 
+
+def test_delete_group_requires_admin_token_when_configured(client, store, monkeypatch):
+    monkeypatch.setenv("RULE_ENGINE_ADMIN_TOKEN", "sudo-secret")
+    create_resp = client.post("/v1/groups", json={"name": "Protected Group"})
+    assert create_resp.status_code == 201
+    group_id = create_resp.json()["id"]
+
+    missing_token_resp = client.delete(f"/v1/groups/{group_id}")
+    assert missing_token_resp.status_code == 403
+    assert missing_token_resp.json()["detail"] == "Admin token required for destructive action"
+
+    wrong_token_resp = client.delete(
+        f"/v1/groups/{group_id}",
+        headers={"X-Admin-Token": "wrong-secret"},
+    )
+    assert wrong_token_resp.status_code == 403
+
+    delete_resp = client.delete(
+        f"/v1/groups/{group_id}",
+        headers={"X-Admin-Token": "sudo-secret"},
+    )
+    assert delete_resp.status_code == 204
+    assert store.get_group(group_id) is None
+
+
+def test_delete_group_without_admin_token_keeps_backwards_compatibility(client, store, monkeypatch):
+    monkeypatch.delenv("RULE_ENGINE_ADMIN_TOKEN", raising=False)
+    create_resp = client.post("/v1/groups", json={"name": "Ephemeral Group"})
+    assert create_resp.status_code == 201
+    group_id = create_resp.json()["id"]
+
+    delete_resp = client.delete(f"/v1/groups/{group_id}")
+    assert delete_resp.status_code == 204
+    assert store.get_group(group_id) is None
+
 def test_update_rule_api_not_found(populated_client):
     client, group_id, rule_id = populated_client
     

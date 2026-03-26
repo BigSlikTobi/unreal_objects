@@ -12,6 +12,8 @@ fi
 
 source .venv/bin/activate
 
+export RULE_ENGINE_PERSISTENCE_PATH="${RULE_ENGINE_PERSISTENCE_PATH:-$ROOT_DIR/data/rule_engine_store.json}"
+
 RULE_ENGINE_PATTERN="uvicorn rule_engine.app:app --port 8001 --host 0.0.0.0"
 DECISION_CENTER_PATTERN="uvicorn decision_center.app:app --port 8002 --host 0.0.0.0"
 MCP_PATTERN="python mcp_server/server.py --transport streamable-http --host 0.0.0.0 --port 8000 --auth-enabled --admin-api-key admin-secret"
