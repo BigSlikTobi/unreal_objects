@@ -371,7 +371,22 @@ def _validate_candidate_alignment(
         var_score = scores.get(var, 0)
         if var_score < threshold:
             best_desc = context_schema.get(best_field, "")
-            # Infer type from operator in rule_logic
+
+            # If the better field already exists in the schema, auto-swap
+            # instead of raising — re-raising would send the user into an
+            # infinite "Add & Retry" loop because the field is already present
+            # and the LLM keeps choosing the wrong one.
+            if best_field in context_schema and var in context_schema:
+                swap_variable_in_result(result, var, best_field)
+                # Re-collect ordered vars after swap to avoid stale iteration
+                used_vars.clear()
+                ordered.clear()
+                _collect_datapoints_from_json_logic(
+                    result.get("rule_logic_json", {}), used_vars, ordered,
+                )
+                break
+
+            # The better field is NOT in the schema — offer to add it.
             rule_logic_str = result.get("rule_logic", "")
             inferred_type = (
                 "number"
