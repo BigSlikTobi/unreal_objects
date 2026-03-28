@@ -816,8 +816,8 @@ def test_translate_rule_succeeds_when_llm_picks_correct_schema_field(mock_openai
     assert result["rule_logic"] == "IF delivery_time_days > 10 THEN REJECT"
 
 
-def test_validate_candidate_alignment_rejects_wrong_field():
-    """account_age_days scores far below delivery_time_days for a delivery rule."""
+def test_validate_candidate_alignment_autoswaps_when_both_fields_exist():
+    """When both the wrong and better field exist in the schema, auto-swap."""
     schema = {
         "delivery_time_days": "number (actual or promised delivery duration in days)",
         "account_age_days": "number (days since user registration)",
@@ -827,12 +827,14 @@ def test_validate_candidate_alignment_rejects_wrong_field():
         "rule_logic_json": {"if": [{">": [{"var": "account_age_days"}, 10]}, "REJECT", None]},
         "datapoints": ["account_age_days"],
     }
-    with pytest.raises(SchemaConceptMismatchError, match="delivery_time_days"):
-        _validate_candidate_alignment(
-            result,
-            "IF delivery_time is longer than 10 days THEN REJECT",
-            schema,
-        )
+    # Should NOT raise — auto-swaps account_age_days -> delivery_time_days
+    _validate_candidate_alignment(
+        result,
+        "IF delivery_time is longer than 10 days THEN REJECT",
+        schema,
+    )
+    assert result["datapoints"] == ["delivery_time_days"]
+    assert result["rule_logic_json"] == {"if": [{">": [{"var": "delivery_time_days"}, 10]}, "REJECT", None]}
 
 
 def test_validate_candidate_alignment_accepts_correct_field():
@@ -879,16 +881,15 @@ def test_validate_candidate_alignment_skips_when_all_scores_zero():
     _validate_candidate_alignment(result, "IF xyz > 5 THEN REJECT", schema)
 
 
-def test_validate_candidate_alignment_proposed_field_carries_best_match():
-    """The error's proposed_field must name the best candidate."""
+def test_validate_candidate_alignment_raises_when_var_not_in_schema():
+    """When the LLM invents a variable not in the schema, raise with the best match."""
     schema = {
         "delivery_time_days": "number (delivery duration in days)",
-        "account_age_days": "number (days since registration)",
     }
     result = {
-        "rule_logic": "IF account_age_days > 10 THEN REJECT",
-        "rule_logic_json": {"if": [{">": [{"var": "account_age_days"}, 10]}, "REJECT", None]},
-        "datapoints": ["account_age_days"],
+        "rule_logic": "IF shipping_delay > 10 THEN REJECT",
+        "rule_logic_json": {"if": [{">": [{"var": "shipping_delay"}, 10]}, "REJECT", None]},
+        "datapoints": ["shipping_delay"],
     }
     with pytest.raises(SchemaConceptMismatchError) as exc_info:
         _validate_candidate_alignment(
