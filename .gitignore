@@ -20,6 +20,7 @@ data/test_agent_auth_tmp.json
 data/test_agent_auth_tmp2.json
 data/test_agent_auth_tmp3.json
 schemas/waste_management_autonomous_operations.json
+evals/eval_output_raw*.txt
 .DS_Store
 .gitignore
 company_server/.DS_Store
