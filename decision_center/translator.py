@@ -510,7 +510,12 @@ def check_llm_connection(provider: str, model: str, api_key: str) -> bool:
 
 def translate_rule(natural_language: str, feature: str, name: str, provider: str, model: str, api_key: str, context_schema: dict = None, datapoint_definitions: list = None) -> dict:
     """Calls the specified LLM to translate natural language into structured logic."""
-    prompt = f"Rule Name: {name}\nFeature: {feature}\nNatural Language Rule: {natural_language}"
+    from shared.sanitize import delimit_user_input
+    prompt = (
+        f"Rule Name: {delimit_user_input(name, 'rule_name')}\n"
+        f"Feature: {delimit_user_input(feature, 'feature')}\n"
+        f"Natural Language Rule: {delimit_user_input(natural_language, 'rule_text')}"
+    )
 
     active_sys_prompt = SYS_PROMPT
     if context_schema:

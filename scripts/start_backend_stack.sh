@@ -16,7 +16,8 @@ export RULE_ENGINE_PERSISTENCE_PATH="${RULE_ENGINE_PERSISTENCE_PATH:-$ROOT_DIR/d
 
 RULE_ENGINE_PATTERN="uvicorn rule_engine.app:app --port 8001 --host 0.0.0.0"
 DECISION_CENTER_PATTERN="uvicorn decision_center.app:app --port 8002 --host 0.0.0.0"
-MCP_PATTERN="python mcp_server/server.py --transport streamable-http --host 0.0.0.0 --port 8000 --auth-enabled --admin-api-key admin-secret"
+MCP_ADMIN_KEY="${MCP_ADMIN_API_KEY:-admin-secret}"
+MCP_PATTERN="python mcp_server/server.py --transport streamable-http --host 0.0.0.0 --port 8000 --auth-enabled"
 
 stop_existing() {
   local pattern="$1"
@@ -53,7 +54,7 @@ python mcp_server/server.py \
   --host 0.0.0.0 \
   --port 8000 \
   --auth-enabled \
-  --admin-api-key admin-secret &
+  --admin-api-key "${MCP_ADMIN_KEY}" &
 MCP_PID=$!
 
 wait "$RULE_ENGINE_PID" "$DECISION_CENTER_PID" "$MCP_PID"
