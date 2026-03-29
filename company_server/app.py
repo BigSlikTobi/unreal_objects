@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import logging
+import os
 from contextlib import asynccontextmanager
 from pathlib import Path
 
@@ -17,6 +18,9 @@ from company_server.scheduler import CompanyScheduler
 from company_server.state import CompanyState
 from company_server.webhooks import WebhookDispatcher
 from support_company.models import CaseStatus
+from shared.middleware import InternalAuthMiddleware, check_production_api_key, internal_headers
+
+check_production_api_key()
 
 logger = logging.getLogger(__name__)
 
@@ -48,7 +52,7 @@ async def _load_rule_pack(config: CompanyConfig) -> str | None:
         pack = json.load(f)
 
     try:
-        async with httpx.AsyncClient(timeout=10) as client:
+        async with httpx.AsyncClient(timeout=10, headers=internal_headers()) as client:
             # Create the rule group
             resp = await client.post(
                 f"{config.rule_engine_url}/v1/groups",
@@ -110,12 +114,16 @@ async def lifespan(app: FastAPI):
 app = FastAPI(title="Unreal Objects Virtual Company", version="0.1.0", lifespan=lifespan)
 
 from fastapi.middleware.cors import CORSMiddleware
+
+_allowed_origins = os.getenv("ALLOWED_ORIGINS", "*").split(",")
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
-    allow_methods=["GET"],
+    allow_origins=_allowed_origins,
+    allow_credentials=False,
+    allow_methods=["*"],
     allow_headers=["*"],
 )
+app.add_middleware(InternalAuthMiddleware)
 
 
 # --- Request/Response models ---
@@ -151,6 +159,11 @@ class UpdateRuleRequest(BaseModel):
 
 
 # --- Endpoints ---
+
+@app.get("/health")
+def health():
+    return {"status": "ok", "service": "company_server"}
+
 
 @app.get("/api/v1/status")
 def get_status():
@@ -252,7 +265,7 @@ def get_customer(customer_id: str):
 async def create_rule(req: CreateRuleRequest):
     if not _group_id:
         raise HTTPException(503, "No rule group loaded")
-    async with httpx.AsyncClient(timeout=10) as client:
+    async with httpx.AsyncClient(timeout=10, headers=internal_headers()) as client:
         resp = await client.post(
             f"{_config.rule_engine_url}/v1/groups/{_group_id}/rules",
             json=req.model_dump(),
@@ -266,7 +279,7 @@ async def create_rule(req: CreateRuleRequest):
 async def list_rules():
     if not _group_id:
         raise HTTPException(503, "No rule group loaded")
-    async with httpx.AsyncClient(timeout=10) as client:
+    async with httpx.AsyncClient(timeout=10, headers=internal_headers()) as client:
         resp = await client.get(f"{_config.rule_engine_url}/v1/groups/{_group_id}")
         if resp.status_code >= 400:
             raise HTTPException(resp.status_code, resp.json())
@@ -279,7 +292,7 @@ async def update_rule(rule_id: str, req: UpdateRuleRequest):
     if not _group_id:
         raise HTTPException(503, "No rule group loaded")
     update_data = req.model_dump(exclude_none=True)
-    async with httpx.AsyncClient(timeout=10) as client:
+    async with httpx.AsyncClient(timeout=10, headers=internal_headers()) as client:
         resp = await client.put(
             f"{_config.rule_engine_url}/v1/groups/{_group_id}/rules/{rule_id}",
             json=update_data,
@@ -293,7 +306,7 @@ async def update_rule(rule_id: str, req: UpdateRuleRequest):
 async def delete_rule(rule_id: str):
     if not _group_id:
         raise HTTPException(503, "No rule group loaded")
-    async with httpx.AsyncClient(timeout=10) as client:
+    async with httpx.AsyncClient(timeout=10, headers=internal_headers()) as client:
         resp = await client.delete(
             f"{_config.rule_engine_url}/v1/groups/{_group_id}/rules/{rule_id}",
         )

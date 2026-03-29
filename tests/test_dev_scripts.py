@@ -16,4 +16,5 @@ def test_backend_stack_script_exists_and_restarts_expected_services():
     assert "--host 0.0.0.0" in script
     assert "--port 8000" in script
     assert "--auth-enabled" in script
-    assert "--admin-api-key admin-secret" in script
+    assert "--admin-api-key" in script
+    assert "MCP_ADMIN_API_KEY" in script

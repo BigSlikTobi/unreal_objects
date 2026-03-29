@@ -1,4 +1,5 @@
 import json
+import os
 from contextlib import asynccontextmanager
 from dataclasses import dataclass
 from functools import wraps
@@ -13,13 +14,14 @@ from pydantic import BaseModel, Field
 from starlette.middleware.cors import CORSMiddleware
 
 from mcp_server.auth import AuthService, AuthStore, get_current_principal, principal_context
+from shared.middleware import internal_headers
 
 # ---------------------------------------------------------------------------
 # Configuration
 # ---------------------------------------------------------------------------
 
-RULE_ENGINE_URL = "http://127.0.0.1:8001"
-DECISION_CENTER_URL = "http://127.0.0.1:8002"
+RULE_ENGINE_URL = os.getenv("RULE_ENGINE_URL", "http://127.0.0.1:8001")
+DECISION_CENTER_URL = os.getenv("DECISION_CENTER_URL", "http://127.0.0.1:8002")
 BACKEND_TIMEOUT = httpx.Timeout(5.0, connect=3.0)
 
 MAX_CONTEXT_JSON_BYTES = 100 * 1024  # 100 KB
@@ -70,9 +72,10 @@ class Clients:
 
 @asynccontextmanager
 async def lifespan(server: FastMCP):
+    _int_headers = internal_headers()
     async with (
-        httpx.AsyncClient(base_url=RULE_ENGINE_URL, timeout=BACKEND_TIMEOUT) as re_client,
-        httpx.AsyncClient(base_url=DECISION_CENTER_URL, timeout=BACKEND_TIMEOUT) as dc_client,
+        httpx.AsyncClient(base_url=RULE_ENGINE_URL, timeout=BACKEND_TIMEOUT, headers=_int_headers) as re_client,
+        httpx.AsyncClient(base_url=DECISION_CENTER_URL, timeout=BACKEND_TIMEOUT, headers=_int_headers) as dc_client,
     ):
         yield Clients(rule_engine=re_client, decision_center=dc_client)
 
@@ -593,9 +596,10 @@ def main():
             auth_service=_AUTH_SERVICE,
             admin_api_key=_ADMIN_API_KEY,
         )
+        _allowed_origins = os.getenv("ALLOWED_ORIGINS", "*").split(",")
         app = CORSMiddleware(
             wrapped_app,
-            allow_origins=["*"],
+            allow_origins=_allowed_origins,
             allow_credentials=False,
             allow_methods=["*"],
             allow_headers=["*"],

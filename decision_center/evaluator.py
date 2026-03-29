@@ -238,12 +238,21 @@ def evaluate_rule(rule_json: dict | None, rule_logic: str, context: Dict[str, An
         # escalate to human review.
         return "ASK_FOR_APPROVAL"
 
+import os
+import re
+
 import httpx
+
+from shared.middleware import internal_headers
+
+_RULE_ENGINE_URL = os.getenv("RULE_ENGINE_URL", "http://127.0.0.1:8001")
 
 async def _fetch_group(group_id: str):
     """Extracted to allow clean mocking in tests without patching all of httpx."""
-    async with httpx.AsyncClient() as client:
-        return await client.get(f"http://127.0.0.1:8001/v1/groups/{group_id}")
+    if not re.match(r'^[a-zA-Z0-9_-]+$', group_id):
+        raise ValueError(f"Invalid group_id format: {group_id!r}")
+    async with httpx.AsyncClient(headers=internal_headers()) as client:
+        return await client.get(f"{_RULE_ENGINE_URL}/v1/groups/{group_id}")
 
 async def evaluate_request(
     context: Dict[str, Any],

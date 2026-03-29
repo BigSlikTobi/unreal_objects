@@ -6,18 +6,23 @@ from typing import List
 
 from .models import BusinessRule, BusinessRuleGroup, CreateRule, CreateRuleGroup, DatapointDefinition
 from .store import RuleStore
+from shared.middleware import InternalAuthMiddleware, check_production_api_key, internal_headers
 
-TOOL_AGENT_URL = "http://127.0.0.1:8003"
+check_production_api_key()
+
+TOOL_AGENT_URL = os.getenv("TOOL_AGENT_URL", "http://127.0.0.1:8003")
 
 app = FastAPI(title="Unreal Objects Rule Engine API")
 
+_allowed_origins = os.getenv("ALLOWED_ORIGINS", "*").split(",")
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
+    allow_origins=_allowed_origins,
+    allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
 )
+app.add_middleware(InternalAuthMiddleware)
 
 store = RuleStore(persistence_path=os.getenv("RULE_ENGINE_PERSISTENCE_PATH"))
 
@@ -25,6 +30,11 @@ store = RuleStore(persistence_path=os.getenv("RULE_ENGINE_PERSISTENCE_PATH"))
 def _require_admin_token_for_destructive_action(admin_token: str | None) -> None:
     expected_token = os.getenv("RULE_ENGINE_ADMIN_TOKEN")
     if not expected_token:
+        if os.getenv("ENVIRONMENT") == "production":
+            raise HTTPException(
+                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                detail="Service misconfigured",
+            )
         return
     if admin_token != expected_token:
         raise HTTPException(
@@ -62,7 +72,7 @@ async def delete_group(group_id: str, x_admin_token: str | None = Header(default
 async def _notify_tool_agent(group_id: str, rule: BusinessRule, group_name: str):
     """Fire-and-forget webhook to the Tool Creation Agent. Silently ignored if agent is down."""
     try:
-        async with httpx.AsyncClient(timeout=3.0) as client:
+        async with httpx.AsyncClient(timeout=3.0, headers=internal_headers()) as client:
             await client.post(
                 f"{TOOL_AGENT_URL}/v1/webhook/rule-created",
                 json={

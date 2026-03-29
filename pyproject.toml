@@ -15,6 +15,7 @@ dependencies = [
     "json-logic-qubit>=0.9.1",
     "python-dotenv>=1.0.1",
     "pydantic-settings>=2.0.0",
+    "slowapi>=0.1.9",
 ]
 
 [project.scripts]
@@ -52,4 +53,5 @@ packages = [
     "evals",
     "support_company",
     "company_server",
+    "shared",
 ]

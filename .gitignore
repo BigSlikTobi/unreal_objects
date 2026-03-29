@@ -19,3 +19,12 @@ data/rule_engine_store.json
 data/test_agent_auth_tmp.json
 data/test_agent_auth_tmp2.json
 data/test_agent_auth_tmp3.json
+schemas/waste_management_autonomous_operations.json
+.DS_Store
+.gitignore
+company_server/.DS_Store
+decision_center/.DS_Store
+evals/.DS_Store
+mcp_server/.DS_Store
+rule_engine/.DS_Store
+.DS_Store

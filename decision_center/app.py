@@ -1,8 +1,15 @@
-from fastapi import FastAPI, HTTPException
+import logging
+import os
+
+from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from typing import List
 import json
+
+from slowapi import Limiter
+from slowapi.errors import RateLimitExceeded
+from slowapi.util import get_remote_address
 
 from .models import (
     DecisionOutcome, DecisionState, EvaluateRequest, DecisionResult,
@@ -13,17 +20,31 @@ from .store import DecisionStore
 from .evaluator import evaluate_request
 from .translator import check_llm_connection, translate_rule, SchemaConceptMismatchError
 from .schema_generator import generate_schema, list_schemas, save_schema, SchemaProposal, SchemaExistsError
+from shared.middleware import InternalAuthMiddleware, check_production_api_key
 import uuid
 
-app = FastAPI(title="Unreal Objects Decision Center API")
+logger = logging.getLogger(__name__)
 
+check_production_api_key()
+
+limiter = Limiter(key_func=get_remote_address, enabled=os.getenv("ENVIRONMENT") == "production")
+
+app = FastAPI(title="Unreal Objects Decision Center API")
+app.state.limiter = limiter
+
+@app.exception_handler(RateLimitExceeded)
+async def _rate_limit_handler(request: Request, exc: RateLimitExceeded):
+    return JSONResponse(status_code=429, content={"detail": "Rate limit exceeded"})
+
+_allowed_origins = os.getenv("ALLOWED_ORIGINS", "*").split(",")
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
+    allow_origins=_allowed_origins,
+    allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
 )
+app.add_middleware(InternalAuthMiddleware)
 
 store = DecisionStore()
 
@@ -97,7 +118,8 @@ async def evaluate(request_description: str, context: str, group_id: str = None,
 
 
 @app.post("/v1/decide", response_model=DecisionResult)
-async def evaluate_post(req: EvaluateRequest):
+@limiter.limit("60/minute")
+async def evaluate_post(request: Request, req: EvaluateRequest):
     return await _evaluate_and_log(req)
 
 @app.get("/v1/pending", response_model=List[dict])
@@ -106,6 +128,11 @@ async def get_pending():
 
 @app.post("/v1/decide/{request_id}/approve")
 async def submit_approval(request_id: str, submission: ApprovalSubmission):
+    import re
+    if not re.match(r'^[a-zA-Z0-9_-]+$', request_id):
+        raise HTTPException(status_code=400, detail="Invalid request_id format")
+    if submission.approver and len(submission.approver) > 200:
+        raise HTTPException(status_code=400, detail="Approver name too long")
     chain = store.get_chain(request_id)
     if not chain:
         raise HTTPException(status_code=404, detail="Decision chain not found")
@@ -164,7 +191,8 @@ async def check_connection(req: LLMConnectionRequest):
     return {"status": "ok"}
 
 @app.post("/v1/llm/translate")
-async def translate_rule_api(req: RuleTranslationRequest):
+@limiter.limit("10/minute")
+async def translate_rule_api(request: Request, req: RuleTranslationRequest):
     try:
         result = translate_rule(
             natural_language=req.natural_language,
@@ -182,11 +210,13 @@ async def translate_rule_api(req: RuleTranslationRequest):
         if e.proposed_field:
             content["proposed_field"] = e.proposed_field
         return JSONResponse(status_code=422, content=content)
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+    except Exception:
+        logger.exception("LLM translation failed")
+        raise HTTPException(status_code=500, detail="Internal processing error")
 
 @app.post("/v1/llm/schema")
-async def generate_schema_api(req: SchemaGenerationRequest):
+@limiter.limit("10/minute")
+async def generate_schema_api(request: Request, req: SchemaGenerationRequest):
     try:
         proposal = generate_schema(
             req.user_message,
@@ -197,8 +227,9 @@ async def generate_schema_api(req: SchemaGenerationRequest):
             req.api_key,
         )
         return proposal.model_dump()
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+    except Exception:
+        logger.exception("Schema generation failed")
+        raise HTTPException(status_code=500, detail="Internal processing error")
 
 @app.get("/v1/schemas")
 async def list_schemas_api():
@@ -217,5 +248,6 @@ async def save_schema_api(req: SchemaSaveRequest):
         return {"path": path, "name": proposal.name}
     except SchemaExistsError as e:
         raise HTTPException(status_code=409, detail=str(e))
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+    except Exception:
+        logger.exception("Schema save failed")
+        raise HTTPException(status_code=500, detail="Internal processing error")

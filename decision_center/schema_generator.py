@@ -54,7 +54,8 @@ def generate_schema(
     # Trim history to last 20 entries to avoid token bloat
     history = list(conversation_history[-20:])
 
-    prompt = user_message
+    from shared.sanitize import delimit_user_input
+    prompt = delimit_user_input(user_message, "user_request")
     if current_schema:
         field_lines = "\n".join(
             f"  - {k}: {v}" for k, v in current_schema.items()
@@ -177,6 +178,12 @@ def save_schema(
         name = "custom_schema"
 
     path = os.path.join(schemas_dir, f"{name}.json")
+
+    # Guard against path traversal
+    real_path = os.path.realpath(path)
+    real_dir = os.path.realpath(schemas_dir)
+    if not real_path.startswith(real_dir + os.sep) and real_path != real_dir:
+        raise ValueError("Invalid schema name")
 
     if os.path.exists(path) and not overwrite:
         raise SchemaExistsError(

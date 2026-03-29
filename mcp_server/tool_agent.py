@@ -15,8 +15,10 @@ LLM configuration (three options, applied in order):
   3. No key configured → analysis is skipped, no proposals are generated
 """
 
+import ast
 import asyncio
 import json
+import keyword
 import os
 import uuid
 from contextlib import asynccontextmanager
@@ -27,8 +29,12 @@ from fastapi import BackgroundTasks, FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
-RULE_ENGINE_URL = "http://127.0.0.1:8001"
-DECISION_CENTER_URL = "http://127.0.0.1:8002"
+from shared.middleware import InternalAuthMiddleware, check_production_api_key, internal_headers
+
+check_production_api_key()
+
+RULE_ENGINE_URL = os.getenv("RULE_ENGINE_URL", "http://127.0.0.1:8001")
+DECISION_CENTER_URL = os.getenv("DECISION_CENTER_URL", "http://127.0.0.1:8002")
 SERVER_PY_PATH = os.path.join(os.path.dirname(__file__), "server.py")
 
 # ---------------------------------------------------------------------------
@@ -64,7 +70,7 @@ _system_group_id: str | None = None
 
 async def _ensure_system_group() -> None:
     global _system_group_id
-    async with httpx.AsyncClient(base_url=RULE_ENGINE_URL, timeout=5.0) as client:
+    async with httpx.AsyncClient(base_url=RULE_ENGINE_URL, timeout=5.0, headers=internal_headers()) as client:
         resp = await client.get("/v1/groups")
         resp.raise_for_status()
         for g in resp.json():
@@ -110,13 +116,16 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(title="Unreal Objects Tool Creation Agent", lifespan=lifespan)
+
+_allowed_origins = os.getenv("ALLOWED_ORIGINS", "*").split(",")
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=_allowed_origins,
     allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
 )
+app.add_middleware(InternalAuthMiddleware)
 
 
 # ---------------------------------------------------------------------------
@@ -210,10 +219,11 @@ async def _analyze_rule(rule: RuleCreatedPayload) -> dict:
             "reason": "No LLM API key configured. Use POST /v1/config or set ANTHROPIC_API_KEY / OPENAI_API_KEY / GOOGLE_API_KEY.",
         }
 
+    from shared.sanitize import delimit_user_input
     prompt = _ANALYSIS_PROMPT.format(
-        name=rule.rule_name,
-        feature=rule.feature,
-        rule_logic=rule.rule_logic,
+        name=delimit_user_input(rule.rule_name, "rule_name"),
+        feature=delimit_user_input(rule.feature, "feature"),
+        rule_logic=delimit_user_input(rule.rule_logic, "rule_logic"),
         datapoints=", ".join(rule.datapoints) or "(none)",
     )
 
@@ -255,8 +265,87 @@ async def _analyze_rule(rule: RuleCreatedPayload) -> dict:
 
 
 # ---------------------------------------------------------------------------
-# Code generation
+# Code generation safety
 # ---------------------------------------------------------------------------
+
+_BLOCKED_IMPORTS = frozenset({
+    "os", "sys", "subprocess", "shutil", "importlib", "builtins",
+    "ctypes", "socket", "pickle", "shelve", "tempfile", "signal",
+    "multiprocessing", "threading", "code", "codeop", "compileall",
+})
+
+_BLOCKED_CALLS = frozenset({
+    "eval", "exec", "compile", "__import__", "getattr", "setattr",
+    "delattr", "globals", "locals", "open", "breakpoint",
+})
+
+
+def _validate_generated_code(code: str) -> tuple[bool, str]:
+    """Validate LLM-generated Python code is safe to persist.
+
+    Returns (is_valid, reason).
+    """
+    try:
+        tree = ast.parse(code)
+    except SyntaxError as e:
+        return False, f"Syntax error: {e}"
+
+    # Top level must only contain function definitions (with decorators)
+    for node in tree.body:
+        if not isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
+            return False, f"Top-level {type(node).__name__} not allowed; only function definitions permitted"
+
+    # Walk entire AST
+    for node in ast.walk(tree):
+        # Block imports
+        if isinstance(node, ast.Import):
+            for alias in node.names:
+                top = alias.name.split(".")[0]
+                if top in _BLOCKED_IMPORTS:
+                    return False, f"Import of '{alias.name}' is blocked"
+        if isinstance(node, ast.ImportFrom):
+            if node.module:
+                top = node.module.split(".")[0]
+                if top in _BLOCKED_IMPORTS:
+                    return False, f"Import from '{node.module}' is blocked"
+
+        # Block dangerous function calls
+        if isinstance(node, ast.Call):
+            func = node.func
+            name = None
+            if isinstance(func, ast.Name):
+                name = func.id
+            elif isinstance(func, ast.Attribute):
+                name = func.attr
+            if name and name in _BLOCKED_CALLS:
+                return False, f"Call to '{name}()' is blocked"
+
+        # Block dunder access (except __init__, __name__)
+        if isinstance(node, ast.Attribute):
+            if node.attr.startswith("__") and node.attr.endswith("__"):
+                if node.attr not in ("__name__", "__doc__"):
+                    return False, f"Access to '{node.attr}' is blocked"
+
+    # Verify function names start with guarded_
+    for node in tree.body:
+        if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
+            if not node.name.startswith("guarded_"):
+                return False, f"Function '{node.name}' must start with 'guarded_'"
+
+    return True, "OK"
+
+
+def _validate_tool_parameters(params: list[dict]) -> tuple[bool, str]:
+    """Validate that LLM-generated parameter names are safe Python identifiers."""
+    for p in params:
+        name = p.get("name", "")
+        if not name.isidentifier() or keyword.iskeyword(name):
+            return False, f"Invalid parameter name: {name!r}"
+        ptype = p.get("type", "str")
+        if ptype not in ("str", "int", "float", "bool", "list", "dict"):
+            return False, f"Invalid parameter type: {ptype!r}"
+    return True, "OK"
+
 
 def _generate_tool_code(analysis: dict) -> str:
     """Generate Python source for a new guarded_ MCP tool."""
@@ -340,7 +429,20 @@ async def _process_rule(rule: RuleCreatedPayload) -> None:
         print(f"[tool_agent] Rule '{rule.rule_name}': no new tool needed. {analysis.get('reason', '')}")
         return
 
+    # Validate parameter names before code generation
+    params = analysis.get("parameters", [])
+    params_ok, params_reason = _validate_tool_parameters(params)
+    if not params_ok:
+        print(f"[tool_agent] Rule '{rule.rule_name}': unsafe parameters rejected: {params_reason}")
+        return
+
     code = _generate_tool_code(analysis)
+
+    # Validate generated code is safe
+    code_ok, code_reason = _validate_generated_code(code)
+    if not code_ok:
+        print(f"[tool_agent] Rule '{rule.rule_name}': generated code rejected: {code_reason}")
+        return
     context = {
         "action": "tool_generation",
         "tool_name": analysis["tool_name"],
@@ -350,7 +452,7 @@ async def _process_rule(rule: RuleCreatedPayload) -> None:
 
     request_id = str(uuid.uuid4())
     try:
-        async with httpx.AsyncClient(base_url=DECISION_CENTER_URL, timeout=5.0) as dc:
+        async with httpx.AsyncClient(base_url=DECISION_CENTER_URL, timeout=5.0, headers=internal_headers()) as dc:
             resp = await dc.get("/v1/decide", params={
                 "request_description": (
                     f"Generate MCP tool '{analysis['tool_name']}' "
@@ -410,6 +512,11 @@ async def set_config(config: LLMConfig):
     The UI calls this automatically whenever the user saves their LLM settings.
     Supported providers: 'openai', 'anthropic', 'gemini'.
     """
+    if os.getenv("ENVIRONMENT") == "production":
+        raise HTTPException(
+            status_code=403,
+            detail="Runtime LLM config changes are disabled in production. Use environment variables.",
+        )
     if config.provider not in ("openai", "anthropic", "gemini"):
         raise HTTPException(
             status_code=400,
@@ -459,7 +566,7 @@ async def review_proposal(proposal_id: str, decision: ReviewDecision):
 
     # Record decision in Decision Center for audit trail
     try:
-        async with httpx.AsyncClient(base_url=DECISION_CENTER_URL, timeout=5.0) as dc:
+        async with httpx.AsyncClient(base_url=DECISION_CENTER_URL, timeout=5.0, headers=internal_headers()) as dc:
             await dc.post(
                 f"/v1/decide/{proposal_id}/approve",
                 json={"approved": decision.approved, "approver": decision.reviewer},
@@ -472,6 +579,11 @@ async def review_proposal(proposal_id: str, decision: ReviewDecision):
         p["reviewer"] = decision.reviewer
         return {"status": "rejected", "proposal_id": proposal_id}
 
+    # Validate generated code before writing
+    code_ok, code_reason = _validate_generated_code(p["generated_code"])
+    if not code_ok:
+        raise HTTPException(status_code=400, detail=f"Generated code failed safety validation: {code_reason}")
+
     # Write the generated code to server.py
     try:
         with open(SERVER_PY_PATH, "a", encoding="utf-8") as f:
@@ -480,7 +592,9 @@ async def review_proposal(proposal_id: str, decision: ReviewDecision):
             f.write(f"# Approved by: {decision.reviewer}\n")
             f.write(p["generated_code"])
     except OSError as exc:
-        raise HTTPException(status_code=500, detail=f"Failed to write to server.py: {exc}")
+        import logging
+        logging.getLogger(__name__).exception("Failed to write generated tool code")
+        raise HTTPException(status_code=500, detail="Failed to persist tool code")
 
     p["status"] = "approved"
     p["reviewer"] = decision.reviewer
