@@ -309,7 +309,12 @@ def _validate_generated_code(code: str) -> tuple[bool, str]:
                 if top in _BLOCKED_IMPORTS:
                     return False, f"Import from '{node.module}' is blocked"
 
-        # Block dangerous function calls
+        # Block any reference to builtins / __builtins__ (prevents sandbox escape)
+        if isinstance(node, ast.Name):
+            if node.id in {"__builtins__", "builtins"}:
+                return False, f"Reference to '{node.id}' is blocked"
+
+        # Block dangerous function calls, including indirect calls via subscripting
         if isinstance(node, ast.Call):
             func = node.func
             name = None
@@ -317,14 +322,26 @@ def _validate_generated_code(code: str) -> tuple[bool, str]:
                 name = func.id
             elif isinstance(func, ast.Attribute):
                 name = func.attr
+            elif isinstance(func, ast.Subscript):
+                # Catch __builtins__["__import__"](...) pattern
+                container_name = None
+                if isinstance(func.value, ast.Name):
+                    container_name = func.value.id
+                elif isinstance(func.value, ast.Attribute):
+                    container_name = func.value.attr
+                if container_name in {"__builtins__", "builtins"}:
+                    if isinstance(func.slice, ast.Constant) and isinstance(func.slice.value, str):
+                        name = func.slice.value
             if name and name in _BLOCKED_CALLS:
                 return False, f"Call to '{name}()' is blocked"
 
-        # Block dunder access (except __init__, __name__)
+        # Block dunder access (except __name__, __doc__)
         if isinstance(node, ast.Attribute):
             if node.attr.startswith("__") and node.attr.endswith("__"):
                 if node.attr not in ("__name__", "__doc__"):
                     return False, f"Access to '{node.attr}' is blocked"
+            if node.attr in {"__builtins__", "builtins"}:
+                return False, f"Access to '{node.attr}' is blocked"
 
     # Verify function names start with guarded_
     for node in tree.body:

@@ -1,9 +1,13 @@
+import os
 import re
+
+import difflib
 import httpx
 from typing import List, Dict, Any
 from .models import DecisionOutcome
 from json_logic import jsonLogic, add_operation
-import difflib
+
+from shared.middleware import internal_headers
 
 def extract_vars_from_jsonlogic(logic: Any, vars_set: set):
     """Recursively finds all requested variables in a JSON Logic dict."""
@@ -237,13 +241,6 @@ def evaluate_rule(rule_json: dict | None, rule_logic: str, context: Dict[str, An
         # it matched (REJECT) or that it didn't (APPROVE).  Always
         # escalate to human review.
         return "ASK_FOR_APPROVAL"
-
-import os
-import re
-
-import httpx
-
-from shared.middleware import internal_headers
 
 _RULE_ENGINE_URL = os.getenv("RULE_ENGINE_URL", "http://127.0.0.1:8001")
 

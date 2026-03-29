@@ -104,7 +104,8 @@ async def health():
     return {"status": "ok", "service": "decision_center"}
 
 @app.get("/v1/decide", response_model=DecisionResult)
-async def evaluate(request_description: str, context: str, group_id: str = None, rule_id: str = None):
+@limiter.limit("60/minute")
+async def evaluate(request: Request, request_description: str, context: str, group_id: str = None, rule_id: str = None):
     try:
         ctx_dict = json.loads(context)
     except Exception:

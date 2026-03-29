@@ -25,7 +25,7 @@ def check_production_api_key() -> None:
 
     Raises ``SystemExit`` if we are in production without an API key.
     """
-    if os.getenv("ENVIRONMENT") == "production" and not _INTERNAL_API_KEY:
+    if os.getenv("ENVIRONMENT") == "production" and not os.getenv("INTERNAL_API_KEY"):
         raise SystemExit(
             "INTERNAL_API_KEY must be set when ENVIRONMENT=production"
         )
