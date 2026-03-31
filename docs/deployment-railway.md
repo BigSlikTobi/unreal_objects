@@ -6,16 +6,29 @@ This guide covers deploying Unreal Objects to Railway as a submodule of `unreal_
 
 Each service runs as a separate Railway service within one project. They communicate over Railway's private network.
 
-| Service | Start Command | Port |
-|---------|--------------|------|
-| Rule Engine | `uvicorn rule_engine.app:app --host 0.0.0.0 --port $PORT` | 8001 |
-| Decision Center | `uvicorn decision_center.app:app --host 0.0.0.0 --port $PORT` | 8002 |
-| MCP Server | `python mcp_server/server.py --transport streamable-http --host 0.0.0.0 --port $PORT --auth-enabled --admin-api-key $MCP_ADMIN_API_KEY` | 8000 |
-| Tool Agent | `uvicorn mcp_server.tool_agent:app --host 0.0.0.0 --port $PORT` | 8003 |
-| Company Server | `uvicorn company_server.app:app --host 0.0.0.0 --port $PORT` | 8010 |
-| UI | `npm run build` (static deploy from `ui/`) | - |
+| Service | Dockerfile | Runtime Port |
+|---------|------------|--------------|
+| Rule Engine | `docker/rule_engine.Dockerfile` | 8001 |
+| Decision Center | `docker/decision_center.Dockerfile` | 8002 |
+| MCP Server | `docker/mcp.Dockerfile` | 8000 |
+| Tool Agent | `docker/tool_agent.Dockerfile` | 8003 |
+| UI | `docker/ui.Dockerfile` | `$PORT` |
 
-Railway assigns `$PORT` dynamically. Always use `--port $PORT` in start commands.
+Railway assigns `$PORT` dynamically. The backend Dockerfiles honor it in their container commands, and the UI Dockerfile renders the Nginx config at startup so it listens on `$PORT` as well.
+
+## Build Configuration
+
+Use Dockerfile deployments for the Unreal Objects services instead of Railway's inferred build/start command flow.
+
+| Service | Root Directory | Dockerfile Path | Watch Paths |
+|---------|----------------|-----------------|------------|
+| Rule Engine | `/` | `docker/rule_engine.Dockerfile` | `/rule_engine/**`, `/shared/**`, `/schemas/**`, `/pyproject.toml`, `/docker/rule_engine.Dockerfile` |
+| Decision Center | `/` | `docker/decision_center.Dockerfile` | `/decision_center/**`, `/shared/**`, `/schemas/**`, `/pyproject.toml`, `/docker/decision_center.Dockerfile` |
+| MCP Server | `/` | `docker/mcp.Dockerfile` | `/mcp_server/**`, `/shared/**`, `/pyproject.toml`, `/docker/mcp.Dockerfile` |
+| Tool Agent | `/` | `docker/tool_agent.Dockerfile` | `/mcp_server/**`, `/decision_center/**`, `/shared/**`, `/pyproject.toml`, `/docker/tool_agent.Dockerfile` |
+| UI | `/` | `docker/ui.Dockerfile` | `/ui/**`, `/docker/ui.Dockerfile`, `/docker/ui-nginx.conf` |
+
+If you still deploy `company_server` from this repo, keep the current start-command setup for now or add a dedicated Dockerfile for it later.
 
 ## Generate Secrets
 
