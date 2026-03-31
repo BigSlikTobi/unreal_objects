@@ -121,11 +121,19 @@ At least one LLM API key is needed for rule translation and tool agent analysis 
 
 | Variable | Required | Description |
 |----------|----------|-------------|
-| `VITE_RULE_ENGINE_BASE_URL` | Yes | Public URL of the Rule Engine, e.g. `https://rule-engine.railway.app` |
-| `VITE_DECISION_CENTER_BASE_URL` | Yes | Public URL of the Decision Center |
-| `VITE_TOOL_AGENT_BASE_URL` | Yes | Public URL of the Tool Agent |
+| `VITE_RULE_ENGINE_BASE_URL` | Yes | Use the same-origin proxy path: `/api/rule-engine` |
+| `VITE_DECISION_CENTER_BASE_URL` | Yes | Use the same-origin proxy path: `/api/decision-center` |
+| `VITE_TOOL_AGENT_BASE_URL` | No | Optional. If you deploy Tool Agent, prefer `/api/tool-agent`; otherwise omit it. |
 
-These are baked into the UI at build time (Vite replaces `import.meta.env.VITE_*`).
+These are baked into the UI at build time (Vite replaces `import.meta.env.VITE_*`). In production, point the UI at the nginx proxy paths above so browser requests stay same-origin.
+
+**UI (runtime env vars for nginx proxy):**
+
+| Variable | Required | Description |
+|----------|----------|-------------|
+| `RULE_ENGINE_UPSTREAM` | Yes | Private Railway URL of the Rule Engine including `/v1`, e.g. `http://ruleengine.railway.internal:8080/v1` |
+| `DECISION_CENTER_UPSTREAM` | Yes | Private Railway URL of the Decision Center including `/v1`, e.g. `http://decisioncenter.railway.internal:8080/v1` |
+| `INTERNAL_API_KEY` | Yes | Same internal service key used by the backend services. nginx forwards it as `X-Internal-Key` for browser-originated writes. |
 
 ## How Auth Works
 
