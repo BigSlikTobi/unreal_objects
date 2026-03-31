@@ -20,4 +20,8 @@ def atomic_write_json(path: Path, payload: Any) -> None:
         tmp.flush()
         temp_path = Path(tmp.name)
 
-    temp_path.replace(path)
+    try:
+        temp_path.replace(path)
+    except Exception:
+        temp_path.unlink(missing_ok=True)
+        raise

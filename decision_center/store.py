@@ -31,7 +31,7 @@ class DecisionStore:
         if self.persistence_path is None or not self.persistence_path.exists():
             return
         try:
-            payload = json.loads(self.persistence_path.read_text())
+            payload = json.loads(self.persistence_path.read_text(encoding="utf-8"))
         except json.JSONDecodeError as exc:
             raise RuntimeError(f"Failed to parse decision store at {self.persistence_path}: {exc}") from exc
 
