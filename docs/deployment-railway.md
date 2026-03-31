@@ -78,13 +78,20 @@ Replace `rule-engine`, `decision-center`, etc. with the actual service names you
 | Variable | Required | Description |
 |----------|----------|-------------|
 | `RULE_ENGINE_ADMIN_TOKEN` | Yes (prod) | Token required for DELETE operations. Without it, the service returns 503 on destructive actions in production. |
-| `RULE_ENGINE_PERSISTENCE_PATH` | No | Path to JSON store file. Defaults to `./data/rule_engine_store.json`. Note: Railway storage is ephemeral; data is lost on redeploy. |
+| `RULE_ENGINE_PERSISTENCE_PATH` | No | Path to JSON store file. Defaults to `./data/rule_engine_store.json`. Mount a Railway volume and point this to the mounted path if rules should survive redeploys. |
 
 **MCP Server:**
 
 | Variable | Required | Description |
 |----------|----------|-------------|
 | `MCP_ADMIN_API_KEY` | Yes | Admin key for agent enrollment and management. Passed via `--admin-api-key` CLI arg in the start command. |
+| `MCP_AUTH_PERSISTENCE_PATH` | No | Path to the JSON auth store. Mount a Railway volume and point this to the mounted path if agent registrations and credentials should survive redeploys. |
+
+**Decision Center:**
+
+| Variable | Required | Description |
+|----------|----------|-------------|
+| `DECISION_CENTER_PERSISTENCE_PATH` | No | Path to the JSON decision store for atomic logs, chains, and pending approvals. Mount a Railway volume and point this to the mounted path if approvals should survive redeploys. |
 
 **Decision Center + Tool Agent (LLM access):**
 
@@ -165,14 +172,26 @@ Configure Railway health checks for each service:
 
 ## Important Notes
 
-### Ephemeral Storage
+### Persistent Volumes for Stateful Services
 
-Railway containers are ephemeral. On redeploy or restart:
-- Rule Engine loses persisted rules (JSON file storage)
-- Decision Center loses all decision logs (in-memory)
-- All pending approvals are lost
+Railway containers are ephemeral, so JSON persistence only survives redeploys if
+you mount a Railway volume and store the files there. Recommended volume-backed
+paths:
 
-For production durability, consider adding a PostgreSQL database (available on Railway) in a future iteration.
+- `RULE_ENGINE_PERSISTENCE_PATH=/app/data/rule_engine_store.json`
+- `DECISION_CENTER_PERSISTENCE_PATH=/app/data/decision_center_store.json`
+- `MCP_AUTH_PERSISTENCE_PATH=/app/data/mcp_auth_store.json`
+
+With those paths backed by volumes:
+- Rule Engine keeps rules and datapoints across redeploys
+- Decision Center keeps decision logs and pending approvals across redeploys
+- MCP Server keeps agent registrations, enrollment tokens, and credentials across redeploys
+
+Still ephemeral after restart:
+- issued bearer access tokens
+- active in-flight MCP HTTP connections
+
+For higher-scale production durability, consider replacing JSON-on-volume with PostgreSQL in a future iteration.
 
 ### Tool Agent Limitations
 

@@ -3,6 +3,8 @@ import pytest
 from httpx import AsyncClient, ASGITransport
 
 from decision_center.app import app
+import decision_center.app as app_module
+from decision_center.store import DecisionStore
 
 # We need to mock the Rule Engine API call in real life, but for MVP evaluator tests
 # we can just use a mocked httpx transport or patch it. Since the app makes outbound
@@ -86,6 +88,52 @@ async def test_approval_flow_and_logs(mock_rule_engine):
         assert chain["events"][0]["event_type"] == "REQUEST"
         assert chain["events"][-1]["event_type"] == "APPROVAL_STATUS"
         assert chain["events"][-1]["details"]["status"] == "APPROVED"
+
+
+@pytest.mark.asyncio
+async def test_pending_approval_survives_store_restart(mock_rule_engine, tmp_path, monkeypatch):
+    mock_response = MagicMock()
+    mock_response.status_code = 200
+    mock_response.json.return_value = {
+        "id": "g1",
+        "name": "Grp",
+        "rules": [
+            {"id": "r1", "rule_logic": "IF amount > 100 THEN ASK_FOR_APPROVAL"}
+        ]
+    }
+    mock_rule_engine.return_value = mock_response
+
+    path = tmp_path / "decision_center_store.json"
+    original_store = app_module.store
+    monkeypatch.setattr(app_module, "store", DecisionStore(persistence_path=path))
+
+    try:
+        async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
+            resp = await client.post(
+                "/v1/decide",
+                json={
+                    "request_description": "NeedLaptop",
+                    "context": {"amount": 150},
+                    "group_id": "g1",
+                },
+            )
+            assert resp.status_code == 200
+            req_id = resp.json()["request_id"]
+
+        monkeypatch.setattr(app_module, "store", DecisionStore(persistence_path=path))
+
+        async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
+            pending_resp = await client.get("/v1/pending")
+            assert pending_resp.status_code == 200
+            assert any(p["request_id"] == req_id for p in pending_resp.json())
+
+            approve_resp = await client.post(
+                f"/v1/decide/{req_id}/approve",
+                json={"approved": True, "approver": "Alice"},
+            )
+            assert approve_resp.status_code == 200
+    finally:
+        monkeypatch.setattr(app_module, "store", original_store)
 
 
 @pytest.mark.asyncio

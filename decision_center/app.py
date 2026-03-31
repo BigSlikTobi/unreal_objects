@@ -46,7 +46,7 @@ app.add_middleware(
 )
 app.add_middleware(InternalAuthMiddleware)
 
-store = DecisionStore()
+store = DecisionStore(persistence_path=os.getenv("DECISION_CENTER_PERSISTENCE_PATH"))
 
 
 def _outcome_to_state(outcome: DecisionOutcome) -> DecisionState:

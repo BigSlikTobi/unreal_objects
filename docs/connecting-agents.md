@@ -150,8 +150,10 @@ permission model is:
 This lets one agent hold separate finance and support credentials without
 collapsing them into one broad trust domain.
 
-> **Current limitation:** Agent registrations are stored in memory only.
-> Restarting the MCP server clears auth state.
+> **Persistence note:** If `MCP_AUTH_PERSISTENCE_PATH` is configured, agent
+> registrations, enrollment tokens, and credentials survive MCP server restarts.
+> Issued bearer access tokens remain in memory only, so agents should request a
+> fresh access token after reconnecting.
 
 Authenticated MCP is supported for HTTP transports only (`streamable-http`,
 `sse`). `stdio` remains available for local development without auth.
