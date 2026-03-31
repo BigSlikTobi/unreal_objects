@@ -12,9 +12,9 @@ Each service runs as a separate Railway service within one project. They communi
 | Decision Center | `docker/decision_center.Dockerfile` | 8002 |
 | MCP Server | `docker/mcp.Dockerfile` | 8000 |
 | Tool Agent | `docker/tool_agent.Dockerfile` | 8003 |
-| UI | `docker/ui.Dockerfile` | 8080 |
+| UI | `docker/ui.Dockerfile` | `$PORT` |
 
-Railway assigns `$PORT` dynamically. The backend Dockerfiles already honor it in their container commands.
+Railway assigns `$PORT` dynamically. The backend Dockerfiles honor it in their container commands, and the UI Dockerfile renders the Nginx config at startup so it listens on `$PORT` as well.
 
 ## Build Configuration
 

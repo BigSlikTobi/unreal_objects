@@ -18,5 +18,4 @@ COPY schemas /app/schemas
 
 RUN pip install --upgrade pip && pip install .
 
-CMD ["sh", "-c", "python mcp_server/server.py --transport streamable-http --host 0.0.0.0 --port ${PORT:-8000} --auth-enabled --admin-api-key ${MCP_ADMIN_API_KEY}"]
-
+CMD ["sh", "-c", "python mcp_server/server.py --transport streamable-http --host 0.0.0.0 --port ${PORT:-8000} --auth-enabled --admin-api-key ${MCP_ADMIN_API_KEY:?missing MCP_ADMIN_API_KEY}"]

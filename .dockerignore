@@ -11,9 +11,10 @@ __pycache__
 *.log
 node_modules
 ui/node_modules
+ui/.vite
+.vite
 ui/dist
 dist
 build
 htmlcov
 .coverage
-
