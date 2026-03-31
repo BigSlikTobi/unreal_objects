@@ -561,7 +561,7 @@ def main():
         raise SystemExit("--admin-api-key requires --auth-enabled")
     if _AUTH_ENABLED:
         _AUTH_SERVICE = AuthService(
-            store=AuthStore(),
+            store=AuthStore(persistence_path=os.getenv("MCP_AUTH_PERSISTENCE_PATH")),
             token_ttl_seconds=args.token_ttl_seconds,
         )
 

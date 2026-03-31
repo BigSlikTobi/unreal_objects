@@ -4,6 +4,7 @@ import json
 from pathlib import Path
 
 from .models import BusinessRule, BusinessRuleGroup, CreateRule, CreateRuleGroup
+from shared.persistence import atomic_write_json
 
 
 class RuleStore:
@@ -16,7 +17,7 @@ class RuleStore:
         if self.persistence_path is None or not self.persistence_path.exists():
             return
         try:
-            payload = json.loads(self.persistence_path.read_text())
+            payload = json.loads(self.persistence_path.read_text(encoding="utf-8"))
         except json.JSONDecodeError as exc:
             raise RuntimeError(f"Failed to parse rule store at {self.persistence_path}: {exc}") from exc
 
@@ -30,11 +31,10 @@ class RuleStore:
     def _save(self) -> None:
         if self.persistence_path is None:
             return
-        self.persistence_path.parent.mkdir(parents=True, exist_ok=True)
         payload = {
             "groups": [group.model_dump(mode="json") for group in self.groups.values()],
         }
-        self.persistence_path.write_text(json.dumps(payload, indent=2))
+        atomic_write_json(self.persistence_path, payload)
 
     def create_group(self, group_create: CreateRuleGroup) -> BusinessRuleGroup:
         group = BusinessRuleGroup(

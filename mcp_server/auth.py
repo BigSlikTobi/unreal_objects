@@ -5,10 +5,14 @@ from contextvars import ContextVar
 from datetime import datetime, timedelta, timezone
 import hashlib
 import hmac
+import json
+from pathlib import Path
 import secrets
 from typing import Any
 
 from pydantic import BaseModel, Field
+
+from shared.persistence import atomic_write_json
 
 
 def _utcnow() -> datetime:
@@ -115,10 +119,33 @@ class AuthenticatedPrincipal(BaseModel):
 
 
 class AuthStore:
-    def __init__(self, data: AuthStoreData | None = None):
+    def __init__(
+        self,
+        data: AuthStoreData | None = None,
+        persistence_path: str | Path | None = None,
+    ):
         self.data = data or AuthStoreData()
+        self.persistence_path = Path(persistence_path) if persistence_path else None
+        if data is None:
+            self._load()
+
+    def _load(self) -> None:
+        if self.persistence_path is None or not self.persistence_path.exists():
+            return
+        try:
+            payload = json.loads(self.persistence_path.read_text(encoding="utf-8"))
+        except json.JSONDecodeError as exc:
+            raise RuntimeError(f"Failed to parse auth store at {self.persistence_path}: {exc}") from exc
+
+        try:
+            self.data = AuthStoreData.model_validate(payload)
+        except Exception as exc:
+            raise RuntimeError(f"Failed to validate auth store at {self.persistence_path}: {exc}") from exc
 
     def save(self):
+        if self.persistence_path is None:
+            return None
+        atomic_write_json(self.persistence_path, self.data.model_dump(mode="json"))
         return None
 
 

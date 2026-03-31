@@ -46,6 +46,61 @@ def test_exchange_enrollment_token_does_not_persist_across_fresh_store(auth_serv
     assert exchange.credential_id not in fresh_store.data.credentials
 
 
+def test_auth_store_restores_agents_credentials_and_tokens(tmp_path):
+    path = tmp_path / "mcp_auth_store.json"
+    auth_service = AuthService(
+        store=AuthStore(persistence_path=path),
+        token_ttl_seconds=60,
+    )
+    agent = auth_service.create_agent(name="Ops Agent")
+    issued = auth_service.create_enrollment_token(
+        agent_id=agent.agent_id,
+        credential_name="finance",
+        scopes=["finance:execute"],
+        default_group_id="grp_finance",
+        allowed_group_ids=["grp_finance"],
+    )
+
+    exchange = auth_service.exchange_enrollment_token(issued["enrollment_token"])
+
+    restored_service = AuthService(
+        store=AuthStore(persistence_path=path),
+        token_ttl_seconds=60,
+    )
+
+    assert agent.agent_id in restored_service.store.data.agents
+    assert exchange.credential_id in restored_service.store.data.credentials
+    restored_tokens = list(restored_service.store.data.enrollment_tokens.values())
+    assert len(restored_tokens) == 1
+    assert restored_tokens[0].status == "used"
+
+    token_issue = restored_service.issue_access_token(
+        client_id=exchange.client_id,
+        client_secret=exchange.client_secret,
+    )
+    assert token_issue.access_token.startswith("uo_at_")
+
+
+def test_revoked_credential_persists_across_restart(tmp_path):
+    path = tmp_path / "mcp_auth_store.json"
+    auth_service = AuthService(
+        store=AuthStore(persistence_path=path),
+        token_ttl_seconds=60,
+    )
+    agent = auth_service.create_agent(name="Ops Agent")
+    issued = auth_service.create_enrollment_token(
+        agent_id=agent.agent_id,
+        credential_name="finance",
+        scopes=["finance:execute"],
+    )
+    exchange = auth_service.exchange_enrollment_token(issued["enrollment_token"])
+
+    auth_service.revoke_credential(exchange.credential_id)
+
+    restored_store = AuthStore(persistence_path=path)
+    assert restored_store.data.credentials[exchange.credential_id].status == "revoked"
+
+
 def test_enrollment_token_can_only_be_used_once(auth_service):
     agent = auth_service.create_agent(name="Ops Agent")
     issued = auth_service.create_enrollment_token(
