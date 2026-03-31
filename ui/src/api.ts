@@ -37,8 +37,14 @@ export class ConceptMismatchError extends Error {
 const withDefaultBase = (value: string | undefined, fallback: string): string =>
   (value?.trim() || fallback).replace(/\/+$/, '');
 
-const RULE_ENGINE_ORIGIN = withDefaultBase(import.meta.env.VITE_RULE_ENGINE_BASE_URL, 'http://127.0.0.1:8001');
-const DECISION_CENTER_ORIGIN = withDefaultBase(import.meta.env.VITE_DECISION_CENTER_BASE_URL, 'http://127.0.0.1:8002');
+const isLocalBrowser = typeof window !== 'undefined'
+  && ['127.0.0.1', 'localhost'].includes(window.location.hostname);
+
+const ruleEngineFallback = isLocalBrowser ? 'http://127.0.0.1:8001' : '/api/rule-engine';
+const decisionCenterFallback = isLocalBrowser ? 'http://127.0.0.1:8002' : '/api/decision-center';
+
+const RULE_ENGINE_ORIGIN = withDefaultBase(import.meta.env.VITE_RULE_ENGINE_BASE_URL, ruleEngineFallback);
+const DECISION_CENTER_ORIGIN = withDefaultBase(import.meta.env.VITE_DECISION_CENTER_BASE_URL, decisionCenterFallback);
 const TOOL_AGENT_ORIGIN = withDefaultBase(import.meta.env.VITE_TOOL_AGENT_BASE_URL, 'http://127.0.0.1:8003');
 
 const API_BASE = `${RULE_ENGINE_ORIGIN}/v1`;
