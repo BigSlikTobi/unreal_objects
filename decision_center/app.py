@@ -9,7 +9,6 @@ import json
 
 from slowapi import Limiter
 from slowapi.errors import RateLimitExceeded
-from slowapi.util import get_remote_address
 
 from .models import (
     DecisionOutcome, DecisionState, EvaluateRequest, DecisionResult,
@@ -27,7 +26,14 @@ logger = logging.getLogger(__name__)
 
 check_production_api_key()
 
-limiter = Limiter(key_func=get_remote_address, enabled=os.getenv("ENVIRONMENT") == "production")
+def _get_real_client_ip(request: Request) -> str:
+    """Use X-Forwarded-For when behind Railway's proxy, fall back to remote addr."""
+    forwarded = request.headers.get("x-forwarded-for")
+    if forwarded:
+        return forwarded.split(",")[0].strip()
+    return request.client.host if request.client else "unknown"
+
+limiter = Limiter(key_func=_get_real_client_ip, enabled=os.getenv("ENVIRONMENT") == "production")
 
 app = FastAPI(title="Unreal Objects Decision Center API")
 app.state.limiter = limiter
