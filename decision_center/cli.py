@@ -20,7 +20,8 @@ DECISION_CENTER_BASE_URL = os.getenv("DECISION_CENTER_BASE_URL", "http://127.0.0
 
 def download_decision_log(output_path: str | None = None, base_url: str = DECISION_CENTER_BASE_URL) -> str:
     """Fetch the full in-memory decision log from the Decision Center and save it to disk."""
-    resp = httpx.get(f"{base_url}/v1/logs/export", timeout=30)
+    normalized_base_url = base_url.rstrip("/")
+    resp = httpx.get(f"{normalized_base_url}/v1/logs/export", timeout=30)
     resp.raise_for_status()
     if not output_path:
         ts = time.strftime("%Y%m%dT%H%M%SZ", time.gmtime())
