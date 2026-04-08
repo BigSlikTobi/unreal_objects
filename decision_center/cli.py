@@ -15,6 +15,34 @@ from decision_center.translator import (
     SchemaConceptMismatchError,
 )
 
+DECISION_CENTER_BASE_URL = os.getenv("DECISION_CENTER_BASE_URL", "http://127.0.0.1:8002")
+
+
+def download_decision_log(output_path: str | None = None, base_url: str = DECISION_CENTER_BASE_URL) -> str:
+    """Fetch the full in-memory decision log from the Decision Center and save it to disk."""
+    normalized_base_url = base_url.rstrip("/")
+    resp = httpx.get(f"{normalized_base_url}/v1/logs/export", timeout=30)
+    resp.raise_for_status()
+    if not output_path:
+        ts = time.strftime("%Y%m%dT%H%M%SZ", time.gmtime())
+        output_path = f"decision_log_{ts}.json"
+    with open(output_path, "w", encoding="utf-8") as f:
+        f.write(resp.text)
+    print(f"Saved decision log to {output_path}")
+    return output_path
+
+
+def run_download_log_wizard():
+    print("\n--- Download Decision Log ---")
+    default_path = f"decision_log_{time.strftime('%Y%m%dT%H%M%SZ', time.gmtime())}.json"
+    raw = input(f"Output file [{default_path}]: ").strip()
+    output_path = raw or default_path
+    try:
+        download_decision_log(output_path=output_path)
+    except httpx.HTTPError as exc:
+        print(f"❌ Failed to download decision log: {exc}")
+
+
 def prompt_start_servers():
     choice = input("Start Rule Engine (8001) and Decision Center (8002) locally? [y/N] ").strip().lower()
     if choice == 'y':
@@ -767,7 +795,12 @@ def main():
     print("\n--- Mode Selection ---")
     print("  1. Rule Management")
     print("  2. Schema Workshop")
-    mode = input("Select mode [1-2, Default: 1]: ").strip() or "1"
+    print("  3. Download Decision Log")
+    mode = input("Select mode [1-3, Default: 1]: ").strip() or "1"
+
+    if mode == "3":
+        run_download_log_wizard()
+        return
 
     llm_config = prompt_llm_setup()
 

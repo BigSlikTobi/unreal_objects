@@ -83,10 +83,12 @@ live rule store to `data/rule_engine_store.json`. That file is runtime-only and
 gitignored, so your active company rules survive restart without being published
 to source control.
 
-For deployed environments, you can also persist MCP auth state and Decision
-Center approval/log state by setting `MCP_AUTH_PERSISTENCE_PATH` and
-`DECISION_CENTER_PERSISTENCE_PATH` to files on persistent storage. Issued bearer
-tokens remain in memory only and should be re-issued after reconnect.
+For deployed environments, you can persist MCP auth state by setting
+`MCP_AUTH_PERSISTENCE_PATH` to a file on persistent storage. Issued bearer
+tokens remain in memory only and should be re-issued after reconnect. The
+Decision Center keeps its audit log in process memory only — use
+`GET /v1/logs/export` (or the UI / CLI download button) to capture a snapshot
+before redeploying.
 
 If you want a sudo-style destructive mode for cleaning up test groups, set
 `RULE_ENGINE_ADMIN_TOKEN`. When that env var is present, deleting a rule group

@@ -1,5 +1,6 @@
 import logging
 import os
+from datetime import datetime, timezone
 
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
@@ -52,7 +53,7 @@ app.add_middleware(
 )
 app.add_middleware(InternalAuthMiddleware)
 
-store = DecisionStore(persistence_path=os.getenv("DECISION_CENTER_PERSISTENCE_PATH"))
+store = DecisionStore()
 
 
 def _outcome_to_state(outcome: DecisionOutcome) -> DecisionState:
@@ -189,6 +190,15 @@ async def get_chain(request_id: str):
     if not chain:
         raise HTTPException(status_code=404, detail="Chain not found")
     return chain
+
+@app.get("/v1/logs/export")
+async def export_logs():
+    payload = store.data.model_dump(mode="json")
+    filename = f"decision_log_{datetime.now(timezone.utc).strftime('%Y%m%dT%H%M%SZ')}.json"
+    return JSONResponse(
+        content=payload,
+        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+    )
 
 @app.post("/v1/llm/connection")
 async def check_connection(req: LLMConnectionRequest):

@@ -102,9 +102,7 @@ Replace `rule-engine`, `decision-center`, etc. with the actual service names you
 
 **Decision Center:**
 
-| Variable | Required | Description |
-|----------|----------|-------------|
-| `DECISION_CENTER_PERSISTENCE_PATH` | No | Path to the JSON decision store for atomic logs, chains, and pending approvals. Mount a Railway volume and point this to the mounted path if approvals should survive redeploys. |
+The Decision Center keeps atomic logs, decision chains, and pending approvals **in process memory only** — no env var, no volume. Logs reset on every redeploy. Use `GET /v1/logs/export` (or the "Download JSON" button in the UI Decision Log panel, or option 3 in the `decision_center/cli.py` wizard) to capture a snapshot before redeploying.
 
 **Decision Center + Tool Agent (LLM access):**
 
@@ -200,15 +198,16 @@ you mount a Railway volume and store the files there. Recommended volume-backed
 paths:
 
 - `RULE_ENGINE_PERSISTENCE_PATH=/app/data/rule_engine_store.json`
-- `DECISION_CENTER_PERSISTENCE_PATH=/app/data/decision_center_store.json`
 - `MCP_AUTH_PERSISTENCE_PATH=/app/data/mcp_auth_store.json`
 
 With those paths backed by volumes:
 - Rule Engine keeps rules and datapoints across redeploys
-- Decision Center keeps decision logs and pending approvals across redeploys
 - MCP Server keeps agent registrations, enrollment tokens, and credentials across redeploys
 
+The **Decision Center does not use a volume**. Atomic logs, decision chains, and pending approvals live in process memory and reset on every redeploy. Capture them on demand via `GET /v1/logs/export`, the "Download JSON" button in the UI Decision Log, or option 3 of the `decision_center/cli.py` wizard.
+
 Still ephemeral after restart:
+- the entire Decision Center audit log and pending approvals queue
 - issued bearer access tokens
 - active in-flight MCP HTTP connections
 

@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { ChevronDown, ChevronRight, RefreshCw, ScrollText } from 'lucide-react';
-import { fetchAtomicLogs, fetchDecisionChain } from '../api';
+import { ChevronDown, ChevronRight, Download, RefreshCw, ScrollText } from 'lucide-react';
+import { downloadDecisionLog, fetchAtomicLogs, fetchDecisionChain } from '../api';
 import type { AtomicLogEntry, DecisionChain, DecisionState } from '../types';
 
 const DECISION_COLORS: Record<DecisionState, { badge: string; dot: string }> = {
@@ -37,6 +37,7 @@ export function DecisionLog() {
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [chain, setChain] = useState<DecisionChain | null>(null);
   const [chainLoading, setChainLoading] = useState(false);
+  const [isDownloading, setIsDownloading] = useState(false);
   const expandedIdRef = useRef<string | null>(null);
 
   useEffect(() => {
@@ -61,6 +62,27 @@ export function DecisionLog() {
   useEffect(() => {
     refresh();
   }, [refresh]);
+
+  const handleDownload = useCallback(async () => {
+    setIsDownloading(true);
+    setError(null);
+    try {
+      const blob = await downloadDecisionLog();
+      const url = URL.createObjectURL(blob);
+      const ts = new Date().toISOString().replace(/[:.]/g, '-');
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `decision_log_${ts}.json`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      setTimeout(() => URL.revokeObjectURL(url), 0);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to download log');
+    } finally {
+      setIsDownloading(false);
+    }
+  }, []);
 
   const handleToggle = async (requestId: string) => {
     if (expandedId === requestId) {
@@ -97,14 +119,24 @@ export function DecisionLog() {
             Decision Log
           </h3>
         </div>
-        <button
-          onClick={refresh}
-          disabled={isLoading}
-          className="inline-flex items-center gap-2 rounded-lg border border-gray-300 px-3 py-1.5 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-100 disabled:opacity-50 dark:border-gray-700 dark:text-gray-200 dark:hover:bg-gray-800"
-        >
-          <RefreshCw size={14} className={isLoading ? 'animate-spin' : ''} />
-          Refresh
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={handleDownload}
+            disabled={isDownloading}
+            className="inline-flex items-center gap-2 rounded-lg border border-gray-300 px-3 py-1.5 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-100 disabled:opacity-50 dark:border-gray-700 dark:text-gray-200 dark:hover:bg-gray-800"
+          >
+            <Download size={14} className={isDownloading ? 'animate-pulse' : ''} />
+            Download JSON
+          </button>
+          <button
+            onClick={refresh}
+            disabled={isLoading}
+            className="inline-flex items-center gap-2 rounded-lg border border-gray-300 px-3 py-1.5 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-100 disabled:opacity-50 dark:border-gray-700 dark:text-gray-200 dark:hover:bg-gray-800"
+          >
+            <RefreshCw size={14} className={isLoading ? 'animate-spin' : ''} />
+            Refresh
+          </button>
+        </div>
       </div>
       <p className="text-sm text-gray-500 dark:text-gray-400">
         Audit trail of all evaluated decisions. Click an entry to view its full event chain.

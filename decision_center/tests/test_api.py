@@ -671,3 +671,53 @@ async def test_save_schema_no_auth_required(tmp_path):
         async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
             resp = await client.post("/v1/schemas/save", json=_SAVE_PAYLOAD)
             assert resp.status_code == 200
+
+
+@pytest.mark.asyncio
+async def test_export_logs_returns_full_store_as_attachment(mock_rule_engine, monkeypatch):
+    """GET /v1/logs/export returns the full in-memory store as a downloadable JSON attachment."""
+    mock_response = MagicMock()
+    mock_response.status_code = 200
+    mock_response.json.return_value = {
+        "id": "g1",
+        "name": "Grp",
+        "rules": [
+            {"id": "r1", "rule_logic": "IF amount > 100 THEN ASK_FOR_APPROVAL"}
+        ],
+    }
+    mock_rule_engine.return_value = mock_response
+
+    # Use a fresh empty store so assertions are deterministic.
+    original_store = app_module.store
+    monkeypatch.setattr(app_module, "store", DecisionStore())
+
+    try:
+        async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
+            decide_resp = await client.post(
+                "/v1/decide",
+                json={
+                    "request_description": "NeedLaptop",
+                    "context": {"amount": 150},
+                    "group_id": "g1",
+                },
+            )
+            assert decide_resp.status_code == 200
+            req_id = decide_resp.json()["request_id"]
+
+            export_resp = await client.get("/v1/logs/export")
+            assert export_resp.status_code == 200
+
+            disposition = export_resp.headers.get("content-disposition", "")
+            assert "attachment" in disposition
+            assert "decision_log_" in disposition
+            assert disposition.endswith('.json"')
+
+            payload = export_resp.json()
+            assert set(payload.keys()) == {"atomic_logs", "chains", "pending"}
+
+            atomic_request_ids = [entry["request_id"] for entry in payload["atomic_logs"]]
+            assert req_id in atomic_request_ids
+            assert req_id in payload["chains"]
+            assert req_id in payload["pending"]
+    finally:
+        monkeypatch.setattr(app_module, "store", original_store)

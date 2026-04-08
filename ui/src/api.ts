@@ -320,6 +320,12 @@ export const fetchDecisionChain = async (requestId: string): Promise<DecisionCha
   return res.json();
 };
 
+export const downloadDecisionLog = async (): Promise<Blob> => {
+  const res = await fetch(`${DECISION_BASE}/logs/export`, { cache: 'no-store' });
+  if (!res.ok) throw new Error(`Failed to export decision log (${res.status})`);
+  return res.blob();
+};
+
 export const revokeCredential = async (
   baseUrl: string,
   adminApiKey: string,
