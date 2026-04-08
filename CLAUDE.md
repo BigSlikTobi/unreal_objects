@@ -101,7 +101,7 @@ When an action is evaluated (`GET /v1/decide`):
 3. If no edge case matches, the main `rule_logic_json` (JSON Logic AST) is evaluated.
 4. Strict fail-closed type checking: type mismatches or missing variables always default to `ASK_FOR_APPROVAL` (regardless of the rule's own outcome). A missing `group_id` defaults to `APPROVE`. String booleans (`"true"`/`"false"`) and string numbers (`"600"`) are coerced to native types before evaluation; un-coerceable mismatches escalate to `ASK_FOR_APPROVAL`.
 5. Outcome precedence: `REJECT` > `ASK_FOR_APPROVAL` > `APPROVE` (most restrictive wins).
-6. All decisions are written to two audit logs: atomic log (flat entries) and decision chains (event sequences per request). Human approval outcomes (`APPROVED`/`REJECTED` from `submit_approval`) also write a second atomic log entry, preserving the original request's identity fields (`agent_id`, `credential_id`, `user_id`, `effective_group_id`).
+6. All decisions are written to two audit logs: atomic log (flat entries) and decision chains (event sequences per request). Human approval outcomes (`APPROVED`/`REJECTED` from `submit_approval`) also write a second atomic log entry, preserving the original request's identity fields (`agent_id`, `credential_id`, `user_id`, `effective_group_id`). The Decision Center store is **in-memory only** (no volume, no persistence path). Snapshots are downloadable on demand via `GET /v1/logs/export`, the UI Decision Log "Download JSON" button, or option 3 of `decision_center/cli.py`. Logs reset on every restart.
 
 ### Rule Data Model (`rule_engine/models.py`)
 
