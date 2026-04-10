@@ -80,7 +80,7 @@ async def lifespan(server: FastMCP):
         yield Clients(rule_engine=re_client, decision_center=dc_client)
 
 
-mcp = FastMCP("Unreal Objects", lifespan=lifespan, instructions=_INSTRUCTIONS)
+mcp = FastMCP("Unreal Objects", lifespan=lifespan, instructions=_INSTRUCTIONS, stateless_http=True)
 
 
 def _clients(ctx: Context) -> Clients:
