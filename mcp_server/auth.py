@@ -155,6 +155,13 @@ class AuthService:
         self.token_ttl_seconds = token_ttl_seconds
         self._access_tokens: dict[str, AccessTokenRecord] = {}
 
+    def _prune_expired_tokens(self) -> None:
+        """Remove expired tokens so the in-memory dict doesn't grow unbounded."""
+        now = _utcnow()
+        expired = [t for t, r in self._access_tokens.items() if r.expires_at <= now]
+        for t in expired:
+            del self._access_tokens[t]
+
     def create_agent(self, name: str, description: str = "", metadata: dict[str, Any] | None = None) -> AgentRecord:
         agent = AgentRecord(name=name, description=description, metadata=metadata or {})
         self.store.data.agents[agent.agent_id] = agent
@@ -249,6 +256,7 @@ class AuthService:
         client_secret: str,
         requested_scope: str | None = None,
     ) -> AccessTokenIssue:
+        self._prune_expired_tokens()
         credential = next(
             (c for c in self.store.data.credentials.values() if c.client_id == client_id),
             None,
