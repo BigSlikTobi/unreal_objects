@@ -4,7 +4,20 @@ This guide covers deploying Unreal Objects to Railway as a submodule of `unreal_
 
 ## Architecture on Railway
 
-Each service runs as a separate Railway service within one project. They communicate over Railway's private network.
+Services can be deployed separately or combined. The **combined backend** (recommended for cost optimization) runs Rule Engine + Decision Center in a single process, eliminating one container and replacing internal HTTP calls with direct function calls.
+
+### Option A: Combined Backend (recommended)
+
+| Service | Dockerfile | Runtime Port |
+|---------|------------|--------------|
+| Combined Backend | `docker/combined_backend.Dockerfile` | 8001 |
+| MCP Server | `docker/mcp.Dockerfile` | 8000 |
+| Tool Agent | `docker/tool_agent.Dockerfile` | 8003 |
+| UI | `docker/ui.Dockerfile` | `$PORT` |
+
+The combined backend mounts Rule Engine at `/rule-engine/v1/...` and Decision Center at `/decision-center/v1/...`. Update `RULE_ENGINE_URL` and `DECISION_CENTER_URL` on other services accordingly (e.g., `http://combined-backend.railway.internal:8001/rule-engine` and `http://combined-backend.railway.internal:8001/decision-center`).
+
+### Option B: Separate Services
 
 | Service | Dockerfile | Runtime Port |
 |---------|------------|--------------|
@@ -20,12 +33,23 @@ Railway assigns `$PORT` dynamically. The backend Dockerfiles honor it in their c
 
 Use Dockerfile deployments for the Unreal Objects services instead of Railway's inferred build/start command flow.
 
+### Combined Backend
+
 | Service | Root Directory | Dockerfile Path | Watch Paths |
 |---------|----------------|-----------------|------------|
-| Rule Engine | `/` | `docker/rule_engine.Dockerfile` | `/rule_engine/**`, `/shared/**`, `/schemas/**`, `/pyproject.toml`, `/docker/rule_engine.Dockerfile` |
+| Combined Backend | `/` | `docker/combined_backend.Dockerfile` | `/rule_engine/**`, `/decision_center/**`, `/shared/**`, `/schemas/**`, `/pyproject.toml`, `/docker/combined_backend.Dockerfile` |
+| MCP Server | `/` | `docker/mcp.Dockerfile` | `/mcp_server/**`, `/shared/**`, `/pyproject.toml`, `/docker/mcp.Dockerfile` |
+| Tool Agent | `/` | `docker/tool_agent.Dockerfile` | `/mcp_server/**`, `/shared/**`, `/pyproject.toml`, `/docker/tool_agent.Dockerfile` |
+| UI | `/` | `docker/ui.Dockerfile` | `/ui/**`, `/docker/ui.Dockerfile`, `/docker/ui-nginx.conf` |
+
+### Separate Services
+
+| Service | Root Directory | Dockerfile Path | Watch Paths |
+|---------|----------------|-----------------|------------|
+| Rule Engine | `/` | `docker/rule_engine.Dockerfile` | `/rule_engine/**`, `/shared/**`, `/pyproject.toml`, `/docker/rule_engine.Dockerfile` |
 | Decision Center | `/` | `docker/decision_center.Dockerfile` | `/decision_center/**`, `/shared/**`, `/schemas/**`, `/pyproject.toml`, `/docker/decision_center.Dockerfile` |
 | MCP Server | `/` | `docker/mcp.Dockerfile` | `/mcp_server/**`, `/shared/**`, `/pyproject.toml`, `/docker/mcp.Dockerfile` |
-| Tool Agent | `/` | `docker/tool_agent.Dockerfile` | `/mcp_server/**`, `/decision_center/**`, `/shared/**`, `/pyproject.toml`, `/docker/tool_agent.Dockerfile` |
+| Tool Agent | `/` | `docker/tool_agent.Dockerfile` | `/mcp_server/**`, `/shared/**`, `/pyproject.toml`, `/docker/tool_agent.Dockerfile` |
 | UI | `/` | `docker/ui.Dockerfile` | `/ui/**`, `/docker/ui.Dockerfile`, `/docker/ui-nginx.conf` |
 
 If you still deploy `company_server` from this repo, keep the current start-command setup for now or add a dedicated Dockerfile for it later.
@@ -176,6 +200,20 @@ When `ENVIRONMENT=production`:
 | Input validation | group_id, request_id, and approver fields are validated |
 
 None of these activate in local development (without `ENVIRONMENT=production`), so your dev workflow is unchanged.
+
+## Resource Limits (Cost Optimization)
+
+Railway bills for allocated CPU and memory. Without explicit limits, containers may be over-provisioned. Set these per-service in the Railway dashboard under **Settings → Resources**:
+
+| Service | CPU Limit | Memory Limit | Notes |
+|---------|-----------|--------------|-------|
+| Rule Engine | 0.25 vCPU | 128 MB | Lightweight CRUD store |
+| Decision Center | 0.25 vCPU | 256 MB | Higher memory for LLM SDK imports (lazy-loaded) |
+| MCP Server | 0.25 vCPU | 192 MB | Proxies to other services; long-lived SSE connections |
+| Tool Agent | 0.25 vCPU | 256 MB | Only active during rule creation; consider removing if unused |
+| UI (nginx) | 0.125 vCPU | 64 MB | Static file serving only |
+
+These limits match observed usage (near-zero CPU, 75-300 MB memory per service). Adjust upward if you see OOM restarts.
 
 ## Health Checks
 

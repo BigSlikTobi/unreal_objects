@@ -1,5 +1,7 @@
+from typing import Literal
+
 from pydantic import BaseModel, Field
-from datetime import datetime
+from datetime import datetime, timezone
 import uuid
 
 def generate_id():
@@ -7,7 +9,7 @@ def generate_id():
 
 class DatapointDefinition(BaseModel):
     name: str
-    type: str  # "text" | "number" | "boolean" | "enum"
+    type: Literal["text", "number", "boolean", "enum"]
     values: list[str] = []
 
 class BusinessRule(BaseModel):
@@ -20,7 +22,7 @@ class BusinessRule(BaseModel):
     edge_cases_json: list[dict] = Field(default_factory=list)
     rule_logic: str
     rule_logic_json: dict = Field(default_factory=dict)
-    created_at: datetime = Field(default_factory=datetime.now)
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
 class BusinessRuleGroup(BaseModel):
     id: str = Field(default_factory=generate_id)

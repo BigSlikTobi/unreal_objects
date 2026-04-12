@@ -8,78 +8,22 @@ Unreal Objects is accountability infrastructure for autonomous AI agents. It sit
 
 ## Commands
 
-Requires **Python 3.11+** and **Node.js 18+**.
+Requires **Python 3.11+** and **Node.js 18+**. Procedural commands are available as skills:
 
-### Python Backend
+| Skill | Purpose |
+|---|---|
+| `/setup` | Create venv and install dependencies |
+| `/start-backend` | Start Rule Engine + Decision Center + MCP Server |
+| `/start-company` | Start the Living Virtual Company server |
+| `/test` | Run tests (accepts target: `all`, `integration`, `evaluator`, `api`, `mcp`, `company`) |
+| `/eval` | Run agent eval scenarios |
+| `/ui` | UI dev server, build, or lint |
 
-```bash
-# Setup
-python3 -m venv .venv
-source .venv/bin/activate
-pip install -e ".[dev]"
-
-# Run all three backend services (kills old processes first)
-./scripts/start_backend_stack.sh
-
-# Or run services individually
-uvicorn rule_engine.app:app --port 8001
-uvicorn decision_center.app:app --port 8002
-python mcp_server/server.py --transport streamable-http --host 0.0.0.0 --port 8000
-# With agent auth:
-python mcp_server/server.py --transport streamable-http --host 0.0.0.0 --port 8000 --auth-enabled --admin-api-key admin-secret
-
-# Tests
-pytest -v                                          # all tests
-pytest rule_engine/tests/test_api.py -v            # single file
-pytest decision_center/tests/test_evaluator.py -v  # evaluator unit tests
-pytest tests/test_integration.py -v               # end-to-end (starts live servers)
-pytest company_server/tests/ -v                   # company server tests
-
-# Agent eval (auto-starts services if needed)
-uo-agent-eval --domain generated                   # 500 edge-case scenarios (seed 42)
-uo-agent-eval --domain generated --seed random      # fresh scenarios each run
-uo-agent-eval --domain full                         # handwritten + generated (509 total)
-
-# Other CLI entry points (installed via pip install -e)
-uo-stress-test                                     # LLM translation stress test
-uo-agent-admin                                     # MCP agent administration
-uo-company-server                                  # Living virtual company server
-
-# CLI wizard
-python decision_center/cli.py
-```
-
-### Living Virtual Company (`company_server/`)
-
-```bash
-# Start with defaults (requires backend stack running)
-uo-company-server
-
-# Custom configuration
-uo-company-server --acceleration 20 --base-rate 10
-uo-company-server --webhook-url http://localhost:9000/webhook
-uo-company-server --no-ai                          # deterministic fallback (no LLM)
-uo-company-server --ai-provider openai --ai-model gpt-4o --ai-api-key sk-...
-
-# Verify
-curl http://localhost:8010/api/v1/status
-curl http://localhost:8010/api/v1/clock
-curl http://localhost:8010/api/v1/cases?status=open
-```
-
-### React UI (`ui/`)
-
-```bash
-cd ui
-npm install
-npm run dev      # dev server (Vite)
-npm run build    # production build
-npm run lint     # ESLint
-```
+CLI entry points (installed via `pip install -e ".[dev]"`): `uo-stress-test`, `uo-agent-admin`, `uo-agent-eval`, `uo-company-server`. CLI wizard: `python decision_center/cli.py`.
 
 ## Architecture
 
-Python microservices communicate via HTTP. All state is **in-memory** (no database), so data resets on restart.
+Python microservices communicate via HTTP. The Rule Engine has optional file-based persistence (`RULE_ENGINE_PERSISTENCE_PATH`, defaults to `data/rule_engine_store.json` when started via the stack script). The Decision Center is **in-memory only** — its state resets on restart.
 
 ### Service Map
 
@@ -88,14 +32,14 @@ Python microservices communicate via HTTP. All state is **in-memory** (no databa
 | Rule Engine | 8001 | `rule_engine/` | CRUD for rule groups and rules |
 | Decision Center | 8002 | `decision_center/` | Evaluates requests against rules; audit log |
 | MCP Server | 8000 | `mcp_server/` | MCP bridge for AI agents to call the above |
-| Tool Creation Agent | 8003 | `mcp_server/tool_agent.py` | LLM agent that proposes new guarded_ tools when rules require them |
+| Tool Creation Agent | 8003 | `mcp_server/tool_agent.py` | LLM agent that proposes new guarded_ tools when rules require them (started separately, not part of the stack script) |
 | Company Server | 8010 | `company_server/` | Living virtual company simulator for stress testing |
 
-The core three services (Rule Engine, Decision Center, MCP Server) are started together via `./scripts/start_backend_stack.sh`. The Company Server runs independently and connects to the backend stack.
+The core three services (Rule Engine, Decision Center, MCP Server) are started together via `/start-backend`. The Company Server and Tool Creation Agent run independently.
 
 ### Rule Evaluation Pipeline (`decision_center/evaluator.py`)
 
-When an action is evaluated (`GET /v1/decide`):
+When an action is evaluated (`GET /v1/decide` or `POST /v1/decide`):
 1. The Decision Center fetches the rule group from the Rule Engine at `127.0.0.1:8001`.
 2. For each rule, **edge cases are evaluated first** (they short-circuit if matched).
 3. If no edge case matches, the main `rule_logic_json` (JSON Logic AST) is evaluated.
@@ -157,7 +101,7 @@ A continuous simulator that generates realistic support cases at accelerated vir
 
 Vite + React + TypeScript + Tailwind CSS. Talks directly to Rule Engine (`:8001`) and Decision Center (`:8002`). Main components: `Sidebar` (group management), `ChatInterface` (LLM wizard for rule creation), `TestConsole` (action simulation), `DecisionLog` (audit trail viewer with expandable chain timelines).
 
-The `ChatInterface` schema dropdown is dynamically populated from `GET /v1/schemas` on mount (previously a hardcoded constant). `AgentAdminPanel` includes an MCP config snippet generator with tabs for Claude Desktop (HTTP/stdio), Cursor/Windsurf, and Generic clients, plus copy-to-clipboard.
+The `ChatInterface` schema dropdown is dynamically populated from `GET /v1/schemas` on mount (previously a hardcoded constant). `AgentAdminPanel` includes an MCP config snippet generator with tabs for Claude Desktop (HTTP), Claude Desktop (stdio), Cursor/Windsurf, and Generic/Other clients, plus copy-to-clipboard.
 
 ## Key Design Decisions
 

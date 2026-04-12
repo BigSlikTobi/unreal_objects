@@ -83,7 +83,7 @@ async def lifespan(app: FastAPI):
 
     _config = _startup_config or CompanyConfig()
     _clock = CompanyClock(acceleration=_config.acceleration)
-    _state = CompanyState()
+    _state = CompanyState(max_cases=_config.max_cases)
 
     # Seed data
     _state.seed_customers(_config.initial_customers)
@@ -161,12 +161,12 @@ class UpdateRuleRequest(BaseModel):
 # --- Endpoints ---
 
 @app.get("/health")
-def health():
+async def health():
     return {"status": "ok", "service": "company_server"}
 
 
 @app.get("/api/v1/status")
-def get_status():
+async def get_status():
     return {
         "virtual_time": _clock.now().isoformat() if _clock else None,
         "acceleration": _config.acceleration if _config else None,
@@ -176,7 +176,7 @@ def get_status():
 
 
 @app.get("/api/v1/clock")
-def get_clock():
+async def get_clock():
     if not _clock:
         raise HTTPException(503, "Clock not initialized")
     vt = _clock.now()
@@ -190,7 +190,7 @@ def get_clock():
 
 
 @app.get("/api/v1/cases")
-def list_cases(status: str | None = Query(None)):
+async def list_cases(status: str | None = Query(None)):
     if not _state:
         raise HTTPException(503, "State not initialized")
     cases = list(_state.cases.values())
@@ -204,7 +204,7 @@ def list_cases(status: str | None = Query(None)):
 
 
 @app.get("/api/v1/cases/{case_id}")
-def get_case(case_id: str):
+async def get_case(case_id: str):
     if not _state:
         raise HTTPException(503, "State not initialized")
     case = _state.cases.get(case_id)
@@ -218,7 +218,7 @@ def get_case(case_id: str):
 
 
 @app.post("/api/v1/cases/{case_id}/assign")
-def assign_case(case_id: str, req: AssignRequest):
+async def assign_case(case_id: str, req: AssignRequest):
     if not _state:
         raise HTTPException(503, "State not initialized")
     case = _state.assign_case(case_id, req.bot_id)
@@ -228,7 +228,7 @@ def assign_case(case_id: str, req: AssignRequest):
 
 
 @app.post("/api/v1/cases/{case_id}/resolve")
-def resolve_case(case_id: str, req: ResolveRequest):
+async def resolve_case(case_id: str, req: ResolveRequest):
     if not _state:
         raise HTTPException(503, "State not initialized")
     case = _state.resolve_case(case_id, req.resolution)
@@ -238,7 +238,7 @@ def resolve_case(case_id: str, req: ResolveRequest):
 
 
 @app.get("/api/v1/customers")
-def list_customers():
+async def list_customers():
     if not _state:
         raise HTTPException(503, "State not initialized")
     return {
@@ -248,7 +248,7 @@ def list_customers():
 
 
 @app.get("/api/v1/customers/{customer_id}")
-def get_customer(customer_id: str):
+async def get_customer(customer_id: str):
     if not _state:
         raise HTTPException(503, "State not initialized")
     customer = _state.customers.get(customer_id)

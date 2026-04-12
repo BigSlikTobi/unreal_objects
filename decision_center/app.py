@@ -18,7 +18,7 @@ from .models import (
 )
 from .store import DecisionStore
 from .evaluator import evaluate_request
-from .translator import check_llm_connection, translate_rule, SchemaConceptMismatchError
+from .translator import check_llm_connection_async, translate_rule_async, SchemaConceptMismatchError
 from .schema_generator import generate_schema, list_schemas, save_schema, SchemaProposal, SchemaExistsError
 from shared.middleware import InternalAuthMiddleware, check_production_api_key
 import uuid
@@ -202,7 +202,7 @@ async def export_logs():
 
 @app.post("/v1/llm/connection")
 async def check_connection(req: LLMConnectionRequest):
-    success = check_llm_connection(req.provider, req.model, req.api_key)
+    success = await check_llm_connection_async(req.provider, req.model, req.api_key)
     if not success:
         raise HTTPException(status_code=400, detail="Connection failed. Check your API key and model.")
     return {"status": "ok"}
@@ -211,7 +211,7 @@ async def check_connection(req: LLMConnectionRequest):
 @limiter.limit("10/minute")
 async def translate_rule_api(request: Request, req: RuleTranslationRequest):
     try:
-        result = translate_rule(
+        result = await translate_rule_async(
             natural_language=req.natural_language,
             feature=req.feature,
             name=req.name,
@@ -219,7 +219,7 @@ async def translate_rule_api(request: Request, req: RuleTranslationRequest):
             model=req.model,
             api_key=req.api_key,
             context_schema=req.context_schema,
-            datapoint_definitions=req.datapoint_definitions
+            datapoint_definitions=req.datapoint_definitions,
         )
         return result
     except SchemaConceptMismatchError as e:

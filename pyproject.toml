@@ -6,16 +6,10 @@ requires-python = ">=3.11"
 dependencies = [
     "fastapi>=0.111.0",
     "uvicorn>=0.30.0",
-    "mcp[cli]>=1.26.0",
     "pydantic>=2.7.0",
     "httpx>=0.28.0",
-    "openai>=1.0.0",
-    "anthropic>=0.39.0",
-    "google-genai>=0.2.0",
-    "json-logic-qubit>=0.9.1",
     "python-dotenv>=1.0.1",
     "pydantic-settings>=2.0.0",
-    "slowapi>=0.1.9",
 ]
 
 [project.scripts]
@@ -25,6 +19,31 @@ uo-agent-eval = "evals.agent_eval.cli:main"
 uo-company-server = "company_server.cli:main"
 
 [project.optional-dependencies]
+rule-engine = []
+decision-center = [
+    "json-logic-qubit>=0.9.1",
+    "slowapi>=0.1.9",
+    "openai>=1.0.0",
+    "anthropic>=0.39.0",
+    "google-genai>=0.2.0",
+]
+mcp-server = [
+    "mcp>=1.26.0",
+]
+tool-agent = [
+    "mcp>=1.26.0",
+    "openai>=1.0.0",
+    "anthropic>=0.39.0",
+    "google-genai>=0.2.0",
+]
+all = [
+    "mcp>=1.26.0",
+    "json-logic-qubit>=0.9.1",
+    "slowapi>=0.1.9",
+    "openai>=1.0.0",
+    "anthropic>=0.39.0",
+    "google-genai>=0.2.0",
+]
 dev = [
     "pytest>=8.0.0",
     "pytest-asyncio>=0.23.0",
@@ -46,7 +65,7 @@ testpaths = [
 ]
 
 [tool.hatch.build.targets.wheel]
-packages = [
+only-include = [
     "rule_engine",
     "decision_center",
     "mcp_server",

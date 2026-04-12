@@ -233,7 +233,7 @@ def build_http_app(
         if not principal:
             return JSONResponse(status_code=401, content={"detail": "Invalid or expired bearer token"})
 
-        with principal_context(principal):
+        async with principal_context(principal):
             return await call_next(request)
 
     if auth_routes_enabled:

@@ -1,10 +1,8 @@
+import asyncio
 import json
 import re
 from pydantic import BaseModel, Field
 from pydantic import ValidationError
-import openai
-import anthropic
-from google import genai
 
 class SchemaConceptMismatchError(ValueError):
     """Raised when a translated rule uses a variable that is not in the active
@@ -487,19 +485,17 @@ def check_llm_connection(provider: str, model: str, api_key: str) -> bool:
     """Smoke test to verify API keys for the selected provider."""
     try:
         if provider == "openai":
+            import openai
             client = openai.OpenAI(api_key=api_key)
             client.models.retrieve(model) # Basic auth check
             return True
         elif provider == "anthropic":
+            import anthropic
             client = anthropic.Anthropic(api_key=api_key)
-            # Anthropic doesn't have a simple auth check endpoint, so we do a tiny completion
-            client.messages.create(
-                model=model,
-                max_tokens=1,
-                messages=[{"role": "user", "content": "Hi"}]
-            )
+            client.models.list(limit=1)
             return True
         elif provider == "gemini":
+            from google import genai
             client = genai.Client(api_key=api_key)
             client.models.get(name=f"models/{model}")
             return True
@@ -568,6 +564,7 @@ All allowed schema fields:
 
     # Handle OpenAI
     if provider == "openai":
+        import openai
         client = openai.OpenAI(api_key=api_key)
         schema_json = RuleLogicDefinition.model_json_schema()
         system_content = f"{active_sys_prompt}\n\nStrictly format your response to match this JSON schema:\n{json.dumps(schema_json)}"
@@ -609,6 +606,7 @@ All allowed schema fields:
 
     # Handle Anthropic
     elif provider == "anthropic":
+        import anthropic
         client = anthropic.Anthropic(api_key=api_key)
         schema = RuleLogicDefinition.model_json_schema()
         response = client.messages.create(
@@ -633,6 +631,7 @@ All allowed schema fields:
 
     # Handle Gemini
     elif provider == "gemini":
+        from google import genai
         client = genai.Client(api_key=api_key)
         response = client.models.generate_content(
             model=model,
@@ -669,3 +668,22 @@ All allowed schema fields:
         _normalize_json_logic(ec, datapoint_names) for ec in result.get("edge_cases_json", [])
     ]
     return result
+
+
+async def check_llm_connection_async(provider: str, model: str, api_key: str) -> bool:
+    """Non-blocking version of check_llm_connection for use in async endpoints."""
+    return await asyncio.to_thread(check_llm_connection, provider, model, api_key)
+
+
+async def translate_rule_async(
+    natural_language: str, feature: str, name: str,
+    provider: str, model: str, api_key: str,
+    context_schema: dict = None, datapoint_definitions: list = None,
+) -> dict:
+    """Non-blocking version of translate_rule for use in async endpoints."""
+    return await asyncio.to_thread(
+        translate_rule,
+        natural_language, feature, name,
+        provider, model, api_key,
+        context_schema, datapoint_definitions,
+    )

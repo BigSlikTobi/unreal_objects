@@ -28,6 +28,9 @@ class CompanyConfig(BaseSettings):
     host: str = "0.0.0.0"
     port: int = 8010
 
+    # Eviction
+    max_cases: int = 5000
+
     # Seeding
     initial_customers: int = 20
     initial_orders: int = 50
