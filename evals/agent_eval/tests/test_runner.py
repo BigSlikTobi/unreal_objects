@@ -14,14 +14,14 @@ from evals.agent_eval.models import AgentScenario, WorkflowStep, ReceiptAssertio
 def reset_stores():
     """Reset in-memory stores before each test."""
     re_store.groups.clear()
-    dc_store.atomic_logs.clear()
-    dc_store.chains.clear()
-    dc_store.pending.clear()
+    dc_store.data.atomic_logs.clear()
+    dc_store.data.chains.clear()
+    dc_store.data.pending.clear()
     yield
     re_store.groups.clear()
-    dc_store.atomic_logs.clear()
-    dc_store.chains.clear()
-    dc_store.pending.clear()
+    dc_store.data.atomic_logs.clear()
+    dc_store.data.chains.clear()
+    dc_store.data.pending.clear()
 
 
 @pytest.fixture
