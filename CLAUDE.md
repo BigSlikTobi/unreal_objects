@@ -19,7 +19,7 @@ Requires **Python 3.11+** and **Node.js 18+**. Procedural commands are available
 | `/eval` | Run agent eval scenarios |
 | `/ui` | UI dev server, build, or lint |
 
-CLI entry points (installed via `pip install -e ".[dev]"`): `uo-stress-test`, `uo-agent-admin`, `uo-agent-eval`, `uo-company-server`. CLI wizard: `python decision_center/cli.py`.
+CLI entry points (installed via `pip install -e ".[all,dev]"`): `uo-stress-test`, `uo-agent-admin`, `uo-agent-eval`, `uo-company-server`. CLI wizard: `python decision_center/cli.py`.
 
 ## Architecture
 

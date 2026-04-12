@@ -280,6 +280,15 @@ def _get_http_client() -> httpx.AsyncClient:
         _http_client = httpx.AsyncClient(headers=internal_headers())
     return _http_client
 
+
+async def close_http_client() -> None:
+    """Close the shared HTTP client so transports and sockets are released."""
+    global _http_client
+    client = _http_client
+    _http_client = None
+    if client is not None and not client.is_closed:
+        await client.aclose()
+
 async def _fetch_group(group_id: str):
     """Extracted to allow clean mocking in tests without patching all of httpx."""
     if not re.match(r'^[a-zA-Z0-9_-]+$', group_id):

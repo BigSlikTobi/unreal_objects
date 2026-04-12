@@ -1,5 +1,6 @@
 import logging
 import os
+from contextlib import asynccontextmanager
 from datetime import datetime, timezone
 
 from fastapi import FastAPI, HTTPException, Request
@@ -17,7 +18,7 @@ from .models import (
     SchemaGenerationRequest, SchemaSaveRequest,
 )
 from .store import DecisionStore
-from .evaluator import evaluate_request
+from .evaluator import evaluate_request, close_http_client
 from .translator import check_llm_connection_async, translate_rule_async, SchemaConceptMismatchError
 from .schema_generator import generate_schema, list_schemas, save_schema, SchemaProposal, SchemaExistsError
 from shared.middleware import InternalAuthMiddleware, check_production_api_key
@@ -36,7 +37,14 @@ def _get_real_client_ip(request: Request) -> str:
 
 limiter = Limiter(key_func=_get_real_client_ip, enabled=os.getenv("ENVIRONMENT") == "production")
 
-app = FastAPI(title="Unreal Objects Decision Center API")
+
+@asynccontextmanager
+async def _lifespan(app: FastAPI):
+    yield
+    await close_http_client()
+
+
+app = FastAPI(title="Unreal Objects Decision Center API", lifespan=_lifespan)
 app.state.limiter = limiter
 
 @app.exception_handler(RateLimitExceeded)

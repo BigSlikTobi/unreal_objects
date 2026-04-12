@@ -8,8 +8,6 @@ Usage:
 
 from __future__ import annotations
 
-import os
-
 from fastapi import FastAPI
 
 from rule_engine.app import app as rule_engine_app, store as rule_store

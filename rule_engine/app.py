@@ -99,7 +99,7 @@ async def _notify_tool_agent(group_id: str, rule: BusinessRule, group_name: str)
                     "datapoints": rule.datapoints,
                 },
             )
-    except (httpx.RequestError, httpx.HTTPStatusError):
+    except httpx.RequestError:
         pass  # Non-blocking: tool agent may not be running
     except Exception:
         logger.debug("Tool agent notification failed unexpectedly", exc_info=True)
