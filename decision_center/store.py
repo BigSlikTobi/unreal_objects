@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import os
 from pathlib import Path
 from typing import Any
 
@@ -8,6 +9,9 @@ from pydantic import BaseModel, Field
 
 from .models import AtomicLogEntry, ChainEvent, DecisionChain
 from shared.persistence import atomic_write_json
+
+MAX_ATOMIC_LOGS = int(os.getenv("MAX_ATOMIC_LOGS", "10000"))
+MAX_CHAINS = int(os.getenv("MAX_CHAINS", "5000"))
 
 
 class DecisionStoreData(BaseModel):
@@ -21,9 +25,13 @@ class DecisionStore:
         self,
         data: DecisionStoreData | None = None,
         persistence_path: str | Path | None = None,
+        max_atomic_logs: int = MAX_ATOMIC_LOGS,
+        max_chains: int = MAX_CHAINS,
     ):
         self.data = data or DecisionStoreData()
         self.persistence_path = Path(persistence_path) if persistence_path else None
+        self.max_atomic_logs = max_atomic_logs
+        self.max_chains = max_chains
         if data is None:
             self._load()
 
@@ -47,6 +55,8 @@ class DecisionStore:
 
     def log_atomic(self, entry: AtomicLogEntry):
         self.data.atomic_logs.append(entry)
+        if len(self.data.atomic_logs) > self.max_atomic_logs:
+            self.data.atomic_logs = self.data.atomic_logs[-self.max_atomic_logs:]
         self._save()
 
     def get_atomic_logs(self) -> list[AtomicLogEntry]:
@@ -55,6 +65,9 @@ class DecisionStore:
     def log_chain_event(self, request_id: str, event_type: str, details: dict | None = None):
         if request_id not in self.data.chains:
             self.data.chains[request_id] = DecisionChain(request_id=request_id)
+            if len(self.data.chains) > self.max_chains:
+                oldest_key = next(iter(self.data.chains))
+                del self.data.chains[oldest_key]
 
         self.data.chains[request_id].events.append(
             ChainEvent(event_type=event_type, details=details or {})

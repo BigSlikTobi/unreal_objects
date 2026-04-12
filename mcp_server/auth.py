@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from contextlib import contextmanager
+from contextlib import asynccontextmanager
 from contextvars import ContextVar
 from datetime import datetime, timedelta, timezone
 import hashlib
@@ -338,8 +338,8 @@ def get_current_principal() -> AuthenticatedPrincipal | None:
     return _CURRENT_PRINCIPAL.get()
 
 
-@contextmanager
-def principal_context(principal: AuthenticatedPrincipal):
+@asynccontextmanager
+async def principal_context(principal: AuthenticatedPrincipal):
     token = _CURRENT_PRINCIPAL.set(principal)
     try:
         yield

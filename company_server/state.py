@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import random
 import uuid
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 from pydantic import BaseModel, Field
 
@@ -21,7 +21,7 @@ class Customer(BaseModel):
     email: str
     tier: str = "basic"
     account_age_days: int = 365
-    created_at: datetime = Field(default_factory=datetime.now)
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
 
 class Order(BaseModel):
@@ -29,7 +29,7 @@ class Order(BaseModel):
     customer_id: str
     total: float
     status: str = "delivered"
-    created_at: datetime = Field(default_factory=datetime.now)
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
 
 FIRST_NAMES = [
@@ -46,10 +46,11 @@ TIERS = ["basic", "basic", "basic", "premium", "premium", "enterprise"]
 
 
 class CompanyState:
-    def __init__(self):
+    def __init__(self, max_cases: int = 5000):
         self.customers: dict[str, Customer] = {}
         self.orders: dict[str, Order] = {}
         self.cases: dict[str, SupportCase] = {}
+        self.max_cases = max_cases
 
     def seed_customers(self, count: int = 20, seed: int = 42) -> None:
         rng = random.Random(seed)
@@ -80,13 +81,30 @@ class CompanyState:
                 customer_id=cid,
                 total=total,
                 status=status,
-                created_at=datetime.now() - timedelta(days=days_ago),
+                created_at=datetime.now(timezone.utc) - timedelta(days=days_ago),
             )
             self.orders[o.id] = o
 
     def add_case(self, case: SupportCase) -> SupportCase:
         self.cases[case.case_id] = case
+        self._evict_if_needed()
         return case
+
+    def _evict_if_needed(self) -> None:
+        if len(self.cases) <= self.max_cases:
+            return
+        resolved = [
+            cid for cid, c in self.cases.items()
+            if c.status == CaseStatus.RESOLVED
+        ]
+        for cid in resolved:
+            del self.cases[cid]
+            if len(self.cases) <= self.max_cases:
+                return
+        # If still over limit after removing all resolved, drop oldest entries
+        while len(self.cases) > self.max_cases:
+            oldest_key = next(iter(self.cases))
+            del self.cases[oldest_key]
 
     def get_open_cases(self) -> list[SupportCase]:
         return [c for c in self.cases.values() if c.status == CaseStatus.OPEN]

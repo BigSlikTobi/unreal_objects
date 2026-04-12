@@ -1,3 +1,6 @@
+import logging
+import re
+
 import httpx
 import os
 from fastapi import BackgroundTasks, FastAPI, Header, HTTPException, Response, status
@@ -7,6 +10,10 @@ from typing import List
 from .models import BusinessRule, BusinessRuleGroup, CreateRule, CreateRuleGroup, DatapointDefinition
 from .store import RuleStore
 from shared.middleware import InternalAuthMiddleware, check_production_api_key, internal_headers
+
+logger = logging.getLogger(__name__)
+
+_ID_PATTERN = re.compile(r'^[a-zA-Z0-9_-]+$')
 
 check_production_api_key()
 
@@ -55,8 +62,14 @@ async def list_groups(response: Response):
     response.headers["Cache-Control"] = "no-store"
     return store.list_groups()
 
+def _validate_id(value: str, name: str = "id") -> None:
+    if not _ID_PATTERN.match(value):
+        raise HTTPException(status_code=400, detail=f"Invalid {name} format")
+
+
 @app.get("/v1/groups/{group_id}", response_model=BusinessRuleGroup)
 async def get_group(group_id: str, response: Response):
+    _validate_id(group_id, "group_id")
     response.headers["Cache-Control"] = "no-store"
     group = store.get_group(group_id)
     if not group:
@@ -65,6 +78,7 @@ async def get_group(group_id: str, response: Response):
 
 @app.delete("/v1/groups/{group_id}", status_code=204)
 async def delete_group(group_id: str, x_admin_token: str | None = Header(default=None)):
+    _validate_id(group_id, "group_id")
     _require_admin_token_for_destructive_action(x_admin_token)
     if not store.delete_group(group_id):
         raise HTTPException(status_code=404, detail="Group not found")
@@ -85,12 +99,15 @@ async def _notify_tool_agent(group_id: str, rule: BusinessRule, group_name: str)
                     "datapoints": rule.datapoints,
                 },
             )
-    except Exception:
+    except httpx.RequestError:
         pass  # Non-blocking: tool agent may not be running
+    except Exception:
+        logger.debug("Tool agent notification failed unexpectedly", exc_info=True)
 
 
 @app.post("/v1/groups/{group_id}/rules", response_model=BusinessRule, status_code=201)
 async def add_rule(group_id: str, rule: CreateRule, background_tasks: BackgroundTasks):
+    _validate_id(group_id, "group_id")
     created = store.add_rule(group_id, rule)
     if not created:
         raise HTTPException(status_code=404, detail="Group not found")
@@ -100,6 +117,8 @@ async def add_rule(group_id: str, rule: CreateRule, background_tasks: Background
 
 @app.get("/v1/groups/{group_id}/rules/{rule_id}", response_model=BusinessRule)
 async def get_rule(group_id: str, rule_id: str, response: Response):
+    _validate_id(group_id, "group_id")
+    _validate_id(rule_id, "rule_id")
     response.headers["Cache-Control"] = "no-store"
     rule = store.get_rule(group_id, rule_id)
     if not rule:
@@ -108,11 +127,15 @@ async def get_rule(group_id: str, rule_id: str, response: Response):
 
 @app.delete("/v1/groups/{group_id}/rules/{rule_id}", status_code=204)
 async def delete_rule(group_id: str, rule_id: str):
+    _validate_id(group_id, "group_id")
+    _validate_id(rule_id, "rule_id")
     if not store.delete_rule(group_id, rule_id):
         raise HTTPException(status_code=404, detail="Rule not found")
 
 @app.put("/v1/groups/{group_id}/rules/{rule_id}", response_model=BusinessRule)
 async def update_rule(group_id: str, rule_id: str, rule: CreateRule):
+    _validate_id(group_id, "group_id")
+    _validate_id(rule_id, "rule_id")
     updated = store.update_rule(group_id, rule_id, rule)
     if not updated:
         raise HTTPException(status_code=404, detail="Rule or Group not found")
@@ -120,6 +143,7 @@ async def update_rule(group_id: str, rule_id: str, rule: CreateRule):
 
 @app.patch("/v1/groups/{group_id}/datapoints", response_model=BusinessRuleGroup)
 async def update_datapoints(group_id: str, definitions: List[DatapointDefinition]):
+    _validate_id(group_id, "group_id")
     group = store.update_datapoints(group_id, definitions)
     if not group:
         raise HTTPException(status_code=404, detail="Group not found")

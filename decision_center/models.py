@@ -1,6 +1,6 @@
 from enum import Enum
 from pydantic import BaseModel, Field
-from datetime import datetime
+from datetime import datetime, timezone
 import uuid
 from typing import Optional, List, Dict, Any
 
@@ -46,7 +46,7 @@ class DecisionResult(BaseModel):
     outcome: DecisionOutcome
     matched_rules: List[str]
     matched_details: List[MatchedRuleInfo] = Field(default_factory=list)
-    timestamp: datetime = Field(default_factory=datetime.now)
+    timestamp: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     agent_id: Optional[str] = None
     credential_id: Optional[str] = None
     user_id: Optional[str] = None
@@ -58,7 +58,7 @@ class ApprovalSubmission(BaseModel):
 
 class AtomicLogEntry(BaseModel):
     request_id: str = Field(default_factory=generate_id)
-    timestamp: datetime = Field(default_factory=datetime.now)
+    timestamp: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     request_description: str
     context: Dict[str, Any]
     decision: DecisionState
@@ -68,7 +68,7 @@ class AtomicLogEntry(BaseModel):
     effective_group_id: Optional[str] = None
 
 class ChainEvent(BaseModel):
-    timestamp: datetime = Field(default_factory=datetime.now)
+    timestamp: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     event_type: str
     details: Dict[str, Any] = Field(default_factory=dict)
 

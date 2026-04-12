@@ -116,7 +116,7 @@ async def test_evaluate_action_requires_user_id_when_authenticated(monkeypatch):
     ctx = _mock_ctx()
     monkeypatch.setattr(server_module, "_AUTH_ENABLED", True)
 
-    with principal_context(
+    async with principal_context(
         AuthenticatedPrincipal(
             agent_id="agt_ops_01",
             credential_id="cred_finance_a",
@@ -151,7 +151,7 @@ async def test_evaluate_action_uses_authenticated_principal_and_posts_identity(m
     ctx = _mock_ctx(dc_client=dc)
     monkeypatch.setattr(server_module, "_AUTH_ENABLED", True)
 
-    with principal_context(
+    async with principal_context(
         AuthenticatedPrincipal(
             agent_id="agt_ops_01",
             credential_id="cred_finance_a",

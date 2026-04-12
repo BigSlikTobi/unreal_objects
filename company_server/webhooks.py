@@ -7,7 +7,7 @@ import hashlib
 import hmac
 import json
 import logging
-from datetime import datetime
+from datetime import datetime, timezone
 
 import httpx
 
@@ -36,7 +36,7 @@ class WebhookDispatcher:
 
         payload = {
             "event": "case.created",
-            "timestamp": datetime.now().isoformat(),
+            "timestamp": datetime.now(timezone.utc).isoformat(),
             "company_time": company_time.isoformat(),
             "data": {
                 "case_id": case.case_id,

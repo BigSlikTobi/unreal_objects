@@ -22,7 +22,7 @@ import keyword
 import os
 import uuid
 from contextlib import asynccontextmanager
-from datetime import datetime
+from datetime import datetime, timezone
 
 import httpx
 from fastapi import BackgroundTasks, FastAPI, HTTPException
@@ -488,7 +488,7 @@ async def _process_rule(rule: RuleCreatedPayload) -> None:
     _proposals[request_id] = {
         "id": request_id,
         "status": "pending_review",
-        "created_at": datetime.now().isoformat(),
+        "created_at": datetime.now(timezone.utc).isoformat(),
         "trigger_rule": rule.rule_name,
         "trigger_group": rule.group_name,
         "group_id": rule.group_id,

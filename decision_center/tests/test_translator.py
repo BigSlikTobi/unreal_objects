@@ -37,7 +37,7 @@ def test_test_llm_connection_anthropic(mock_anthropic):
     mock_anthropic.return_value = mock_client
     
     assert check_llm_connection("anthropic", "claude-4.5-haiku", "fake_key") is True
-    mock_client.messages.create.assert_called_once()
+    mock_client.models.list.assert_called_once_with(limit=1)
 
 @patch("google.genai.Client")
 def test_test_llm_connection_gemini(mock_genai):

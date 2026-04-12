@@ -164,12 +164,17 @@ export const executeTest = async (
   context: Record<string, string | number | boolean>,
   ruleId?: string
 ): Promise<DecisionResult> => {
-  const ctxStr = encodeURIComponent(JSON.stringify(context));
-  const descStr = encodeURIComponent(description);
-  const ruleStr = ruleId ? `&rule_id=${encodeURIComponent(ruleId)}` : '';
-  const res = await fetch(
-    `${DECISION_BASE}/decide?request_description=${descStr}&context=${ctxStr}&group_id=${groupId}${ruleStr}`
-  );
+  const body: Record<string, unknown> = {
+    request_description: description,
+    context,
+    group_id: groupId,
+  };
+  if (ruleId) body.rule_id = ruleId;
+  const res = await fetch(`${DECISION_BASE}/decide`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  });
   if (!res.ok) throw new Error('Test evaluation failed');
   return res.json();
 };

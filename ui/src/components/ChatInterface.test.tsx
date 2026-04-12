@@ -3,7 +3,8 @@ import userEvent from '@testing-library/user-event';
 import { useState } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { ChatInterface, replaceVariableToken, swapVariableInResult } from './ChatInterface';
+import { ChatInterface } from './ChatInterface';
+import { replaceVariableToken, swapVariableInResult } from '../utils/variableSwap';
 import { createRule, fetchSchemas, getGroup, translateRule, updateDatapointDefinitions, updateRule } from '../api';
 import type { Rule, RuleGroup } from '../types';
 

@@ -218,19 +218,36 @@ def _coerce_bool_strings(context: Dict[str, Any]) -> None:
                 context[k] = False
 
 
+def _coerce_numeric_strings(context: Dict[str, Any]) -> None:
+    """Coerce string values that look numeric to int/float.
+
+    Applied pre-evaluation so that operators like ``in`` and arithmetic
+    see native numbers, not just the strict comparison operators that use
+    ``_coerce_pair``.
+    """
+    for k, v in context.items():
+        if isinstance(v, str) and not isinstance(context[k], bool):
+            coerced = _try_coerce_numeric(v)
+            if coerced is not v:
+                context[k] = coerced
+
+
 def evaluate_rule(rule_json: dict | None, rule_logic: str, context: Dict[str, Any]) -> str | None:
     """Evaluates rules using JSON Logic if available, falling back to legacy string parsing."""
     if not rule_json:
         return legacy_evaluate_rule(rule_logic, context)
 
     try:
-        # Coerce string booleans before evaluation
-        _coerce_bool_strings(context)
+        # Work on a shallow copy to prevent cross-rule context pollution
+        ctx = dict(context)
+        # Coerce string booleans and numeric strings before evaluation
+        _coerce_bool_strings(ctx)
+        _coerce_numeric_strings(ctx)
         # Map missing variables via fuzzy matching before evaluating
-        map_missing_variables(rule_json, context)
+        map_missing_variables(rule_json, ctx)
 
         # Evaluate safely
-        result = jsonLogic(rule_json, context)
+        result = jsonLogic(rule_json, ctx)
         if result in ["APPROVE", "REJECT", "ASK_FOR_APPROVAL"]:
             return result
         # If False/None, the condition wasn't met
@@ -244,12 +261,56 @@ def evaluate_rule(rule_json: dict | None, rule_logic: str, context: Dict[str, An
 
 _RULE_ENGINE_URL = os.getenv("RULE_ENGINE_URL", "http://127.0.0.1:8001")
 
+_http_client: httpx.AsyncClient | None = None
+
+# When set, the evaluator reads directly from this store instead of making
+# HTTP calls.  Used by the combined backend app to avoid internal networking.
+_local_rule_store = None
+
+
+def use_local_rule_store(store) -> None:
+    """Wire the evaluator to read rules from *store* directly (no HTTP)."""
+    global _local_rule_store
+    _local_rule_store = store
+
+
+def _get_http_client() -> httpx.AsyncClient:
+    global _http_client
+    if _http_client is None or _http_client.is_closed:
+        _http_client = httpx.AsyncClient(headers=internal_headers())
+    return _http_client
+
+
+async def close_http_client() -> None:
+    """Close the shared HTTP client so transports and sockets are released."""
+    global _http_client
+    client = _http_client
+    _http_client = None
+    if client is not None and not client.is_closed:
+        await client.aclose()
+
 async def _fetch_group(group_id: str):
     """Extracted to allow clean mocking in tests without patching all of httpx."""
     if not re.match(r'^[a-zA-Z0-9_-]+$', group_id):
         raise ValueError(f"Invalid group_id format: {group_id!r}")
-    async with httpx.AsyncClient(headers=internal_headers()) as client:
-        return await client.get(f"{_RULE_ENGINE_URL}/v1/groups/{group_id}")
+
+    # Fast path: direct store access when running in the combined backend.
+    if _local_rule_store is not None:
+        group = _local_rule_store.get_group(group_id)
+        if group is None:
+            # Mimic an HTTP 404 response object
+            class _NotFound:
+                status_code = 404
+            return _NotFound()
+        # Mimic an HTTP 200 response object
+        class _Ok:
+            status_code = 200
+            def json(self_inner):
+                return group.model_dump(mode="json")
+        return _Ok()
+
+    client = _get_http_client()
+    return await client.get(f"{_RULE_ENGINE_URL}/v1/groups/{group_id}")
 
 async def evaluate_request(
     context: Dict[str, Any],
