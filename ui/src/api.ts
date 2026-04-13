@@ -343,3 +343,58 @@ export const revokeCredential = async (
   if (!res.ok) throw new Error('Failed to revoke credential');
   return res.json();
 };
+
+// ── Dashboard API ────────────────────────────────────────────────────────────
+
+export interface PendingApproval {
+  request_id: string;
+  description: string;
+  context: Record<string, unknown>;
+  agent_id?: string | null;
+  credential_id?: string | null;
+  user_id?: string | null;
+  effective_group_id?: string | null;
+}
+
+export const fetchRuleEngineHealth = async (): Promise<boolean> => {
+  try {
+    const res = await fetch(`${RULE_ENGINE_ORIGIN}/v1/health`, {
+      cache: 'no-store',
+      signal: AbortSignal.timeout(3000),
+    });
+    return res.ok;
+  } catch {
+    return false;
+  }
+};
+
+export const fetchDecisionCenterHealth = async (): Promise<boolean> => {
+  try {
+    const res = await fetch(`${DECISION_CENTER_ORIGIN}/v1/health`, {
+      cache: 'no-store',
+      signal: AbortSignal.timeout(3000),
+    });
+    return res.ok;
+  } catch {
+    return false;
+  }
+};
+
+export const fetchPendingApprovals = async (): Promise<PendingApproval[]> => {
+  const res = await fetch(`${DECISION_BASE}/pending`, { cache: 'no-store' });
+  if (!res.ok) throw new Error('Failed to fetch pending approvals');
+  return res.json();
+};
+
+export const submitApprovalDecision = async (
+  requestId: string,
+  approved: boolean,
+  approverName: string,
+): Promise<void> => {
+  const res = await fetch(`${DECISION_BASE}/decide/${encodeURIComponent(requestId)}/approve`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ approved, approver: approverName }),
+  });
+  if (!res.ok) throw new Error('Failed to submit approval decision');
+};

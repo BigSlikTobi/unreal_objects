@@ -99,9 +99,19 @@ A continuous simulator that generates realistic support cases at accelerated vir
 
 ### React UI (`ui/`)
 
-Vite + React + TypeScript + Tailwind CSS. Talks directly to Rule Engine (`:8001`) and Decision Center (`:8002`). Main components: `Sidebar` (group management), `ChatInterface` (LLM wizard for rule creation), `TestConsole` (action simulation), `DecisionLog` (audit trail viewer with expandable chain timelines).
+Vite + React + TypeScript + Tailwind CSS. Talks directly to Rule Engine (`:8001`) and Decision Center (`:8002`).
 
-The `ChatInterface` schema dropdown is dynamically populated from `GET /v1/schemas` on mount (previously a hardcoded constant). `AgentAdminPanel` includes an MCP config snippet generator with tabs for Claude Desktop (HTTP), Claude Desktop (stdio), Cursor/Windsurf, and Generic/Other clients, plus copy-to-clipboard.
+**App shell**: A persistent top header bar (`h-14`) contains a hamburger toggle and breadcrumb navigation (`Unreal Objects › View › Group`). The sidebar is a glassmorphism slide-over overlay (`bg-white/85 backdrop-blur-xl`) that opens from the burger button — no fixed desktop sidebar. Default view on load is `dashboard`.
+
+**Main views / components:**
+- `Dashboard` — default landing screen; service health badges (Rule Engine, Decision Center), stat cards (rule groups, total rules, pending approvals, decisions today), decision outcome progress bars, inline pending-approval approve/reject, recent decisions table (desktop) / card list (mobile). Auto-refreshes every 30 s.
+- `Sidebar` — glassmorphism overlay; single rendering path for all screen sizes. Props: `isOpen`, `onClose`, `activeView`, `onOpenDashboard`.
+- `ChatInterface` — LLM wizard for rule creation. Schema dropdown dynamically populated from `GET /v1/schemas` on mount.
+- `TestConsole` — action simulation against a rule group.
+- `DecisionLog` — audit trail viewer with expandable chain timelines and "Download JSON" export.
+- `AgentAdminPanel` — MCP config snippet generator (Claude Desktop HTTP/stdio, Cursor/Windsurf, Generic) with copy-to-clipboard.
+
+**Dashboard API functions** (`api.ts`): `fetchRuleEngineHealth()`, `fetchDecisionCenterHealth()` (3 s timeout probes returning `boolean`), `fetchPendingApprovals()`, `submitApprovalDecision(requestId, approved, approverName)`. `PendingApproval` interface exported from `api.ts`.
 
 ## Key Design Decisions
 

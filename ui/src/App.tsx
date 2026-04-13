@@ -6,17 +6,28 @@ import { TestConsole } from './components/TestConsole';
 import { AgentAdminPanel } from './components/AgentAdminPanel';
 import { SchemaWorkshop } from './components/SchemaWorkshop';
 import { DecisionLog } from './components/DecisionLog';
+import { Dashboard } from './components/Dashboard';
 import { fetchGroups, createGroup, deleteGroup, checkLLMConnection } from './api';
-import { Bot, Settings, X, Save, Plus, PanelLeftOpen } from 'lucide-react';
+import { Bot, ChevronRight, Menu, Save, Settings, X } from 'lucide-react';
 import type { DatapointDefinition, LlmConfig, Rule, RuleGroup } from './types';
 
-type WorkspaceView = 'library' | 'builder' | 'agent-admin' | 'schema-workshop' | 'decision-log';
+type WorkspaceView = 'dashboard' | 'library' | 'builder' | 'agent-admin' | 'schema-workshop' | 'decision-log';
+
+const VIEW_LABELS: Record<WorkspaceView, string> = {
+  dashboard: 'Dashboard',
+  library: 'Rule Library',
+  builder: 'Rule Builder',
+  'agent-admin': 'Agent Admin',
+  'schema-workshop': 'Schema Workshop',
+  'decision-log': 'Decision Log',
+};
 
 function App() {
   const [groups, setGroups] = useState<RuleGroup[]>([]);
   const [selectedGroupId, setSelectedGroupId] = useState<string | null>(null);
   const [isDarkMode, setIsDarkMode] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   // LLM Config — seeded from sessionStorage so values survive page refresh
   const [provider, setProvider] = useState(() => sessionStorage.getItem('llm_provider') || 'openai');
@@ -37,10 +48,9 @@ function App() {
   const [selectedRule, setSelectedRule] = useState<Rule | null>(null);
   const [selectedRuleToken, setSelectedRuleToken] = useState(0);
   const [rulePanelRefreshKey, setRulePanelRefreshKey] = useState(0);
-  const [showGroupPanel, setShowGroupPanel] = useState(false);
   const [systemNotice, setSystemNotice] = useState<string | null>(null);
   const [systemNoticeToken, setSystemNoticeToken] = useState(0);
-  const [workspaceView, setWorkspaceView] = useState<WorkspaceView>('library');
+  const [workspaceView, setWorkspaceView] = useState<WorkspaceView>('dashboard');
   const providerSelectRef = useRef<HTMLSelectElement>(null);
 
   useEffect(() => {
@@ -62,7 +72,7 @@ function App() {
       const data = await fetchGroups();
       setGroups(data);
       if (data.length > 0 && !selectedGroupId) {
-        setSelectedGroupId(data[0].id);
+        // Don't auto-select; let user pick from dashboard/sidebar
       }
     } catch (err) {
       console.error('Failed to load groups:', err);
@@ -76,10 +86,11 @@ function App() {
   useEffect(() => {
     setSelectedRule(null);
     setSelectedRuleToken(0);
-    setShowGroupPanel(false);
     setSystemNotice(null);
     setSystemNoticeToken(0);
-    setWorkspaceView('library');
+    if (selectedGroupId) {
+      setWorkspaceView('library');
+    }
   }, [selectedGroupId]);
 
   const handleCreateGroup = async (name: string, description: string) => {
@@ -108,15 +119,15 @@ function App() {
   };
 
   const handleRuleUpdated = (rule: Rule) => {
-    setSelectedRule((current) => current?.id === rule.id ? rule : current);
+    setSelectedRule((current) => (current?.id === rule.id ? rule : current));
   };
 
   const handleRuleStatusChanged = (rule: Rule) => {
-    setSelectedRule((current) => current?.id === rule.id ? rule : current);
+    setSelectedRule((current) => (current?.id === rule.id ? rule : current));
     setSystemNotice(
       rule.active
         ? `Rule '${rule.name}' reactivated. It is live in evaluation again.`
-        : `Rule '${rule.name}' deactivated. It remains documented but will be skipped during evaluation.`
+        : `Rule '${rule.name}' deactivated. It remains documented but will be skipped during evaluation.`,
     );
     setSystemNoticeToken(Date.now());
   };
@@ -126,9 +137,7 @@ function App() {
     setGroups((prev) => {
       const nextGroups = prev.filter((item) => item.id !== group.id);
       setSelectedGroupId((current) => {
-        if (current !== group.id) {
-          return current;
-        }
+        if (current !== group.id) return current;
         return nextGroups[0]?.id ?? null;
       });
       return nextGroups;
@@ -139,7 +148,7 @@ function App() {
     setTestDatapointDefs([]);
     setSystemNotice(`Rule group '${group.name}' destroyed.`);
     setSystemNoticeToken(Date.now());
-    setWorkspaceView('library');
+    setWorkspaceView('dashboard');
   };
 
   const handleSaveLlmConfig = async () => {
@@ -151,7 +160,7 @@ function App() {
       sessionStorage.setItem('llm_model', model);
       sessionStorage.setItem('llm_api_key', apiKey);
       setLlmConfig({ provider, model, api_key: apiKey });
-        setShowSettings(false);
+      setShowSettings(false);
     } catch (err: unknown) {
       setLlmError(err instanceof Error ? err.message : 'Connection failed. Please check your API key.');
     } finally {
@@ -159,88 +168,90 @@ function App() {
     }
   };
 
+  const selectedGroup = groups.find((g) => g.id === selectedGroupId);
+
   return (
-    <div className="flex h-screen bg-white transition-colors dark:bg-gray-900 overflow-hidden font-sans">
-      <div className="hidden lg:block lg:w-64 lg:flex-shrink-0">
-        <Sidebar
-          groups={groups}
-          selectedGroupId={selectedGroupId}
-          onSelectGroup={(id) => {
-            setSelectedGroupId(id);
-            setWorkspaceView('library');
-          }}
-          onOpenAgentAdmin={() => setWorkspaceView('agent-admin')}
-          onOpenSchemaWorkshop={() => setWorkspaceView('schema-workshop')}
-          onOpenDecisionLog={() => setWorkspaceView('decision-log')}
-          onCreateGroup={handleCreateGroup}
-          onDeleteGroup={handleDeleteGroup}
-          isDarkMode={isDarkMode}
-          toggleDarkMode={() => setIsDarkMode(!isDarkMode)}
-          onOpenSettings={() => setShowSettings(true)}
-          llmConfigured={!!llmConfig}
-        />
-      </div>
+    <div className="flex h-screen flex-col bg-white font-sans transition-colors dark:bg-gray-900 overflow-hidden">
 
-      {showGroupPanel && (
-        <div className="fixed inset-0 z-40 bg-black/50 backdrop-blur-sm lg:hidden" onClick={() => setShowGroupPanel(false)}>
-          <div className="panel-enter-left h-full w-80 max-w-[85vw] shadow-2xl" onClick={(e) => e.stopPropagation()}>
-            <Sidebar
-              groups={groups}
-              selectedGroupId={selectedGroupId}
-              onSelectGroup={(id) => {
-                setSelectedGroupId(id);
-                setWorkspaceView('library');
-                setShowGroupPanel(false);
-              }}
-              onOpenAgentAdmin={() => {
-                setWorkspaceView('agent-admin');
-                setShowGroupPanel(false);
-              }}
-              onOpenSchemaWorkshop={() => {
-                setWorkspaceView('schema-workshop');
-                setShowGroupPanel(false);
-              }}
-              onOpenDecisionLog={() => {
-                setWorkspaceView('decision-log');
-                setShowGroupPanel(false);
-              }}
-              onCreateGroup={handleCreateGroup}
-              onDeleteGroup={handleDeleteGroup}
-              isDarkMode={isDarkMode}
-              toggleDarkMode={() => setIsDarkMode(!isDarkMode)}
-              onOpenSettings={() => {
-                setShowSettings(true);
-                setShowGroupPanel(false);
-              }}
-              llmConfigured={!!llmConfig}
-            />
-          </div>
-        </div>
-      )}
+      {/* ── Top header bar ───────────────────────────────────────────── */}
+      <header className="flex h-14 flex-shrink-0 items-center gap-3 border-b border-gray-200 bg-white px-4 dark:border-gray-800 dark:bg-gray-900">
+        <button
+          onClick={() => setSidebarOpen((v) => !v)}
+          className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-xl border border-gray-200 bg-white/90 shadow-sm transition-colors hover:bg-gray-100 dark:border-gray-700 dark:bg-gray-800 dark:hover:bg-gray-700"
+          aria-label={sidebarOpen ? 'Close sidebar' : 'Open sidebar'}
+        >
+          {sidebarOpen ? <X size={18} /> : <Menu size={18} />}
+        </button>
 
-      <main className="flex min-w-0 flex-1 bg-white transition-colors dark:bg-gray-900">
-        <div className="flex min-w-0 flex-1 flex-col">
-          {selectedGroupId && (
-            <div className="border-b border-gray-200 bg-white px-4 py-3 dark:border-gray-800 dark:bg-gray-900 lg:hidden">
-              <div className="flex items-center justify-between gap-2">
-                <button
-                  onClick={() => setShowGroupPanel(true)}
-                  className="inline-flex items-center gap-2 rounded-lg border border-gray-300 px-3 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-100 dark:border-gray-700 dark:text-gray-200 dark:hover:bg-gray-800"
-                  aria-label="Open groups"
-                >
-                  <PanelLeftOpen size={16} />
-                  Groups
-                </button>
-                <div className="min-w-0 flex-1 text-center text-sm font-semibold text-gray-800 dark:text-gray-100">
-                  <span className="truncate">{groups.find((group) => group.id === selectedGroupId)?.name ?? 'Rule Group'}</span>
-                </div>
-                <div className="w-[76px]" aria-hidden="true" />
-              </div>
-            </div>
+        <div className="flex min-w-0 flex-1 items-center gap-1.5 text-sm">
+          <span className="font-semibold text-gray-900 dark:text-gray-100">Unreal Objects</span>
+          {workspaceView !== 'dashboard' && (
+            <>
+              <ChevronRight size={14} className="flex-shrink-0 text-gray-400" />
+              <span className="truncate text-gray-500 dark:text-gray-400">
+                {VIEW_LABELS[workspaceView]}
+              </span>
+            </>
           )}
+          {selectedGroup && (workspaceView === 'library' || workspaceView === 'builder') && (
+            <>
+              <ChevronRight size={14} className="flex-shrink-0 text-gray-400" />
+              <span className="truncate font-medium text-gray-700 dark:text-gray-300">
+                {selectedGroup.name}
+              </span>
+            </>
+          )}
+        </div>
+      </header>
 
+      {/* ── Glassmorphism sidebar overlay ────────────────────────────── */}
+      <Sidebar
+        isOpen={sidebarOpen}
+        onClose={() => setSidebarOpen(false)}
+        groups={groups}
+        selectedGroupId={selectedGroupId}
+        activeView={workspaceView}
+        onSelectGroup={(id) => {
+          setSelectedGroupId(id);
+          setWorkspaceView('library');
+          setSidebarOpen(false);
+        }}
+        onOpenDashboard={() => {
+          setWorkspaceView('dashboard');
+          setSidebarOpen(false);
+        }}
+        onOpenAgentAdmin={() => {
+          setWorkspaceView('agent-admin');
+          setSidebarOpen(false);
+        }}
+        onOpenSchemaWorkshop={() => {
+          setWorkspaceView('schema-workshop');
+          setSidebarOpen(false);
+        }}
+        onOpenDecisionLog={() => {
+          setWorkspaceView('decision-log');
+          setSidebarOpen(false);
+        }}
+        onCreateGroup={handleCreateGroup}
+        onDeleteGroup={handleDeleteGroup}
+        isDarkMode={isDarkMode}
+        toggleDarkMode={() => setIsDarkMode(!isDarkMode)}
+        onOpenSettings={() => {
+          setShowSettings(true);
+          setSidebarOpen(false);
+        }}
+        llmConfigured={!!llmConfig}
+      />
+
+      {/* ── Main content area ─────────────────────────────────────────── */}
+      <main className="flex min-h-0 flex-1 bg-white transition-colors dark:bg-gray-900">
+        <div className="flex min-w-0 flex-1 flex-col">
           <div className="min-h-0 flex-1">
-            {workspaceView === 'agent-admin' ? (
+            {workspaceView === 'dashboard' ? (
+              <Dashboard
+                onNavigateToDecisionLog={() => setWorkspaceView('decision-log')}
+              />
+            ) : workspaceView === 'agent-admin' ? (
               <div className="h-full overflow-y-auto p-6">
                 <div className="mx-auto max-w-6xl">
                   <AgentAdminPanel />
@@ -283,7 +294,10 @@ function App() {
                   systemNotice={systemNotice}
                   systemNoticeToken={systemNoticeToken}
                   onRuleCreated={handleRuleSaved}
-                  onStartTest={(rule, defs) => { setRuleToTest(rule); setTestDatapointDefs(defs); }}
+                  onStartTest={(rule, defs) => {
+                    setRuleToTest(rule);
+                    setTestDatapointDefs(defs);
+                  }}
                   onStopEditing={() => {
                     setSelectedRule(null);
                     setSelectedRuleToken(0);
@@ -296,6 +310,7 @@ function App() {
                 hasGroups={groups.length > 0}
                 llmConfigured={!!llmConfig}
                 onOpenSettings={() => setShowSettings(true)}
+                onOpenDashboard={() => setWorkspaceView('dashboard')}
               />
             )}
           </div>
@@ -313,29 +328,31 @@ function App() {
 
       {/* Settings Modal */}
       {showSettings && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
-          <div className="bg-white dark:bg-gray-800 rounded-xl max-w-2xl w-full max-h-[90vh] shadow-2xl overflow-hidden">
-            <div className="p-4 border-b border-gray-200 dark:border-gray-700 font-semibold flex items-center justify-between text-gray-800 dark:text-gray-200">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm">
+          <div className="max-h-[90vh] w-full max-w-2xl overflow-hidden rounded-xl bg-white shadow-2xl dark:bg-gray-800">
+            <div className="flex items-center justify-between border-b border-gray-200 p-4 font-semibold text-gray-800 dark:border-gray-700 dark:text-gray-200">
               <div className="flex items-center gap-2">
                 <Settings size={18} />
                 LLM Provider Settings
               </div>
               <button
                 onClick={() => setShowSettings(false)}
-                className="p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                className="rounded p-1 transition-colors hover:bg-gray-100 dark:hover:bg-gray-700"
               >
                 <X size={18} />
               </button>
             </div>
-            <div className="max-h-[calc(90vh-128px)] overflow-y-auto p-5 space-y-6">
+            <div className="max-h-[calc(90vh-128px)] space-y-6 overflow-y-auto p-5">
               <section className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Provider</label>
+                  <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">
+                    Provider
+                  </label>
                   <select
                     ref={providerSelectRef}
                     value={provider}
                     onChange={(e) => setProvider(e.target.value)}
-                    className="w-full bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-lg px-3 py-2 text-sm text-gray-900 dark:text-gray-100"
+                    className="w-full rounded-lg border border-gray-300 bg-gray-50 px-3 py-2 text-sm text-gray-900 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100"
                   >
                     <option value="openai">OpenAI</option>
                     <option value="anthropic">Anthropic</option>
@@ -343,46 +360,48 @@ function App() {
                   </select>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Model Name</label>
+                  <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">
+                    Model Name
+                  </label>
                   <input
                     type="text"
                     value={model}
                     onChange={(e) => setModel(e.target.value)}
                     placeholder="e.g. gpt-5.2-2025-12-11, claude-sonnet-4-6"
-                    className="w-full bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-lg px-3 py-2 text-sm text-gray-900 dark:text-gray-100 placeholder-gray-400"
+                    className="w-full rounded-lg border border-gray-300 bg-gray-50 px-3 py-2 text-sm text-gray-900 placeholder-gray-400 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">API Key</label>
+                  <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">
+                    API Key
+                  </label>
                   <input
                     type="password"
                     value={apiKey}
                     onChange={(e) => setApiKey(e.target.value)}
                     placeholder="sk-..."
-                    className="w-full bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-lg px-3 py-2 text-sm text-gray-900 dark:text-gray-100 placeholder-gray-400"
+                    className="w-full rounded-lg border border-gray-300 bg-gray-50 px-3 py-2 text-sm text-gray-900 placeholder-gray-400 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100"
                   />
                 </div>
                 {llmError && (
-                  <div className="text-red-600 dark:text-red-400 text-sm font-medium">
-                    {llmError}
-                  </div>
+                  <div className="text-sm font-medium text-red-600 dark:text-red-400">{llmError}</div>
                 )}
               </section>
             </div>
-            <div className="p-4 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50 flex justify-end gap-2">
+            <div className="flex justify-end gap-2 border-t border-gray-200 bg-gray-50 p-4 dark:border-gray-700 dark:bg-gray-900/50">
               <button
                 onClick={() => setShowSettings(false)}
-                className="px-4 py-2 font-medium text-sm text-gray-600 dark:text-gray-300 hover:text-gray-800 dark:hover:text-white transition-colors"
+                className="px-4 py-2 text-sm font-medium text-gray-600 transition-colors hover:text-gray-800 dark:text-gray-300 dark:hover:text-white"
               >
                 Cancel
               </button>
               <button
                 onClick={handleSaveLlmConfig}
                 disabled={isTestingLlm || !apiKey}
-                className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium text-sm rounded-lg transition-colors disabled:opacity-50"
+                className="flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-blue-700 disabled:opacity-50"
               >
                 {isTestingLlm ? <Bot size={16} className="animate-spin" /> : <Save size={16} />}
-                {isTestingLlm ? 'Testing...' : 'Save & Connect'}
+                {isTestingLlm ? 'Testing…' : 'Save & Connect'}
               </button>
             </div>
           </div>
@@ -396,58 +415,41 @@ function EmptyState({
   hasGroups,
   llmConfigured,
   onOpenSettings,
+  onOpenDashboard,
 }: {
   hasGroups: boolean;
   llmConfigured: boolean;
   onOpenSettings: () => void;
+  onOpenDashboard: () => void;
 }) {
   return (
-    <div className="flex-1 flex items-center justify-center p-8">
-      <div className="text-center max-w-sm">
-        <div className="w-16 h-16 rounded-2xl bg-blue-50 dark:bg-blue-900/20 flex items-center justify-center mx-auto mb-4">
+    <div className="flex flex-1 items-center justify-center p-8">
+      <div className="max-w-sm text-center">
+        <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-blue-50 dark:bg-blue-900/20">
           <Bot size={32} className="text-blue-500 dark:text-blue-400" />
         </div>
-        <h2 className="text-lg font-semibold text-gray-800 dark:text-gray-200 mb-2">
+        <h2 className="mb-2 text-lg font-semibold text-gray-800 dark:text-gray-200">
           {hasGroups ? 'Select a Rule Group' : 'Get Started'}
         </h2>
-        <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">
+        <p className="mb-4 text-sm text-gray-500 dark:text-gray-400">
           {hasGroups
             ? 'Choose a rule group from the sidebar to view and create rules.'
             : 'Set up your LLM provider, then create your first rule group to begin.'}
         </p>
-
-        {!hasGroups && (
-          <div className="space-y-3 text-left">
-            <div
-              className={`flex items-start gap-3 p-3 rounded-xl border cursor-pointer transition-colors ${
-                !llmConfigured
-                  ? 'border-amber-200 dark:border-amber-800/50 bg-amber-50 dark:bg-amber-900/20 hover:bg-amber-100 dark:hover:bg-amber-900/30'
-                  : 'border-green-200 dark:border-green-800/50 bg-green-50 dark:bg-green-900/20'
-              }`}
-              onClick={!llmConfigured ? onOpenSettings : undefined}
+        <button
+          onClick={onOpenDashboard}
+          className="text-sm text-blue-500 hover:text-blue-600 dark:text-blue-400 dark:hover:text-blue-300 transition-colors"
+        >
+          ← Back to Dashboard
+        </button>
+        {!hasGroups && !llmConfigured && (
+          <div className="mt-4">
+            <button
+              onClick={onOpenSettings}
+              className="inline-flex items-center gap-2 rounded-lg border border-amber-200 bg-amber-50 px-4 py-2 text-sm font-medium text-amber-700 transition-colors hover:bg-amber-100 dark:border-amber-800/50 dark:bg-amber-900/20 dark:text-amber-300"
             >
-              <span className="text-lg mt-0.5">{llmConfigured ? '✅' : '⚙️'}</span>
-              <div>
-                <div className="text-sm font-semibold text-gray-800 dark:text-gray-200">
-                  Configure LLM Provider
-                </div>
-                <div className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
-                  {llmConfigured ? 'Connected and ready.' : 'Click to set your API key and model.'}
-                </div>
-              </div>
-            </div>
-
-            <div className="flex items-start gap-3 p-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50">
-              <Plus size={18} className="text-gray-400 mt-0.5 flex-shrink-0" />
-              <div>
-                <div className="text-sm font-semibold text-gray-800 dark:text-gray-200">
-                  Create a Rule Group
-                </div>
-                <div className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
-                  Use the sidebar button to name and create your first group.
-                </div>
-              </div>
-            </div>
+              ⚙️ Configure LLM Provider
+            </button>
           </div>
         )}
       </div>
