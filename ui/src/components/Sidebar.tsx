@@ -153,7 +153,9 @@ export const Sidebar: React.FC<SidebarProps> = ({
         className={`fixed bottom-0 left-0 top-14 z-50 flex w-full flex-col border-r border-white/20 bg-white/85 shadow-2xl backdrop-blur-xl transition-transform duration-300 ease-out dark:border-white/10 dark:bg-gray-950/88 sm:w-80 ${
           isOpen ? 'translate-x-0' : '-translate-x-full'
         }`}
-        aria-modal="true"
+        aria-modal={isOpen}
+        aria-hidden={!isOpen}
+        inert={!isOpen ? true : undefined}
         role="dialog"
       >
         {/* New Group Button or Inline Form */}

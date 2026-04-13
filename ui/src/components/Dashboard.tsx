@@ -360,7 +360,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigateToDecisionLog })
                   >
                     <div className="min-w-0 flex-1">
                       <div className="truncate text-sm font-medium text-gray-800 dark:text-gray-200">
-                        {p.request_description}
+                        {p.description}
                       </div>
                       {p.agent_id && (
                         <div className="mt-0.5 truncate text-xs text-gray-500 dark:text-gray-400">

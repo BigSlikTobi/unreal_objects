@@ -348,7 +348,7 @@ export const revokeCredential = async (
 
 export interface PendingApproval {
   request_id: string;
-  request_description: string;
+  description: string;
   context: Record<string, unknown>;
   agent_id?: string | null;
   credential_id?: string | null;
@@ -394,7 +394,7 @@ export const submitApprovalDecision = async (
   const res = await fetch(`${DECISION_BASE}/decide/${encodeURIComponent(requestId)}/approve`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ approved, approver_name: approverName }),
+    body: JSON.stringify({ approved, approver: approverName }),
   });
   if (!res.ok) throw new Error('Failed to submit approval decision');
 };
